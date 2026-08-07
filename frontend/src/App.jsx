@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Cpu, UserPlus, KeyRound, Sparkles, Home } from 'lucide-react';
+import { Cpu, UserPlus, KeyRound, Sparkles, Home, ShieldCheck } from 'lucide-react';
 import RegistrationForm from './components/RegistrationForm';
 import DigitalPass from './components/DigitalPass';
 import LoginPortal from './components/LoginPortal';
@@ -7,15 +7,27 @@ import AdminDashboard from './components/AdminDashboard';
 import LoadingScreen from './components/LoadingScreen';
 import EventCountdown from './components/EventCountdown';
 import EventsGrid from './components/EventsGrid';
+import AiPledge from './components/AiPledge';
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState(() =>
-    window.location.pathname === '/cseadmin' ? 'admin' : 'home'
-  );
+  const [activeTab, setActiveTab] = useState(() => {
+    const path = window.location.pathname;
+    if (path === '/cseadmin') return 'admin';
+    if (path === '/aipledge') return 'aipledge';
+    return 'home';
+  });
   const [currentUser, setCurrentUser] = useState(null);
   const [isNewRegistration, setIsNewRegistration] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
+
+  // Helper to change tab and optionally sync browser URL
+  const changeTab = (tabName, urlPath = '/') => {
+    setActiveTab(tabName);
+    if (urlPath !== window.location.pathname) {
+      window.history.pushState({}, '', urlPath);
+    }
+  };
 
   // Fetch total registration stats
   const fetchStats = async () => {
@@ -37,19 +49,18 @@ export default function App() {
   const handleRegistrationSuccess = (user) => {
     setCurrentUser(user);
     setIsNewRegistration(true);
-    setActiveTab('pass');
+    changeTab('pass');
     setTotalCount(prev => prev + 1);
   };
 
   const handleLoginSuccess = (user) => {
     setCurrentUser(user);
     setIsNewRegistration(false);
-    setActiveTab('pass');
+    changeTab('pass');
   };
 
   const leaveAdmin = () => {
-    window.history.replaceState({}, '', '/');
-    setActiveTab('home');
+    changeTab('home', '/');
   };
 
   if (isLoading) {
@@ -60,7 +71,7 @@ export default function App() {
     <div>
       {/* Navbar Header */}
       <nav className="navbar">
-        <div className="brand" onClick={() => setActiveTab('home')}>
+        <div className="brand" onClick={() => changeTab('home', '/')}>
           <div className="brand-icon">
             <Cpu size={22} />
           </div>
@@ -70,28 +81,35 @@ export default function App() {
         <div className="nav-links">
           <button
             className={`nav-btn ${activeTab === 'home' ? 'active' : ''}`}
-            onClick={() => setActiveTab('home')}
+            onClick={() => changeTab('home', '/')}
           >
             <Home size={18} /> Home
           </button>
 
           <button
             className={`nav-btn ${activeTab === 'events' ? 'active' : ''}`}
-            onClick={() => setActiveTab('events')}
+            onClick={() => changeTab('events', '/')}
           >
             <Sparkles size={18} /> Events
           </button>
 
           <button
+            className={`nav-btn ${activeTab === 'aipledge' ? 'active' : ''}`}
+            onClick={() => changeTab('aipledge', '/aipledge')}
+          >
+            <ShieldCheck size={18} /> AI Pledge & Oath
+          </button>
+
+          <button
             className={`nav-btn ${activeTab === 'register' ? 'active' : ''}`}
-            onClick={() => setActiveTab('register')}
+            onClick={() => changeTab('register', '/')}
           >
             <UserPlus size={18} /> Register / Signup
           </button>
 
           <button
             className={`nav-btn ${activeTab === 'login' || activeTab === 'pass' ? 'active' : ''}`}
-            onClick={() => setActiveTab(currentUser ? 'pass' : 'login')}
+            onClick={() => changeTab(currentUser ? 'pass' : 'login', '/')}
           >
             <KeyRound size={18} /> {currentUser ? 'My Digital Pass' : 'Login'}
           </button>
@@ -102,7 +120,7 @@ export default function App() {
       <main className="main-wrapper">
         {/* DASHBOARD VIEW: COUNTDOWN ONLY */}
         {activeTab === 'home' && (
-          <EventCountdown onExploreEvents={() => setActiveTab('events')} />
+          <EventCountdown onExploreEvents={() => changeTab('events', '/')} />
         )}
 
         {/* EVENTS PAGE VIEW: 9 EVENT CARDS ONLY */}
@@ -110,11 +128,16 @@ export default function App() {
           <EventsGrid />
         )}
 
+        {/* AI PLEDGE & OATH VIEW */}
+        {activeTab === 'aipledge' && (
+          <AiPledge />
+        )}
+
         {/* REGISTRATION / SIGNUP FORM VIEW */}
         {activeTab === 'register' && (
           <RegistrationForm
             onSuccess={handleRegistrationSuccess}
-            onBack={() => setActiveTab('home')}
+            onBack={() => changeTab('home', '/')}
           />
         )}
 
@@ -128,13 +151,13 @@ export default function App() {
                 onReset={() => {
                   setCurrentUser(null);
                   setIsNewRegistration(false);
-                  setActiveTab('register');
+                  changeTab('register', '/');
                 }}
               />
             ) : (
               <LoginPortal
                 onLoginSuccess={handleLoginSuccess}
-                onBack={() => setActiveTab('home')}
+                onBack={() => changeTab('home', '/')}
               />
             )}
           </div>
@@ -144,7 +167,7 @@ export default function App() {
         {activeTab === 'login' && (
           <LoginPortal
             onLoginSuccess={handleLoginSuccess}
-            onBack={() => setActiveTab('home')}
+            onBack={() => changeTab('home', '/')}
           />
         )}
 
