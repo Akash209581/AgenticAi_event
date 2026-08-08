@@ -19,7 +19,7 @@ It guarantees:
 
 | ID Type | Prefix | Format Pattern | Example | Purpose / Scope |
 | :--- | :--- | :--- | :--- | :--- |
-| **User ID** (`userId`) | `MH26` | `MH26` + 6 digits | `MH26000001` | Unique primary key for participant/visitor accounts |
+| **User ID** (`aiId`) | `VUCSE` | `VUCSE` + 5 digits | `VUCSE00001` | Unique primary key for participant accounts |
 | **Sports Individual Reg ID** | `SR` | `SR` + 8 digits | `SR26000001` | Individual Sports Event registration |
 | **Cultural Individual Reg ID**| `CR` | `CR` + 8 digits | `CR26000001` | Individual Cultural Event registration |
 | **Other Event Reg ID** | `ER` | `ER` + 8 digits | `ER26000001` | General Event registration |

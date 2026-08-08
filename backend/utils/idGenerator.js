@@ -40,7 +40,7 @@ let fallbackCounter = 0;
 export const memoryUsers = []; // In-memory store fallback if Mongo connection is absent
 
 /**
- * Generates sequential AI Registration ID (e.g. AI00001, AI00002)
+ * Generates sequential AI Registration ID (e.g. VUCSE00001, VUCSE00002)
  * Queue-protected and MongoDB $inc atomic counter driven.
  */
 export async function generateAiId() {
@@ -54,7 +54,7 @@ export async function generateAiId() {
           { new: true, upsert: true }
         );
         const nextSeq = counter.seq;
-        return `AI${nextSeq.toString().padStart(5, '0')}`;
+        return `VUCSE${nextSeq.toString().padStart(5, '0')}`;
       } catch (err) {
         console.warn('[ID Generator Warning] Mongo Counter error, computing from max User ID:', err.message);
       }
@@ -65,6 +65,6 @@ export async function generateAiId() {
     const maxExistingInMemory = memoryUsers.length;
     const currentSeq = Math.max(fallbackCounter, maxExistingInMemory);
     fallbackCounter = currentSeq;
-    return `AI${currentSeq.toString().padStart(5, '0')}`;
+    return `VUCSE${currentSeq.toString().padStart(5, '0')}`;
   });
 }

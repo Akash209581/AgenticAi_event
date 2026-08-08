@@ -77,7 +77,7 @@ export default function AdminDashboard({ onBack }) {
             Admin Registrations Management
           </h2>
           <p className="card-subtitle">
-            Real-time participant database & AI ID tracking starting from AI00001
+            Real-time participant database & VUCSE ID tracking starting from VUCSE00001
           </p>
         </div>
 
@@ -92,7 +92,7 @@ export default function AdminDashboard({ onBack }) {
         <div className="search-input-box">
           <input
             type="text"
-            placeholder="Search by Name, Reg No, AI ID (e.g. AI00001), Phone, Email..."
+            placeholder="Search by Name, Reg No, VUCSE ID (e.g. VUCSE00001), Phone, Email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="cyber-input"
@@ -132,7 +132,7 @@ export default function AdminDashboard({ onBack }) {
           <table className="cyber-table">
             <thead>
               <tr>
-                <th>Generated AI ID</th>
+                <th>Generated VUCSE ID</th>
                 <th>Name</th>
                 <th>Reg No.</th>
                 <th>Year</th>

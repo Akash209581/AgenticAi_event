@@ -70,13 +70,13 @@ router.post('/register', async (req, res) => {
         if (existingUser.email === cleanEmail) {
           return res.status(400).json({
             success: false,
-            message: `User with email '${cleanEmail}' is already registered (AI ID: ${existingUser.aiId}).`
+            message: `User with email '${cleanEmail}' is already registered (VUCSE ID: ${existingUser.aiId}).`
           });
         }
         if (existingUser.regNo === cleanRegNo) {
           return res.status(400).json({
             success: false,
-            message: `Registration number '${cleanRegNo}' is already registered (AI ID: ${existingUser.aiId}).`
+            message: `Registration number '${cleanRegNo}' is already registered (VUCSE ID: ${existingUser.aiId}).`
           });
         }
       }
@@ -86,12 +86,12 @@ router.post('/register', async (req, res) => {
       if (existingMem) {
         return res.status(400).json({
           success: false,
-          message: `User with email or registration number is already registered (AI ID: ${existingMem.aiId}).`
+          message: `User with email or registration number is already registered (VUCSE ID: ${existingMem.aiId}).`
         });
       }
     }
 
-    // 5. Generate AI ID with retry mechanism (ID starts at AI00001)
+    // 5. Generate VUCSE ID with retry mechanism (ID starts at VUCSE00001)
     const MAX_RETRIES = 3;
     let newRegistration = null;
 
@@ -231,8 +231,8 @@ router.get('/stats', async (req, res) => {
       stats: {
         totalRegistrations: totalCount,
         eventName: 'Agentic AI Day 2026',
-        idPrefix: 'AI',
-        startId: 'AI00001'
+        idPrefix: 'VUCSE',
+        startId: 'VUCSE00001'
       }
     });
   } catch (error) {

@@ -1,18 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { KeyRound, Hash, Calendar, ArrowRight, AlertCircle, ArrowLeft } from 'lucide-react';
 
-export default function LoginPortal({ onLoginSuccess, onBack }) {
-  const [identifier, setIdentifier] = useState('');
+export default function LoginPortal({ onLoginSuccess, onBack, initialIdentifier = '' }) {
+  const [identifier, setIdentifier] = useState(initialIdentifier);
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (initialIdentifier) {
+      setIdentifier(initialIdentifier);
+    }
+  }, [initialIdentifier]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
     if (!identifier.trim()) {
-      setError('Please enter your Registration Number.');
+      setError('Please enter your Registration Number or AI ID.');
       return;
     }
 
@@ -73,7 +79,7 @@ export default function LoginPortal({ onLoginSuccess, onBack }) {
           <div className="form-group">
             <div className="label-row">
               <label htmlFor="login-id">
-                <Hash size={16} /> Registration Number <span className="req-star">*</span>
+                <Hash size={16} /> Registration Number or AI ID <span className="req-star">*</span>
               </label>
             </div>
             <div className="input-wrapper">
@@ -82,7 +88,7 @@ export default function LoginPortal({ onLoginSuccess, onBack }) {
                 type="text"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
-                placeholder="e.g. 211FA04000"
+                placeholder="e.g. 211FA04000 or CSE26-AI-XXXX"
                 className="cyber-input"
                 required
               />

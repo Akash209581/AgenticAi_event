@@ -1,29 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { Cpu, UserPlus, KeyRound, Sparkles, Home, ShieldCheck } from 'lucide-react';
+import { Cpu, UserPlus, KeyRound, Sparkles, Home, ShieldCheck, Menu, X } from 'lucide-react';
 import RegistrationForm from './components/RegistrationForm';
-import DigitalPass from './components/DigitalPass';
+import UserProfile from './components/UserProfile';
 import LoginPortal from './components/LoginPortal';
 import AdminDashboard from './components/AdminDashboard';
 import LoadingScreen from './components/LoadingScreen';
 import EventCountdown from './components/EventCountdown';
 import EventsGrid from './components/EventsGrid';
-import AiPledge from './components/AiPledge';
+import NavOverlay from './components/NavOverlay';
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(() => {
     const path = window.location.pathname;
     if (path === '/cseadmin') return 'admin';
-    if (path === '/aipledge') return 'aipledge';
     return 'home';
   });
   const [currentUser, setCurrentUser] = useState(null);
   const [isNewRegistration, setIsNewRegistration] = useState(false);
+  const [prefillLoginId, setPrefillLoginId] = useState('');
   const [totalCount, setTotalCount] = useState(0);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Helper to change tab and optionally sync browser URL
   const changeTab = (tabName, urlPath = '/') => {
     setActiveTab(tabName);
+    setIsMobileMenuOpen(false);
     if (urlPath !== window.location.pathname) {
       window.history.pushState({}, '', urlPath);
     }
@@ -47,16 +49,99 @@ export default function App() {
   }, [currentUser]);
 
   const handleRegistrationSuccess = (user) => {
-    setCurrentUser(user);
-    setIsNewRegistration(true);
-    changeTab('pass');
     setTotalCount(prev => prev + 1);
+  };
+
+  const handleProceedToLogin = (identifier) => {
+    if (identifier) {
+      setPrefillLoginId(identifier);
+    }
+    changeTab('login', '/');
   };
 
   const handleLoginSuccess = (user) => {
     setCurrentUser(user);
     setIsNewRegistration(false);
     changeTab('pass');
+  };
+
+  const handleEnrollEvent = async (event) => {
+    if (!currentUser) return;
+
+    try {
+      const response = await fetch('/cseAI/enroll-event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          identifier: currentUser.aiId || currentUser.regNo || currentUser.email,
+          event: {
+            id: event.id,
+            title: event.title,
+            categoryName: event.categoryName || event.category,
+            categoryId: event.categoryId,
+            image: event.image
+          }
+        })
+      });
+
+      const data = await response.json();
+      if (data.success && data.registeredEvents) {
+        setCurrentUser(prev => ({
+          ...prev,
+          registeredEvents: data.registeredEvents
+        }));
+      }
+    } catch (err) {
+      console.warn('Failed to enroll event:', err);
+      setCurrentUser(prev => {
+        const existing = prev?.registeredEvents || [];
+        if (existing.some(e => e.id === event.id || e.title === event.title)) return prev;
+        return {
+          ...prev,
+          registeredEvents: [...existing, {
+            id: event.id,
+            title: event.title,
+            categoryName: event.categoryName || event.category || 'TECHNICAL EVENTS',
+            categoryId: event.categoryId || 'technical',
+            image: event.image || ''
+          }]
+        };
+      });
+    }
+  };
+
+  const handleUnenrollEvent = async (eventId, eventTitle) => {
+    if (!currentUser) return;
+
+    try {
+      const response = await fetch('/cseAI/unenroll-event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          identifier: currentUser.aiId || currentUser.regNo || currentUser.email,
+          eventId,
+          eventTitle
+        })
+      });
+
+      const data = await response.json();
+      if (data.success && data.registeredEvents !== undefined) {
+        setCurrentUser(prev => ({
+          ...prev,
+          registeredEvents: data.registeredEvents
+        }));
+      }
+    } catch (err) {
+      console.warn('Failed to unenroll event:', err);
+      setCurrentUser(prev => ({
+        ...prev,
+        registeredEvents: (prev?.registeredEvents || []).filter(e => {
+          if (eventId && e.id === eventId) return false;
+          if (eventTitle && e.title.toLowerCase() === eventTitle.toLowerCase()) return false;
+          return true;
+        })
+      }));
+    }
   };
 
   const leaveAdmin = () => {
@@ -69,6 +154,9 @@ export default function App() {
 
   return (
     <div>
+      {/* Background Route Overlay */}
+      <NavOverlay activeTab={activeTab} />
+
       {/* Navbar Header */}
       <nav className="navbar">
         <div className="brand" onClick={() => changeTab('home', '/')}>
@@ -78,7 +166,16 @@ export default function App() {
           AGENTIC AI DAY
         </div>
 
-        <div className="nav-links">
+        {/* Mobile menu hamburger toggle button */}
+        <button
+          className="mobile-menu-toggle"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label="Toggle Navigation Menu"
+        >
+          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+
+        <div className={`nav-links ${isMobileMenuOpen ? 'open' : ''}`}>
           <button
             className={`nav-btn ${activeTab === 'home' ? 'active' : ''}`}
             onClick={() => changeTab('home', '/')}
@@ -93,25 +190,20 @@ export default function App() {
             <Sparkles size={18} /> Events
           </button>
 
-          <button
-            className={`nav-btn ${activeTab === 'aipledge' ? 'active' : ''}`}
-            onClick={() => changeTab('aipledge', '/aipledge')}
-          >
-            <ShieldCheck size={18} /> AI Pledge & Oath
-          </button>
-
-          <button
-            className={`nav-btn ${activeTab === 'register' ? 'active' : ''}`}
-            onClick={() => changeTab('register', '/')}
-          >
-            <UserPlus size={18} /> Register / Signup
-          </button>
+          {!currentUser && (
+            <button
+              className={`nav-btn ${activeTab === 'register' ? 'active' : ''}`}
+              onClick={() => changeTab('register', '/')}
+            >
+              <UserPlus size={18} /> Register / Signup
+            </button>
+          )}
 
           <button
             className={`nav-btn ${activeTab === 'login' || activeTab === 'pass' ? 'active' : ''}`}
             onClick={() => changeTab(currentUser ? 'pass' : 'login', '/')}
           >
-            <KeyRound size={18} /> {currentUser ? 'My Digital Pass' : 'Login'}
+            <KeyRound size={18} /> {currentUser ? 'My Profile' : 'Login'}
           </button>
         </div>
       </nav>
@@ -125,37 +217,50 @@ export default function App() {
 
         {/* EVENTS PAGE VIEW: 9 EVENT CARDS ONLY */}
         {activeTab === 'events' && (
-          <EventsGrid />
-        )}
-
-        {/* AI PLEDGE & OATH VIEW */}
-        {activeTab === 'aipledge' && (
-          <AiPledge />
+          <EventsGrid 
+            onRegister={() => changeTab('register', '/')} 
+            currentUser={currentUser}
+            onEnrollEvent={handleEnrollEvent}
+          />
         )}
 
         {/* REGISTRATION / SIGNUP FORM VIEW */}
         {activeTab === 'register' && (
-          <RegistrationForm
-            onSuccess={handleRegistrationSuccess}
-            onBack={() => changeTab('home', '/')}
-          />
+          currentUser ? (
+            <UserProfile
+              user={currentUser}
+              onLogout={() => {
+                setCurrentUser(null);
+                changeTab('login', '/');
+              }}
+              onExploreEvents={() => changeTab('events', '/')}
+              onUnenrollEvent={handleUnenrollEvent}
+            />
+          ) : (
+            <RegistrationForm
+              onSuccess={handleRegistrationSuccess}
+              onProceedToLogin={handleProceedToLogin}
+              onBack={() => changeTab('home', '/')}
+            />
+          )
         )}
 
-        {/* DIGITAL PASS VIEW */}
+        {/* USER PROFILE & REGISTERED EVENTS VIEW */}
         {activeTab === 'pass' && (
           <div>
             {currentUser ? (
-              <DigitalPass
+              <UserProfile
                 user={currentUser}
-                isNew={isNewRegistration}
-                onReset={() => {
+                onLogout={() => {
                   setCurrentUser(null);
-                  setIsNewRegistration(false);
-                  changeTab('register', '/');
+                  changeTab('login', '/');
                 }}
+                onExploreEvents={() => changeTab('events', '/')}
+                onUnenrollEvent={handleUnenrollEvent}
               />
             ) : (
               <LoginPortal
+                initialIdentifier={prefillLoginId}
                 onLoginSuccess={handleLoginSuccess}
                 onBack={() => changeTab('home', '/')}
               />
@@ -166,6 +271,7 @@ export default function App() {
         {/* PASS LOGIN LOOKUP VIEW */}
         {activeTab === 'login' && (
           <LoginPortal
+            initialIdentifier={prefillLoginId}
             onLoginSuccess={handleLoginSuccess}
             onBack={() => changeTab('home', '/')}
           />

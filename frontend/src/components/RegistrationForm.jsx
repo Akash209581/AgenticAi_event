@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { User, Calendar, Hash, Phone, Mail, Lock, Sparkles, AlertCircle, ArrowRight, ArrowLeft, GraduationCap } from 'lucide-react';
+import confetti from 'canvas-confetti';
+import { User, Calendar, Hash, Phone, Mail, Lock, Sparkles, AlertCircle, ArrowRight, ArrowLeft, GraduationCap, Copy, Check, KeyRound } from 'lucide-react';
 
-export default function RegistrationForm({ onSuccess, onBack }) {
+export default function RegistrationForm({ onSuccess, onProceedToLogin, onBack }) {
   const [formData, setFormData] = useState({
     name: '',
     dob: '',
@@ -14,6 +15,8 @@ export default function RegistrationForm({ onSuccess, onBack }) {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState('');
+  const [registeredUser, setRegisteredUser] = useState(null);
+  const [copied, setCopied] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -90,14 +93,159 @@ export default function RegistrationForm({ onSuccess, onBack }) {
         throw new Error(data.message || 'Registration failed.');
       }
 
-      // Clear form & trigger success handler with issued user details
-      onSuccess(data.user);
+      setRegisteredUser(data.user);
+
+      if (onSuccess) {
+        onSuccess(data.user);
+      }
+
+      // Confetti celebration for generated ID
+      try {
+        confetti({
+          particleCount: 90,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#00f2fe', '#4facfe', '#a855f7']
+        });
+      } catch (err) {
+        console.warn('Confetti trigger ignored:', err);
+      }
+
     } catch (err) {
       setApiError(err.message || 'Failed to connect to registration server.');
     } finally {
       setLoading(false);
     }
   };
+
+  const handleCopyId = () => {
+    if (registeredUser?.aiId) {
+      navigator.clipboard.writeText(registeredUser.aiId);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleRegisterAnother = () => {
+    setRegisteredUser(null);
+    setFormData({
+      name: '',
+      dob: '',
+      regNo: '',
+      year: '1',
+      phone: '',
+      email: ''
+    });
+    setErrors({});
+    setApiError('');
+  };
+
+  // Render Post-Registration Generated ID Screen
+  if (registeredUser) {
+    return (
+      <div className="cyber-card registration-card" style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
+        <div className="card-header">
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.8rem' }}>
+            <div style={{ background: 'rgba(0, 242, 254, 0.1)', padding: '1rem', borderRadius: '50%', border: '1px solid rgba(0, 242, 254, 0.4)' }}>
+              <Sparkles size={36} color="#00f2fe" />
+            </div>
+          </div>
+          <h2 className="card-title" style={{ color: '#00f2fe' }}>
+            Registration Successful!
+          </h2>
+          <p className="card-subtitle" style={{ color: '#94a3b8', marginTop: '0.2rem' }}>
+            Your unique Agentic AI Day ID has been generated.
+          </p>
+        </div>
+
+        <div style={{
+          background: 'rgba(15, 23, 42, 0.7)',
+          border: '1px solid rgba(0, 242, 254, 0.3)',
+          borderRadius: '16px',
+          padding: '1.5rem',
+          margin: '1.25rem 0',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)'
+        }}>
+          <div style={{ textTransform: 'uppercase', fontSize: '0.75rem', color: '#94a3b8', letterSpacing: '1.5px', marginBottom: '0.5rem' }}>
+            YOUR GENERATED REGISTRATION ID
+          </div>
+          <div style={{
+            fontFamily: 'monospace',
+            fontSize: 'clamp(1.5rem, 5vw, 2.2rem)',
+            fontWeight: '900',
+            color: '#00f2fe',
+            letterSpacing: '2px',
+            margin: '0.4rem 0 1rem 0',
+            textShadow: '0 0 15px rgba(0, 242, 254, 0.4)'
+          }}>
+            {registeredUser.aiId}
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
+            <button
+              type="button"
+              onClick={handleCopyId}
+              className="btn-secondary"
+              style={{ padding: '0.4rem 1.2rem', fontSize: '0.85rem' }}
+            >
+              {copied ? <Check size={16} color="#10b981" /> : <Copy size={16} />}
+              {copied ? 'Copied ID!' : 'Copy Registration ID'}
+            </button>
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '0.75rem',
+            textAlign: 'left',
+            background: 'rgba(255, 255, 255, 0.04)',
+            padding: '1rem',
+            borderRadius: '12px',
+            border: '1px solid rgba(255, 255, 255, 0.08)'
+          }}>
+            <div>
+              <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block' }}>ATTENDEE NAME</span>
+              <strong style={{ color: '#f8fafc', fontSize: '0.95rem' }}>{registeredUser.name}</strong>
+            </div>
+            <div>
+              <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block' }}>REGISTRATION NO</span>
+              <strong style={{ color: '#f8fafc', fontSize: '0.95rem' }}>{registeredUser.regNo}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div className="info-box" style={{ marginBottom: '1.5rem', textAlign: 'left' }}>
+          <Lock size={20} color="#0284c7" style={{ flexShrink: 0, marginTop: 2 }} />
+          <div>
+            <strong>Next Step: Log In to View Pass</strong>
+            <div style={{ fontSize: '0.85rem', marginTop: '0.2rem', color: '#334155' }}>
+              Your Digital Pass is protected. Please proceed to login using your <strong>Registration Number or AI ID</strong> and <strong>Date of Birth (DOB)</strong>.
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '1rem', flexDirection: 'column', alignItems: 'center' }}>
+          <button
+            type="button"
+            onClick={() => onProceedToLogin && onProceedToLogin(registeredUser.aiId || registeredUser.regNo)}
+            className="btn-primary"
+            style={{ width: '100%', maxWidth: '350px', justifyContent: 'center' }}
+          >
+            <KeyRound size={20} /> Proceed to Login
+          </button>
+
+          <button
+            type="button"
+            onClick={handleRegisterAnother}
+            className="btn-secondary"
+            style={{ width: '100%', maxWidth: '350px', justifyContent: 'center' }}
+          >
+            Register Another Participant
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="cyber-card registration-card">
@@ -271,7 +419,7 @@ export default function RegistrationForm({ onSuccess, onBack }) {
         <div className="info-box">
           <Lock size={20} color="#38bdf8" style={{ flexShrink: 0, marginTop: 2 }} />
           <div>
-            <strong>Password:</strong>your password will be set automatically to your <strong>Date of Birth (DOB)</strong>. You can use your Email/Reg No and DOB to check your registration pass anytime.
+            <strong>Password:</strong> your password will be set automatically to your <strong>Date of Birth (DOB)</strong>. You can use your Registration No / AI ID and DOB to check your registration pass anytime.
           </div>
         </div>
 
@@ -291,3 +439,4 @@ export default function RegistrationForm({ onSuccess, onBack }) {
     </div>
   );
 }
+

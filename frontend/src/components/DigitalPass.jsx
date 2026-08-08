@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
 import confetti from 'canvas-confetti';
-import { Copy, Check, Download, Sparkles, User, Calendar, Hash, Phone, Mail, Award } from 'lucide-react';
+import { Copy, Check, Download, Sparkles, User, Calendar, Hash, Phone, Mail, Award, LogOut } from 'lucide-react';
 
-export default function DigitalPass({ user, isNew = false, onReset }) {
+export default function DigitalPass({ user, isNew = false, onReset, onLogout }) {
   const canvasRef = useRef(null);
   const [copied, setCopied] = useState(false);
 
@@ -133,6 +133,12 @@ export default function DigitalPass({ user, isNew = false, onReset }) {
         {onReset && (
           <button onClick={onReset} className="btn-secondary">
             Register Another Participant
+          </button>
+        )}
+
+        {onLogout && (
+          <button onClick={onLogout} className="btn-secondary" style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.4)' }}>
+            <LogOut size={18} /> Logout
           </button>
         )}
       </div>
