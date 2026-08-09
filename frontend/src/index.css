@@ -115,25 +115,138 @@ body {
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
-  flex-wrap: wrap;
+  position: relative;
 }
 
-.brand {
+.navbar-center {
+  position: absolute;
+  left: 45%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  justify-content: center;
+  cursor: pointer;
+}
+
+
+.brand-title-center {
   font-family: var(--font-heading);
-  font-size: clamp(1.2rem, 3.8vw, 1.55rem);
+  font-size: clamp(1.2rem, 3.5vw, 1.55rem);
   font-weight: 900;
   letter-spacing: -0.5px;
   background: linear-gradient(135deg, #ffffff 30%, var(--primary-cyan) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  white-space: nowrap;
+}
+
+.desktop-cse-badge {
+  display: inline-flex;
+}
+
+.mobile-brand-title {
+  display: none;
+}
+
+.mobile-right-controls {
+  display: none;
+}
+
+@media (max-width: 992px) {
+  .desktop-cse-badge {
+    display: none !important;
+  }
+
+  .navbar-center {
+    display: none !important;
+  }
+
+  .mobile-brand-title {
+    display: inline-block;
+    font-family: var(--font-heading);
+    font-size: clamp(0.95rem, 3.6vw, 1.2rem);
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #ffffff 30%, var(--primary-cyan) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    white-space: nowrap;
+  }
+
+  .mobile-right-controls {
+    display: flex !important;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .mobile-cse-badge {
+    font-size: 0.85rem !important;
+    padding: 0.25rem 0.6rem !important;
+    letter-spacing: 1.5px !important;
+    border-radius: 6px !important;
+  }
+
+  .mobile-menu-toggle {
+    display: flex !important;
+  }
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   cursor: pointer;
   white-space: nowrap;
 }
 
+/* Blinking CSE Text Badge on Left Navbar */
+.blinking-cse-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Space Grotesk', 'Outfit', 'Segoe UI', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 900;
+  letter-spacing: 3px;
+  padding: 0.35rem 0.95rem;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #00f2fe 0%, #4facfe 50%, #00f2fe 100%);
+  background-size: 200% auto;
+  color: #0b1120;
+  border: 2px solid #00f2fe;
+  -webkit-text-fill-color: #0b1120;
+  animation: cseNeonPulse 1.2s infinite ease-in-out;
+  box-shadow: 0 0 25px rgba(0, 242, 254, 0.85);
+  vertical-align: middle;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.5);
+}
+
+@keyframes cseNeonPulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 25px rgba(0, 242, 254, 1), 0 0 45px rgba(0, 242, 254, 0.7), inset 0 0 10px rgba(255, 255, 255, 0.4);
+    filter: brightness(1.3);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.95);
+    box-shadow: 0 0 8px rgba(0, 242, 254, 0.3), 0 0 15px rgba(0, 242, 254, 0.2);
+    filter: brightness(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.05);
+    box-shadow: 0 0 35px rgba(0, 242, 254, 1), 0 0 65px rgba(0, 242, 254, 0.9), inset 0 0 15px rgba(255, 255, 255, 0.6);
+    filter: brightness(1.4);
+  }
+}
+
+
+
+
 .brand-icon {
+
   width: clamp(36px, 8vw, 44px);
   height: clamp(36px, 8vw, 44px);
   border-radius: 12px;
@@ -204,54 +317,63 @@ body {
   box-shadow: 0 0 20px rgba(245, 245, 230, 0.8);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 992px) {
   .navbar {
-    padding: 0.8rem 1rem;
+    padding: 0.85rem 1.25rem;
     position: sticky;
     top: 0;
     z-index: 1000;
   }
 
   .mobile-menu-toggle {
-    display: flex;
+    display: flex !important;
   }
 
   .nav-links {
     display: none !important;
-    width: 100%;
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 92%;
+    max-width: 420px;
     flex-direction: column;
-    gap: 0.6rem;
-    padding: 0.85rem 0.5rem 0.6rem;
-    margin-top: 0.5rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.15);
-    background: rgba(15, 23, 42, 0.98);
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+    gap: 0.75rem;
+    padding: 1.25rem;
+    background: rgba(15, 23, 42, 0.97);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1.5px solid var(--border-shining);
+    border-radius: 18px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.85), 0 0 25px rgba(0, 242, 254, 0.25);
+    z-index: 1001;
   }
 
   .nav-links.open {
     display: flex !important;
-    animation: fadeInNav 0.25s ease forwards;
+    animation: fadeInNavCenter 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
   .nav-btn {
     width: 100%;
-    justify-content: flex-start;
-    padding: 0.75rem 1rem;
+    justify-content: center;
+    padding: 0.85rem 1.25rem;
+    font-size: 1rem;
+    border-radius: 12px;
   }
 }
 
-@keyframes fadeInNav {
+@keyframes fadeInNavCenter {
   from {
     opacity: 0;
-    transform: translateY(-8px);
+    transform: translate(-50%, -12px);
   }
-
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translate(-50%, 0);
   }
 }
+
 
 /* Primary CTA Button */
 .btn-primary {
@@ -1475,20 +1597,27 @@ label {
   }
 
   .portrait-image-stage {
-    height: 320px;
+    aspect-ratio: 3 / 4;
+    height: auto;
   }
 }
 
 @media (max-width: 600px) {
   .events-portrait-grid {
     grid-template-columns: 1fr;
-    gap: 1.75rem;
+    gap: 2.25rem;
+    max-width: 420px;
+    margin: 1.5rem auto 3rem;
+    padding: 0 1rem;
   }
 
   .portrait-image-stage {
-    height: 300px;
+    aspect-ratio: 3 / 4;
+    height: auto;
+    border-radius: 22px;
   }
 }
+
 
 .events-sub-header {
   display: flex;

@@ -22,6 +22,8 @@ const userSchema = new mongoose.Schema(
     regNo: {
       type: String,
       required: [true, 'Registration Number is mandatory'],
+      unique: true,
+      index: true,
       trim: true
     },
     year: {
@@ -51,6 +53,8 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       required: [true, 'Email Id is mandatory'],
+      unique: true,
+      index: true,
       trim: true,
       lowercase: true,
       match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email address']

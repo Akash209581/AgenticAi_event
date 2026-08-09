@@ -1,9 +1,14 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import helmet from 'helmet';
+import compression from 'compression';
 import { connectDB } from './config/db.js';
 import registrationRoutes from './routes/registration.js';
 import authRoutes from './routes/auth.js';
+import { mongoSanitizer } from './middleware/sanitizer.js';
+import { authRateLimiter, registrationRateLimiter, publicApiRateLimiter } from './middleware/rateLimiter.js';
+import mongoose from 'mongoose';
 
 dotenv.config();
 
@@ -11,12 +16,48 @@ const app = express();
 const PORT = process.env.PORT || 6007;
 const BASE_API = process.env.BASE_API || '/cseAI';
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+// 1. Trust Proxy (Crucial for Nginx reverse proxy & accurate IP rate limiting on campus Wi-Fi)
+app.set('trust proxy', 1);
+
+// 2. Disable Server Fingerprinting & Enable Security Headers
+app.disable('x-powered-by');
+app.use(helmet({
+  contentSecurityPolicy: false, // Managed by Nginx or client frontend assets
+  crossOriginEmbedderPolicy: false
+}));
+
+// 3. Response Compression (Gzip / Deflate for speed)
+app.use(compression());
+
+// 4. CORS Restrictions
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true
+};
+app.use(cors(corsOptions));
+
+// 5. Body Parsing with Payload Size Guard (Prevent DoS memory crash)
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+
+// 6. NoSQL Query Injection Sanitization
+app.use(mongoSanitizer);
 
 // Connect Database
 connectDB();
+
+// 7. Apply NAT-Aware Rate Limiters to Specific Routes
+app.use(`${BASE_API}/register`, registrationRateLimiter);
+app.use(`${BASE_API}/team-register`, registrationRateLimiter);
+app.use(`${BASE_API}/login`, authRateLimiter);
+app.use(`${BASE_API}/admin-login`, authRateLimiter);
+app.use(`${BASE_API}/enroll-event`, authRateLimiter);
+app.use(`${BASE_API}/unenroll-event`, authRateLimiter);
+
+// Public API Rate Limiting for all other endpoints
+app.use(BASE_API, publicApiRateLimiter);
 
 // Mount Routes with /cseAI prefix
 app.use(BASE_API, registrationRoutes);
@@ -27,6 +68,7 @@ app.get('/', (req, res) => {
   res.json({
     status: 'online',
     event: 'Agentic AI Day 2026 Registration API',
+    environment: process.env.NODE_ENV || 'development',
     baseApi: BASE_API,
     port: PORT,
     endpoints: {
@@ -38,10 +80,39 @@ app.get('/', (req, res) => {
   });
 });
 
+// 8. Global Error Handler (Masks stack trace in production)
+app.use((err, req, res, next) => {
+  console.error('[Global Server Error]', err);
+  const status = err.status || err.statusCode || 500;
+  res.status(status).json({
+    success: false,
+    message: process.env.NODE_ENV === 'production'
+      ? 'An unexpected server error occurred. Please try again later.'
+      : err.message || 'Internal Server Error'
+  });
+});
+
 // Start Server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`=======================================================`);
-  console.log(`🤖 Agentic AI Day Backend Server Live on Port ${PORT}`);
+  console.log(`🤖 Agentic AI Day Backend Live on Port ${PORT}`);
+  console.log(`🔒 Security Hardened | NAT Rate Limiting Active`);
   console.log(`🌐 Base API URL: http://localhost:${PORT}${BASE_API}`);
   console.log(`=======================================================`);
 });
+
+// 9. Graceful Shutdown Handlers for PM2 / Systemd
+const shutdownGracefully = async (signal) => {
+  console.log(`\n[Server] ${signal} signal received. Closing HTTP server gracefully...`);
+  server.close(async () => {
+    console.log('[Server] HTTP server closed.');
+    if (mongoose.connection.readyState === 1) {
+      await mongoose.connection.close(false);
+      console.log('[Server] MongoDB connection closed.');
+    }
+    process.exit(0);
+  });
+};
+
+process.on('SIGTERM', () => shutdownGracefully('SIGTERM'));
+process.on('SIGINT', () => shutdownGracefully('SIGINT'));

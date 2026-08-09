@@ -3,6 +3,7 @@ import { User } from '../models/User.js';
 import { Team } from '../models/Team.js';
 import { memoryUsers } from '../utils/idGenerator.js';
 import { memoryTeams } from './registration.js';
+import { getAdminSecretToken } from '../middleware/adminAuth.js';
 import mongoose from 'mongoose';
 
 const router = express.Router();
@@ -23,20 +24,27 @@ router.post('/admin-login', (req, res) => {
     const cleanUser = String(username).trim().toLowerCase();
     const cleanPass = String(password).trim();
 
-    // Valid admin credentials check
-    const isValidAdmin = (cleanUser === 'admin' || cleanUser === 'cseadmin') &&
-                         (cleanPass === 'admin' || cleanPass === 'admin123' || cleanPass === 'vucse2026');
+    // Valid admin credentials check (Environment configurable)
+    const allowedUsers = (process.env.ADMIN_USERNAME || 'admin,cseadmin').toLowerCase().split(',').map(u => u.trim());
+    const allowedPasswords = process.env.ADMIN_PASSWORD
+      ? [process.env.ADMIN_PASSWORD]
+      : ['admin', 'admin123', 'vucse2026'];
+
+    const isValidAdmin = allowedUsers.includes(cleanUser) && allowedPasswords.includes(cleanPass);
 
     if (!isValidAdmin) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid Admin Credentials. Default login: admin / admin'
+        message: 'Invalid Admin Credentials.'
       });
     }
+
+    const token = getAdminSecretToken();
 
     return res.json({
       success: true,
       message: 'Admin Authentication Successful!',
+      token,
       admin: {
         username: cleanUser,
         role: 'SUPER_ADMIN',

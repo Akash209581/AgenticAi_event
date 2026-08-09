@@ -188,21 +188,32 @@ export default function App() {
 
       {/* Navbar Header */}
       <nav className="navbar">
+        {/* Left Side: Brand Icon + Desktop CSE Badge + Mobile Title */}
         <div className="brand" onClick={() => changeTab('home', '/')}>
           <div className="brand-icon">
             <Cpu size={22} />
           </div>
-          AGENTIC AI DAY
+          <span className="desktop-cse-badge blinking-cse-badge">CSE</span>
+          <span className="mobile-brand-title">AGENTIC AI DAY - 2026</span>
         </div>
 
-        {/* Mobile menu hamburger toggle button */}
-        <button
-          className="mobile-menu-toggle"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          aria-label="Toggle Navigation Menu"
-        >
-          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        {/* Center: AGENTIC AI DAY - 2026 (Desktop) */}
+        <div className="navbar-center" onClick={() => changeTab('home', '/')}>
+          <span className="brand-title-center">AGENTIC AI DAY - 2026</span>
+        </div>
+
+        {/* Mobile Right Controls: Blinking CSE + Hamburger Menu Toggle */}
+        <div className="mobile-right-controls">
+          <span className="mobile-cse-badge blinking-cse-badge">CSE</span>
+          <button
+            className="mobile-menu-toggle"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Toggle Navigation Menu"
+          >
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+
 
         <div className={`nav-links ${isMobileMenuOpen ? 'open' : ''}`}>
           <button
@@ -255,8 +266,8 @@ export default function App() {
 
         {/* EVENTS PAGE VIEW: 9 EVENT CARDS ONLY */}
         {activeTab === 'events' && (
-          <EventsGrid 
-            onRegister={() => changeTab('register', '/register')} 
+          <EventsGrid
+            onRegister={() => changeTab('register', '/register')}
             currentUser={currentUser}
             onEnrollEvent={handleEnrollEvent}
           />

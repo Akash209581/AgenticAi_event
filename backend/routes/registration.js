@@ -2,6 +2,7 @@ import express from 'express';
 import { User } from '../models/User.js';
 import { Team } from '../models/Team.js';
 import { generateAiId, memoryUsers } from '../utils/idGenerator.js';
+import { requireAdminAuth, getAdminSecretToken } from '../middleware/adminAuth.js';
 import mongoose from 'mongoose';
 
 const router = express.Router();
@@ -33,20 +34,27 @@ router.post('/admin-login', (req, res) => {
     const cleanUser = String(username).trim().toLowerCase();
     const cleanPass = String(password).trim();
 
-    // Valid admin credentials check
-    const isValidAdmin = (cleanUser === 'admin' || cleanUser === 'cseadmin') &&
-                         (cleanPass === 'admin' || cleanPass === 'admin123' || cleanPass === 'vucse2026');
+    // Valid admin credentials check (Environment configurable)
+    const allowedUsers = (process.env.ADMIN_USERNAME || 'admin,cseadmin').toLowerCase().split(',').map(u => u.trim());
+    const allowedPasswords = process.env.ADMIN_PASSWORD
+      ? [process.env.ADMIN_PASSWORD]
+      : ['admin', 'admin123', 'vucse2026'];
+
+    const isValidAdmin = allowedUsers.includes(cleanUser) && allowedPasswords.includes(cleanPass);
 
     if (!isValidAdmin) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid Admin Credentials. Default login: admin / admin'
+        message: 'Invalid Admin Credentials.'
       });
     }
+
+    const token = getAdminSecretToken();
 
     return res.json({
       success: true,
       message: 'Admin Authentication Successful!',
+      token,
       admin: {
         username: cleanUser,
         role: 'SUPER_ADMIN',
@@ -233,7 +241,7 @@ router.post('/register', async (req, res) => {
  * Retrieve list of registered attendees with filters (Admin view)
  * Supports query params: search, year, gender, event
  */
-router.get('/registrations', async (req, res) => {
+router.get('/registrations', requireAdminAuth, async (req, res) => {
   try {
     const { search, year, gender, event } = req.query;
     let users = [];
@@ -706,7 +714,7 @@ router.post('/team-register', async (req, res) => {
  * GET /cseAI/team-registrations
  * Retrieve list of registered teams for Admin Dashboard
  */
-router.get('/team-registrations', async (req, res) => {
+router.get('/team-registrations', requireAdminAuth, async (req, res) => {
   try {
     const { search, event } = req.query;
     let teams = [];

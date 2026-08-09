@@ -87,6 +87,9 @@ export default function AdminDashboard({ onBack }) {
         setIsAuthenticated(true);
         setAdminUser(data.admin);
         sessionStorage.setItem('vucse_admin_auth', 'true');
+        if (data.token) {
+          sessionStorage.setItem('vucse_admin_token', data.token);
+        }
         return;
       }
 
@@ -123,6 +126,7 @@ export default function AdminDashboard({ onBack }) {
     setIsAuthenticated(false);
     setAdminUser(null);
     sessionStorage.removeItem('vucse_admin_auth');
+    sessionStorage.removeItem('vucse_admin_token');
   };
 
   // Auto-fill demo admin credentials
@@ -142,8 +146,11 @@ export default function AdminDashboard({ onBack }) {
       if (yearFilter !== 'all') params.append('year', yearFilter);
       if (genderFilter !== 'all') params.append('gender', genderFilter);
 
+      const adminToken = sessionStorage.getItem('vucse_admin_token') || '';
+      const reqHeaders = adminToken ? { 'x-admin-token': adminToken } : {};
+
       const [regRes, statsRes] = await Promise.all([
-        fetch(`/cseAI/registrations?${params.toString()}`),
+        fetch(`/cseAI/registrations?${params.toString()}`, { headers: reqHeaders }),
         fetch('/cseAI/stats')
       ]);
 
@@ -175,7 +182,10 @@ export default function AdminDashboard({ onBack }) {
       if (teamSearch.trim()) params.append('search', teamSearch.trim());
       if (teamEventFilter !== 'all') params.append('event', teamEventFilter);
 
-      const res = await fetch(`/cseAI/team-registrations?${params.toString()}`);
+      const adminToken = sessionStorage.getItem('vucse_admin_token') || '';
+      const reqHeaders = adminToken ? { 'x-admin-token': adminToken } : {};
+
+      const res = await fetch(`/cseAI/team-registrations?${params.toString()}`, { headers: reqHeaders });
       const data = await res.json();
       if (data.success) {
         setTeams(data.teams || []);
