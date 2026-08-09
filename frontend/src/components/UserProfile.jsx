@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { 
   User, Calendar, Hash, Phone, Mail, GraduationCap, Copy, Check, 
   Sparkles, LogOut, ShieldCheck, Trophy, Brain, Zap, FileText, 
-  Mic, Bot, Users, Video, Music, HelpCircle, ArrowRight, Trash2
+  Mic, Bot, Users, Video, Music, HelpCircle, ArrowRight, Trash2, Lock
 } from 'lucide-react';
+
 
 const registeredEventsList = [
   // Technical Category
@@ -375,37 +376,59 @@ export default function UserProfile({ user, onLogout, onExploreEvents, onUnenrol
 
                   {/* Footer status button */}
                   <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
-                    <button
-                      onClick={() => onUnenrollEvent && onUnenrollEvent(item.id, item.title)}
-                      type="button"
-                      title="Delete / Cancel event registration"
-                      style={{
-                        background: 'rgba(239, 68, 68, 0.12)',
-                        border: '1px solid rgba(239, 68, 68, 0.35)',
-                        color: '#f87171',
-                        fontSize: '0.75rem',
-                        fontWeight: '700',
-                        padding: '0.3rem 0.65rem',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.3rem',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(239, 68, 68, 0.25)';
-                        e.currentTarget.style.borderColor = '#ef4444';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)';
-                        e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.35)';
-                      }}
-                    >
-                      <Trash2 size={13} /> Delete
-                    </button>
+                    {item.isTeam || item.teamId ? (
+                      <span
+                        title="Team Registration Locked: You are part of an active team. Only Admin can remove team registrations."
+                        style={{
+                          background: 'rgba(234, 179, 8, 0.12)',
+                          border: '1px solid rgba(234, 179, 8, 0.35)',
+                          color: '#fde047',
+                          fontSize: '0.75rem',
+                          fontWeight: '700',
+                          padding: '0.3rem 0.65rem',
+                          borderRadius: '6px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.3rem',
+                          cursor: 'not-allowed'
+                        }}
+                      >
+                        <Lock size={13} /> Team Locked
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => onUnenrollEvent && onUnenrollEvent(item.id, item.title)}
+                        type="button"
+                        title="Delete / Cancel event registration"
+                        style={{
+                          background: 'rgba(239, 68, 68, 0.12)',
+                          border: '1px solid rgba(239, 68, 68, 0.35)',
+                          color: '#f87171',
+                          fontSize: '0.75rem',
+                          fontWeight: '700',
+                          padding: '0.3rem 0.65rem',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.3rem',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'rgba(239, 68, 68, 0.25)';
+                          e.currentTarget.style.borderColor = '#ef4444';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)';
+                          e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.35)';
+                        }}
+                      >
+                        <Trash2 size={13} /> Delete
+                      </button>
+                    )}
 
                     {onExploreEvents && (
+
                       <button
                         onClick={onExploreEvents}
                         type="button"

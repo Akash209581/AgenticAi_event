@@ -49,17 +49,18 @@ body {
   height: 100%;
   pointer-events: none;
   z-index: -1;
-  background-color: transparent;
-  backdrop-filter: blur(0px);
-  -webkit-backdrop-filter: blur(0px);
-  transition: background-color 0.35s ease, backdrop-filter 0.35s ease, -webkit-backdrop-filter 0.35s ease;
+  opacity: 0;
+  background: transparent;
+  transition: opacity 0.4s ease, backdrop-filter 0.4s ease, -webkit-backdrop-filter 0.4s ease;
 }
 
-/* Modifier Class: Non-Home Pages (Dark Tint + Frosted Backdrop Blur on Background Image Only) */
+/* Modifier Class: Non-Home Pages (Displays events.png Background Image) */
 .nav-overlay--dark {
-  background-color: rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  opacity: 1;
+  background: linear-gradient(rgba(15, 23, 42, 0.45), rgba(15, 23, 42, 0.45)), url('/events.png') no-repeat center center fixed;
+  background-size: cover;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 #root {
@@ -205,7 +206,10 @@ body {
 
 @media (max-width: 768px) {
   .navbar {
-    padding: 0.8rem 1.25rem;
+    padding: 0.8rem 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
   }
 
   .mobile-menu-toggle {
@@ -213,17 +217,21 @@ body {
   }
 
   .nav-links {
-    display: none;
+    display: none !important;
     width: 100%;
     flex-direction: column;
     gap: 0.6rem;
-    padding-top: 0.8rem;
+    padding: 0.85rem 0.5rem 0.6rem;
+    margin-top: 0.5rem;
     border-top: 1px solid rgba(255, 255, 255, 0.15);
-    animation: fadeInNav 0.25s ease forwards;
+    background: rgba(15, 23, 42, 0.98);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
   }
 
   .nav-links.open {
-    display: flex;
+    display: flex !important;
+    animation: fadeInNav 0.25s ease forwards;
   }
 
   .nav-btn {
@@ -574,11 +582,6 @@ body {
 
   .navbar {
     padding: 0.75rem 1rem;
-  }
-
-  .nav-links {
-    width: 100%;
-    justify-content: space-between;
   }
 }
 
@@ -2708,12 +2711,12 @@ label {
   left: 0 !important;
   width: 100vw !important;
   height: 100vh !important;
-  z-index: 99999 !important;
+  z-index: 900 !important;
   background: #1a0b2e url('/events.png') center top / cover no-repeat fixed !important;
   color: #ffffff;
   overflow-y: auto !important;
   overflow-x: hidden !important;
-  padding: 1.75rem 1.5rem 4rem 1.5rem;
+  padding: 5.5rem 1.5rem 4rem 1.5rem !important;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
@@ -2735,36 +2738,38 @@ label {
   width: 100%;
 }
 
-.header-top-nav-row {
+.event-details-back-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  margin-bottom: 1rem;
   width: 100%;
-  gap: 1rem;
 }
 
 .back-to-events-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.12) !important;
-  border: 1.5px solid rgba(251, 191, 36, 0.7) !important;
-  color: #fde047 !important;
+  gap: 0.55rem;
+  background: rgba(15, 23, 42, 0.9) !important;
+  border: 2px solid #00f0ff !important;
+  color: #00f0ff !important;
   font-weight: 800;
   font-size: 0.95rem;
-  padding: 0.55rem 1.35rem;
-  border-radius: 9999px;
+  padding: 0.6rem 1.4rem;
+  border-radius: 30px;
   cursor: pointer;
   transition: all 0.25s ease;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.35);
+  z-index: 10;
 }
 
 .back-to-events-btn:hover {
-  background: #fbbf24 !important;
-  color: #1e1b4b !important;
-  border-color: #fde047 !important;
+  background: #00f0ff !important;
+  color: #0f172a !important;
+  border-color: #00f0ff !important;
   transform: translateX(-4px);
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.7);
 }
 
 .register-event-hero-btn {
@@ -3023,10 +3028,14 @@ label {
 
   .event-card-column {
     width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
   .event-poster-card {
-    max-width: 100%;
+    max-width: 360px;
+    width: 100%;
   }
 
   .event-detail-header {
@@ -3038,5 +3047,48 @@ label {
   .event-title-group {
     text-align: left;
     width: 100%;
+  }
+
+  .card-quick-register-btn {
+    width: 100% !important;
+    max-width: 360px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .events-grid-section {
+    padding: 0 0.5rem;
+    margin: 1.25rem auto 1rem;
+  }
+
+  .events-main-heading {
+    font-size: 1.35rem;
+  }
+
+  .portrait-card {
+    border-radius: 16px;
+  }
+
+  .cyber-card {
+    padding: 1.1rem 1rem !important;
+    border-radius: 16px !important;
+  }
+
+  .user-profile-card {
+    padding: 1.2rem 1rem !important;
+  }
+
+  .event-detail-page {
+    padding: 4.8rem 0.85rem 3rem 0.85rem !important;
+  }
+
+  .event-details-back-bar {
+    margin-bottom: 1rem;
+    padding-top: 0.25rem;
+  }
+
+  .back-to-events-btn {
+    padding: 0.55rem 1.15rem !important;
+    font-size: 0.88rem !important;
   }
 }

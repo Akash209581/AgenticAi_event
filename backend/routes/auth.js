@@ -1,9 +1,52 @@
 import express from 'express';
 import { User } from '../models/User.js';
+import { Team } from '../models/Team.js';
 import { memoryUsers } from '../utils/idGenerator.js';
+import { memoryTeams } from './registration.js';
 import mongoose from 'mongoose';
 
 const router = express.Router();
+
+
+/**
+ * POST /cseAI/admin-login
+ * Authentication endpoint for Admin Portal (/Iamadmin)
+ */
+router.post('/admin-login', (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+      return res.status(400).json({ success: false, message: 'Username and Password are required' });
+    }
+
+    const cleanUser = String(username).trim().toLowerCase();
+    const cleanPass = String(password).trim();
+
+    // Valid admin credentials check
+    const isValidAdmin = (cleanUser === 'admin' || cleanUser === 'cseadmin') &&
+                         (cleanPass === 'admin' || cleanPass === 'admin123' || cleanPass === 'vucse2026');
+
+    if (!isValidAdmin) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid Admin Credentials. Default login: admin / admin'
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Admin Authentication Successful!',
+      admin: {
+        username: cleanUser,
+        role: 'SUPER_ADMIN',
+        authenticatedAt: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message || 'Server authentication error' });
+  }
+});
 
 /**
  * POST /cseAI/login
@@ -187,7 +230,41 @@ router.post('/unenroll-event', async (req, res) => {
       return res.status(404).json({ success: false, message: 'User record not found.' });
     }
 
+    // Check if user is part of an active team for this event
+    const userAiId = user.aiId ? user.aiId.toUpperCase() : '';
+    const cleanEvtId = String(eventId || '').trim();
+    const cleanEvtTitle = String(eventTitle || '').trim().toLowerCase();
+
+    let activeTeam = null;
+    if (mongoose.connection.readyState === 1) {
+      const searchCond = [];
+      if (cleanEvtId) searchCond.push({ eventId: cleanEvtId });
+      if (cleanEvtTitle) searchCond.push({ eventTitle: { $regex: new RegExp(`^${cleanEvtTitle}$`, 'i') } });
+
+      if (searchCond.length > 0) {
+        activeTeam = await Team.findOne({
+          $and: [
+            { $or: searchCond },
+            { 'members.aiId': userAiId }
+          ]
+        });
+      }
+    } else {
+      activeTeam = memoryTeams.find(t =>
+        ( (cleanEvtId && t.eventId === cleanEvtId) || (cleanEvtTitle && t.eventTitle && t.eventTitle.toLowerCase() === cleanEvtTitle) ) &&
+        t.members && t.members.some(m => m.aiId && m.aiId.toUpperCase() === userAiId)
+      );
+    }
+
+    if (activeTeam) {
+      return res.status(400).json({
+        success: false,
+        message: `Action Blocked: You are registered in team '${activeTeam.teamName}' (${activeTeam.teamId}) for '${activeTeam.eventTitle}'. You cannot remove an event registration while part of an active team!`
+      });
+    }
+
     if (user.registeredEvents) {
+
       user.registeredEvents = user.registeredEvents.filter(e => {
         if (eventId && e.id === eventId) return false;
         if (eventTitle && e.title.toLowerCase() === eventTitle.toLowerCase()) return false;

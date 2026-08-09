@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Award, Phone, UserPlus, Sparkles, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Award, Phone, UserPlus, Sparkles, ShieldCheck, Calendar } from 'lucide-react';
 
 export default function EventDetailsView({ event, onBack, onRegister, currentUser = null, onEnrollEvent }) {
   if (!event) return null;
@@ -9,51 +9,16 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
   return (
     <div className="event-detail-page">
       <div className="event-detail-container">
+        {/* PROMINENT STANDALONE BACK BUTTON BAR */}
+        <div className="event-details-back-bar">
+          <button className="back-to-events-btn" onClick={onBack} type="button">
+            <ArrowLeft size={18} />
+            <span>Back to Events</span>
+          </button>
+        </div>
+
         {/* TOP HEADER WITH CENTERED HEADINGS */}
         <header className="event-detail-header-centered">
-          {/* Top Row: Back Button (Left) & Register Button (Right) */}
-          <div className="header-top-nav-row">
-            <button className="back-to-events-btn" onClick={onBack}>
-              <ArrowLeft size={18} />
-              <span>Back to Events</span>
-            </button>
-
-            {!currentUser ? (
-              <button
-                className="register-event-hero-btn"
-                onClick={() => onRegister && onRegister(event)}
-              >
-                <UserPlus size={18} />
-                <span>Register / Sign up</span>
-              </button>
-            ) : isEnrolled ? (
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                padding: '0.5rem 1rem',
-                borderRadius: '30px',
-                background: 'rgba(16, 185, 129, 0.15)',
-                border: '1px solid rgba(16, 185, 129, 0.4)',
-                color: '#34d399',
-                fontSize: '0.85rem',
-                fontWeight: '700'
-              }}>
-                <ShieldCheck size={18} />
-                <span>Enrolled Participant ✅</span>
-              </div>
-            ) : (
-              <button
-                className="register-event-hero-btn"
-                onClick={() => onEnrollEvent && onEnrollEvent(event)}
-              >
-                <Sparkles size={18} />
-                <span>Register for this Event</span>
-              </button>
-            )}
-          </div>
-
-          {/* Centered Headings */}
           <div className="event-title-center-group">
             <span className="event-category-label-centered">{event.categoryName || 'TECHNICAL EVENTS'}</span>
             <h1 className="event-heading-title-centered">{event.title}</h1>
@@ -89,6 +54,28 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
                 <span>Register for this Event</span>
               </button>
             ) : null}
+
+            {/* REGISTRATION DEADLINE BADGE BELOW REGISTER BUTTON */}
+            <div className="registration-deadline-badge" style={{
+              marginTop: '0.85rem',
+              padding: '0.65rem 0.85rem',
+              borderRadius: '12px',
+              background: 'rgba(239, 68, 68, 0.15)',
+              border: '1.5px solid rgba(248, 113, 113, 0.45)',
+              color: '#f87171',
+              fontSize: '0.85rem',
+              fontWeight: '700',
+              textAlign: 'center',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.45rem',
+              boxShadow: '0 4px 15px rgba(239, 68, 68, 0.2)',
+              width: '100%'
+            }}>
+              <Calendar size={16} style={{ color: '#002affff', flexShrink: 0 }} />
+              <span>Registration Deadline: <strong>{event.registrationDeadline || '26 August 2026'}</strong></span>
+            </div>
           </div>
 
           {/* COLUMN 2: CENTER RULES */}
@@ -145,7 +132,7 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
                   <h2 className="section-gold-heading">Competition Rounds:</h2>
                   <ul className="rules-bullet-list">
                     {(event.CompetitionRounds || event.competitionRounds || event.rounds).map((round, idx) => {
-                      const isHeading = round.toLowerCase().startsWith('round');
+                      const isHeading = round.toLowerCase().startsWith('round') || round.endsWith(':') || round.toLowerCase().includes('guidelines');
                       return (
                         <li key={idx} className="rule-item" style={{
                           marginTop: isHeading ? '0.75rem' : '0.2rem',
@@ -204,19 +191,27 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
               </div>
             </div>
 
-            {/* CONTACT NUMBERS BOX */}
+            {/* CONTACT / COORDINATORS BOX */}
             <div className="sidebar-glass-box" style={{ marginTop: '1.25rem' }}>
               <h2 className="section-gold-heading">
-                <Phone size={18} className="gold-heading-icon" /> Contact no:
+                <Phone size={18} className="gold-heading-icon" /> Event Coordinators:
               </h2>
               <div className="contacts-list">
                 {event.coordinators && event.coordinators.length > 0 ? (
                   event.coordinators.map((c, idx) => (
                     <div key={idx} className="contact-item-row">
-                      <span className="contact-name-text">{c.name}:</span>{' '}
-                      <a href={`tel:${c.phone}`} className="contact-phone-link">
-                        {c.phone}
-                      </a>
+                      {c.name && <span className="contact-name-text">{c.name}:</span>}{' '}
+                      {c.phone ? (
+                        c.phone.trim().startsWith('+') ? (
+                          <a href={`tel:${c.phone}`} className="contact-phone-link">
+                            {c.phone}
+                          </a>
+                        ) : (
+                          <span className="contact-phone-link" style={{ textDecoration: 'none' }}>
+                            {c.phone}
+                          </span>
+                        )
+                      ) : null}
                     </div>
                   ))
                 ) : (

@@ -38,6 +38,7 @@ const categoriesData = [
         num: '3',
         title: '3.) paper/poster presentation',
         icon: FileText,
+        image: '/images/event_paper_poster.png',
         gradient: 'linear-gradient(135deg, #0284c7, #1e40af)'
       }
     ]
@@ -57,6 +58,7 @@ const categoriesData = [
         num: '1',
         title: '1.) podcast with industry proffesionals',
         icon: Mic,
+        image: '/images/event_podcast.png',
         gradient: 'linear-gradient(135deg, #a855f7, #ec4899)'
       },
       {
@@ -64,6 +66,7 @@ const categoriesData = [
         num: '2',
         title: '2.) AI Agents expo',
         icon: Bot,
+        image: '/images/event_expo.png',
         gradient: 'linear-gradient(135deg, #c084fc, #9333ea)'
       },
       {
@@ -71,6 +74,7 @@ const categoriesData = [
         num: '3',
         title: '3.) AI summit-industry interaction',
         icon: Users,
+        image: '/images/event_summit.png',
         gradient: 'linear-gradient(135deg, #e879f9, #7e22ce)'
       }
     ]
@@ -90,6 +94,7 @@ const categoriesData = [
         num: '1',
         title: '1.) Reels competation',
         icon: Video,
+        image: '/images/event_reels.png',
         gradient: 'linear-gradient(135deg, #f59e0b, #ef4444)'
       },
       {
@@ -97,6 +102,7 @@ const categoriesData = [
         num: '2',
         title: '2.) AI musical competation',
         icon: Music,
+        image: '/images/event_musical.png',
         gradient: 'linear-gradient(135deg, #fbbf24, #d97706)'
       },
       {
@@ -104,6 +110,7 @@ const categoriesData = [
         num: '3',
         title: '3.) AI Quiz',
         icon: HelpCircle,
+        image: '/images/event_quiz.png',
         gradient: 'linear-gradient(135deg, #f59e0b, #b45309)'
       }
     ]
@@ -119,7 +126,11 @@ export default function EventsGrid({ onRegister, currentUser = null, onEnrollEve
     return (
       <EventDetailsView
         event={selectedEventDetail}
-        onBack={() => setSelectedEventDetail(null)}
+        onBack={() => {
+          setSelectedEventDetail(null);
+          const backPath = selectedCategory ? `/events/${selectedCategory.id}` : '/events';
+          window.history.pushState({}, '', backPath);
+        }}
         onRegister={onRegister}
         currentUser={currentUser}
         onEnrollEvent={onEnrollEvent}
@@ -139,7 +150,10 @@ export default function EventsGrid({ onRegister, currentUser = null, onEnrollEve
         <div className="events-sub-header">
           <button
             className="events-back-btn"
-            onClick={() => setSelectedCategory(null)}
+            onClick={() => {
+              setSelectedCategory(null);
+              window.history.pushState({}, '', '/events');
+            }}
           >
             <ArrowLeft size={20} /> Back to Categories
           </button>
@@ -163,7 +177,10 @@ export default function EventsGrid({ onRegister, currentUser = null, onEnrollEve
               <div
                 key={cat.id}
                 className="portrait-event-card"
-                onClick={() => setSelectedCategory(cat)}
+                onClick={() => {
+                  setSelectedCategory(cat);
+                  window.history.pushState({}, '', `/events/${cat.id}`);
+                }}
               >
                 {/* Pure Image Container */}
                 <div className="portrait-image-stage">
@@ -190,21 +207,23 @@ export default function EventsGrid({ onRegister, currentUser = null, onEnrollEve
         <div className="events-portrait-grid">
           {selectedCategory.events.map((ev) => {
             const IconComp = ev.icon;
+            const slug = (ev.title || ev.cardTitle).toLowerCase().replace(/[^a-z0-9]+/g, '-');
             return (
               <div
                 key={ev.id}
                 className="portrait-event-card sub-portrait-card"
                 onClick={() => {
                   const detail = getEventDetails(selectedCategory.id, ev.id, ev.title);
+                  window.history.pushState({}, '', `/events/${selectedCategory.id}/${slug}`);
                   setSelectedEventDetail(detail);
                 }}
                 style={{ cursor: 'pointer' }}
               >
                 {/* Pure Image Container */}
                 <div className="portrait-image-stage">
-                  {ev.image ? (
+                  {(ev.image || getEventDetails(selectedCategory.id, ev.id, ev.title)?.image) ? (
                     <img
-                      src={ev.image}
+                      src={ev.image || getEventDetails(selectedCategory.id, ev.id, ev.title)?.image}
                       alt={ev.title}
                       className="portrait-card-img"
                     />
@@ -226,7 +245,6 @@ export default function EventsGrid({ onRegister, currentUser = null, onEnrollEve
                 {/* Name displayed below the card */}
                 <div className="portrait-card-footer">
                   <h3 className="portrait-card-title">{ev.title}</h3>
-                  <div className="click-rules-hint">Click to view rules & prizes →</div>
                 </div>
               </div>
             );

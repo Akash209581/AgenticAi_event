@@ -27,7 +27,14 @@ const userSchema = new mongoose.Schema(
     year: {
       type: String,
       required: [true, 'Year is mandatory'],
-      enum: ['1', '2', '3', '4'],
+      enum: ['1', '2', '3', '4', 'M.Tech (1st year)', 'M.Tech (2nd year)'],
+      trim: true
+    },
+
+    gender: {
+      type: String,
+      enum: ['Male', 'Female', 'Other', 'Unspecified'],
+      default: 'Unspecified',
       trim: true
     },
     phone: {

@@ -7,15 +7,16 @@
   height: 100%;
   pointer-events: none;
   z-index: -1; /* Placed behind headings, buttons, text, and cards */
-  background-color: transparent;
-  backdrop-filter: blur(0px);
-  -webkit-backdrop-filter: blur(0px);
-  transition: background-color 0.35s ease, backdrop-filter 0.35s ease, -webkit-backdrop-filter 0.35s ease;
+  opacity: 0;
+  background: transparent;
+  transition: opacity 0.4s ease, backdrop-filter 0.4s ease, -webkit-backdrop-filter 0.4s ease;
 }
 
-/* Modifier Class for Non-Home Pages (Dark Tint + Backdrop Blur on Background Image Only) */
+/* Modifier Class for Non-Home Pages (Displays events.png Background Image) */
 .nav-overlay--dark {
-  background-color: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  opacity: 1;
+  background: linear-gradient(rgba(15, 23, 42, 0.45), rgba(15, 23, 42, 0.45)), url('/events.png') no-repeat center center fixed;
+  background-size: cover;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }

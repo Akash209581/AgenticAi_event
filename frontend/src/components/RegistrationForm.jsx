@@ -8,6 +8,7 @@ export default function RegistrationForm({ onSuccess, onProceedToLogin, onBack }
     dob: '',
     regNo: '',
     year: '1', // Default 1st Year
+    gender: 'Male',
     phone: '',
     email: ''
   });
@@ -52,9 +53,11 @@ export default function RegistrationForm({ onSuccess, onProceedToLogin, onBack }
       newErrors.regNo = 'Registration Number is mandatory';
     }
 
-    if (!formData.year || !['1', '2', '3', '4'].includes(formData.year)) {
-      newErrors.year = 'Year is mandatory (Choose 1, 2, 3, or 4)';
+    const validYears = ['1', '2', '3', '4', 'M.Tech (1st year)', 'M.Tech (2nd year)'];
+    if (!formData.year || !validYears.includes(formData.year)) {
+      newErrors.year = 'Year is mandatory';
     }
+
 
     if (!formData.phone.trim()) {
       newErrors.phone = 'Phone number is mandatory';
@@ -133,6 +136,7 @@ export default function RegistrationForm({ onSuccess, onProceedToLogin, onBack }
       dob: '',
       regNo: '',
       year: '1',
+      gender: 'Male',
       phone: '',
       email: ''
     });
@@ -360,10 +364,37 @@ export default function RegistrationForm({ onSuccess, onProceedToLogin, onBack }
                 <option value="2">2nd Year (2)</option>
                 <option value="3">3rd Year (3)</option>
                 <option value="4">4th Year (4)</option>
+                <option value="M.Tech (1st year)">M.Tech (1st year)</option>
+                <option value="M.Tech (2nd year)">M.Tech (2nd year)</option>
               </select>
+
               <GraduationCap className="input-icon" size={18} />
             </div>
             {errors.year && <div className="error-text"><AlertCircle size={14} /> {errors.year}</div>}
+          </div>
+
+          {/* Gender Dropdown Field */}
+          <div className="form-group">
+            <div className="label-row">
+              <label htmlFor="gender">
+                <User size={16} /> Gender <span className="req-star">*</span>
+              </label>
+            </div>
+            <div className="input-wrapper">
+              <select
+                id="gender"
+                name="gender"
+                value={formData.gender}
+                onChange={handleChange}
+                className="cyber-select"
+                required
+              >
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+              <User className="input-icon" size={18} />
+            </div>
           </div>
 
           {/* Phone Number (Strictly 10 digits) */}

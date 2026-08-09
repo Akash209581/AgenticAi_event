@@ -1,82 +1,157 @@
 export const eventsRulesData = {
   // TECHNICAL CATEGORY EVENTS
-  '1': {
+  'technical-1': {
     id: '1',
     categoryId: 'technical',
     categoryName: 'TECHNICAL EVENTS',
     title: 'AGENTIC AI HACKATHON',
     cardTitle: 'AGENTIC AI HACKATHON',
     image: '/images/event_hackathon_1786084020517.png',
+    eventDate: '27th & 28th August 2026',
+    registrationDeadline: '26th August 2026',
+    teamSize: 'Strictly 4 members (1x 4th Year, 2x 3rd Year, 1x 2nd Year)',
     rules: [
-      'Participants must register before the deadline through the official website.',
-      'Each team must select one AI innovation track during registration. Track selection cannot be changed after Round 1 begins.',
-      'Participants must carry a valid University ID card.',
-      'Use of internet, AI tools, APIs, open-source libraries, documentation, and coding assistants is permitted.',
-      'Teams must disclose all AI tools, APIs, datasets, open-source libraries, and frameworks used.',
-      'All major work must be developed during the official hackathon window. Previously completed projects cannot be reused without substantial new work.',
-      'Plagiarism of code, design, content, or ideas will lead to disqualification.',
-      'Use of personally identifiable or sensitive data must follow privacy and consent principles. All datasets used must be properly cited.',
-      'Teams must submit source code, documentation, architecture diagram, prototype, README, demo video, and pitch deck before the deadline.',
-      'Evaluation criteria will be disclosed on the day of event.',
-      "Judge's decision will be final."
+      'Hackathon Dates: 27th & 28th August 2026.',
+      'All participants must complete registration through the official registration form before the specified deadline.',
+      'Theme Selection: During registration, only the Team Leader is required to select one theme from the list of given themes. The selected theme will apply to the entire team. The theme must be finalized on or before 26th August 2026. No changes to the selected theme will be permitted after the deadline.',
+      'Team Composition: Each team must consist of strictly 4 members — 1 Student from 4th Year, 2 Students from 3rd Year, and 1 Student from 2nd Year.',
+      'Track Selection & Venue: Each team must select one AI innovation track or problem statement at the start of the hackathon. Once the hackathon begins, the selected track or problem statement cannot be changed. All participants must report to the venue on time and carry a valid university identification card.',
+      'Approved Tools & Resources: Participants are permitted to use the internet, AI tools, APIs, open-source libraries, coding assistants, datasets, and documentation for development purposes.',
+      'Resource Disclosure: Teams must disclose all AI tools, frameworks, APIs, datasets, libraries, and external resources used during project development.',
+      'Live Project Development: All major development work must be completed during the official hackathon period. Previously developed projects may not be reused unless they contain substantial new work.',
+      'Plagiarism Policy: Plagiarism of code, designs, ideas, content, presentations, or complete projects is strictly prohibited and will result in immediate disqualification.',
+      'Ethical Data Handling: Participants must follow ethical guidelines while handling data. Any personally identifiable or sensitive information must be used only with proper consent and in compliance with privacy regulations.',
+      'Citations & Acknowledgments: Teams must properly acknowledge and cite all datasets, tools, frameworks, and external resources used in their projects.',
+      'Theme Adherence: All teams must adhere to the assigned theme, problem statement, or innovation track.',
+      'Professional Conduct: Participants are expected to maintain discipline, professionalism, collaboration, and a positive team spirit throughout the event.',
+      'Disqualification Criteria: Any form of misconduct, unfair practice, disruption, or violation of the rules may result in disqualification.',
+      'Source Code & Working Demo: Teams must demonstrate both the complete source code and the working output of their problem statement to the judges during the evaluation process. If the team fails to present the implementation, it will not be considered for evaluation.',
+      'On-Duty (OD) Permission: On-Duty (OD) permission will be provided to eligible participants for the duration of the hackathon, subject to applicable university/department guidelines.',
+      'Final Decision: The decision of the judging panel shall be considered final and binding.'
     ],
     prizes: [
-      { rank: 'First', amount: 'To be announced' },
-      { rank: 'Second', amount: 'To be announced' }
+      { rank: 'First', amount: 'Rs. 3000/-' },
+      { rank: 'Second', amount: 'Rs. 2000/-' },
+      { rank: 'Third', amount: 'Rs. 1000/-' }
     ],
     coordinators: [
-      { name: 'Mr. P Vamsi Krishna (Faculty CSE)', phone: '+916309663292' },
-      { name: 'Student Coordinator', phone: '+919392960026' }
+      { name: 'Dr. Phanindra Thota', phone: '+91 80964 65667' },
+      { name: 'Dr. Veeranjaneyulu', phone: '+91 94922 46551' },
+      { name: 'Mrs. J. Dayanika', phone: '+91 70134 47336' },
+      { name: 'Ms. Sk. Kareena Yashmin', phone: '+91 78010 17820' },
+      { name: 'Student Coordinator', phone: 'To be announced' }
     ]
   },
-  '2': {
+  'technical-2': {
     id: '2',
     categoryId: 'technical',
     categoryName: 'TECHNICAL EVENTS',
     title: 'AI PROMPT COMBAT',
     cardTitle: 'AI PROMPT COMBAT',
     image: '/images/event_prompt_1786084056457.png',
+    registrationDeadline: '26 August 2026',
+    eventDate: '29 August 2026',
+    reportingTime: '10:00 AM',
+    teamSize: '2 to 3 members per team',
+    duration: '3 hours (Same Day)',
     rules: [
-      'Individual participation or team of 2 members allowed.',
-      'Participants will be assigned target AI prompt tasks with specific output constraints.',
-      'Time limit per round: 15 to 20 minutes.',
-      'Must use approved Generative AI tools (LLMs / Image generators).',
-      'Evaluation based on prompt efficiency, output accuracy, creativity, and speed.',
-      'Pre-written prompt templates or automated scripts are strictly prohibited.',
-      "Judges' decision will be final."
+      'Only registered participants can participate.',
+      'Each team must have 2–3 members.',
+      'Participants must bring their own laptop.',
+      'Only AI image-generation tools permitted by the organizers may be used.',
+      'All images must be generated during the competition. Pre-generated images are not allowed.',
+      'Only the direct AI-generated image will be considered for evaluation.',
+      'External editing or post-processing using tools such as Photoshop, Canva, etc. is not allowed.',
+      'Copying another team\'s prompt, image, or concept is strictly prohibited.',
+      'Previously generated images, stock images, or downloaded images cannot be used.',
+      'In reference-image rounds, the reference image will be shown digitally only and will not be shared with participants.',
+      'Participants must not use image search, reverse-image search, screenshots, OCR, or other tools to obtain or recreate the reference image.',
+      'The submitted prompt must be the actual prompt used to generate the submitted image.',
+      'Each team must submit its final image within the given time limit.',
+      'Participants must follow all instructions given by the organizers and jury.',
+      'Any form of cheating, plagiarism, or unfair practice will result in disqualification.',
+      'The organizers may verify prompts or generation history if required.',
+      'Technical issues related to a participant\'s laptop, internet, account, or software are the team\'s responsibility.',
+      'The jury\'s decision will be final.'
+    ],
+    CompetitionRounds: [
+      'Round 1 — Theme-Based Prompt & Image Generation:',
+      'Theme Allocation: At the beginning of Round 1, each registered team will be assigned a theme by the organizers (revealed during competition). Multiple teams may receive the same theme.',
+      'Prompt & Generation: Teams must interpret their assigned theme, develop an appropriate image-generation prompt, and generate an original AI image directly from its prompt.',
+      'Submission Requirements: Teams must submit the final AI image, exact prompt used, and a brief explanation describing the creative concept and why the image represents the theme.',
+      'Shortlisting: All teams assigned the same theme will be evaluated against one another. The best-performing team from each theme group will be shortlisted for Round 2.',
+
+      'Round 2 — AI Image Recreation Challenge:',
+      'Batch Distribution: Shortlisted teams from Round 1 will be organized into five batches.',
+      'Digital Reference Display: Each batch will be shown one reference image digitally on the competition display (not distributed as a downloadable file).',
+      'Observation & Recreation: Teams study composition, objects, colors, lighting, perspective, and details to create the closest possible visual recreation using permitted AI image-generation tools.',
+      'No Post-Processing: The generated image must be produced directly through AI generation. No external editing or post-processing is permitted.',
+      'Finalist Selection: The jury will determine the five finalist teams that advance to the Grand Finale based on Round 2 performance.',
+
+      'Round 3 — Grand Final: Reference Image Challenge:',
+      'Finalist Showcase: The five finalist teams will compete in the final round by recreating a new reference image shown digitally.',
+      'Prompt Engineering Precision: Teams rely on observation and prompt engineering to recreate the new reference image as closely as possible.',
+      'No External Editing: No external editing, retouching, compositing, or post-processing is allowed.',
+      'Jury Ranking: The jury evaluates outputs and determines 1st, 2nd, and 3rd place winners based on prompt-engineering performance, visual quality, and image accuracy.'
     ],
     prizes: [
-      { rank: 'First', amount: 'To be announced' },
-      { rank: 'Second', amount: 'To be announced' }
+      { rank: 'First', amount: 'Rs. 3000/-' },
+      { rank: 'Second', amount: 'Rs. 2000/-' },
+      { rank: 'Third', amount: 'Rs. 1000/-' }
     ],
     coordinators: [
-      { name: 'Faculty Coordinator', phone: '+919392960026' },
-      { name: 'Student Coordinator', phone: '+918019171205' }
+      { name: 'Mr. Veerendra', phone: '+91 95736 32919' },
+      { name: 'Mr. Latesh Babu', phone: '+91 95508 18722' },
+      { name: 'Student Coordinator', phone: 'To be announced' }
     ]
   },
-  '3': {
+  'technical-3': {
     id: '3',
     categoryId: 'technical',
     categoryName: 'TECHNICAL EVENTS',
     title: 'PAPER / POSTER PRESENTATION',
     cardTitle: 'PAPER / POSTER',
-    image: '/images/cat_technical_1786083918530.png',
+    image: '/images/event_paper_poster.png',
     rules: [
-      'Open to individual participants or teams of up to 3 members.',
-      'Topics must be centered around AI, Machine Learning, Agentic Workflows, or AI Ethics.',
-      'Abstract (max 250 words) must be submitted prior to the presentation.',
-      'Presentation format: Standard poster or 8-10 slides presentation.',
-      'Presentation time: 8 minutes + 2 minutes Q&A session with judges.',
-      'Plagiarism content must be strictly below 15%.',
-      "Judges' decision will be final."
+      'Maximum 3 students per team.',
+      'Participants must carry their college ID card.',
+      'Presentation duration is 10 minutes (8 minutes presentation + 2 minutes Q&A).',
+      'Papers and posters must be original and free from plagiarism.',
+      'Similar or duplicate submissions will be rejected.',
+      'The decision of the judges will be final.',
+      'Late submissions will not be accepted.',
+      'PPT/Poster should be submitted before the deadline.',
+      'All team members should be present during the presentation.',
+      'Certificates will be provided to all participants, and prizes will be awarded to the winners.'
+    ],
+    CompetitionRounds: [
+      'Paper Presentation Guidelines:',
+      'Maximum Team Size: 3 participants.',
+      'Presentation Slides: Maximum 10 slides.',
+      'Presentation Duration: 8 minutes presentation.',
+      'Question & Answer Session: 2 minutes.',
+      'Total Duration: 10 minutes.',
+      'Format: Presentations should be prepared in Microsoft PowerPoint (.ppt / .pptx) format.',
+
+      'Poster Presentation Guidelines:',
+      'Maximum Team Size: 3 participants.',
+      'Poster Design: One-page poster designed using Adobe Photoshop or Canva.',
+      'Poster Size: A1 (594 × 841 mm), Portrait or Landscape.',
+      'Originality: AI-generated images are NOT permitted. All figures, illustrations, and graphics must be original.',
+      'Content Structure: The poster should clearly present the title, authors, abstract, methodology, results, conclusion, and references.',
+      'Presentation Duration: 8 minutes presentation.',
+      'Question & Answer Session: 2 minutes.',
+      'Total Duration: 10 minutes.'
     ],
     prizes: [
-      { rank: 'First', amount: 'To be announced' },
-      { rank: 'Second', amount: 'To be announced' }
+      { rank: 'First', amount: 'Rs. 3000/-' },
+      { rank: 'Second', amount: 'Rs. 2000/-' },
+      { rank: 'Third', amount: 'Rs. 1000/-' }
     ],
     coordinators: [
-      { name: 'Faculty Coordinator', phone: '+919392960026' },
-      { name: 'Student Coordinator', phone: '+917013639789' }
+      { name: 'Dr. Vijitha Ananthi', phone: '+91 97906 28946' },
+      { name: 'Ms. B. Jyothika', phone: '+91 79893 66515' },
+      { name: 'Student Coordinator', phone: 'To be announced' }
     ]
   },
 
@@ -87,7 +162,7 @@ export const eventsRulesData = {
     categoryName: 'INDUSTRY & INNOVATION',
     title: 'PODCAST WITH INDUSTRY PROFESSIONALS',
     cardTitle: 'AI PODCAST',
-    image: '/images/cat_industry_1786083949042.png',
+    image: '/images/event_podcast.png',
     rules: [
       'Interactive live discussion with AI industry experts and leaders.',
       'Participants can submit questions during registration or live during Q&A.',
@@ -95,11 +170,14 @@ export const eventsRulesData = {
       'Strict decorum and professional etiquette must be maintained throughout.'
     ],
     prizes: [
-      { rank: 'Best Q&A Contributor', amount: 'Special Recognition & Certificate' }
+      { rank: 'First', amount: 'Rs. 3000/-' },
+      { rank: 'Second', amount: 'Rs. 2000/-' },
+      { rank: 'Third', amount: 'Rs. 1000/-' }
     ],
     coordinators: [
-      { name: 'Faculty Coordinator', phone: '+919392960026' },
-      { name: 'Student Coordinator', phone: '+917780693439' }
+      { name: 'Dr. O. Baskaru', phone: '+91 63015 77419' },
+      { name: 'Mr. Rajulu', phone: '+91 97050 21183' },
+      { name: 'Student Coordinator', phone: 'To be announced' }
     ]
   },
   'industry-2': {
@@ -108,34 +186,20 @@ export const eventsRulesData = {
     categoryName: 'INDUSTRY & INNOVATION',
     title: 'AI AGENTS EXPO',
     cardTitle: 'AI AGENTS EXPO',
-    image: '/images/cat_industry_1786083949042.png',
+    image: '/images/event_expo.png',
     rules: [
-      'Teams must demonstrate working autonomous AI agents or multi-agent systems live.',
-      'Architecture diagram, workflow documentation, and live demo required.',
-      'Evaluation criteria include innovation, practical utility, agent autonomy, and UI/UX.',
-      'Open to all engineering departments.',
-      "Judges' decision will be final."
-    ],
-    CompetitionRounds: [
-      'Round 1 - AI Awareness Test:',
-      'Fairness, Privacy, Bias, Copyright, Misinformation, Hallucinations, Deepfakes, Academic Integrity',
-
-      'Round 2 - AI Knowledge Challenge',
-      'AI Tools & Logos, Machine Learning & Deep Learning, NLP, Computer Vision, LLMs, Prompt Engineering, Agentic AI',
-
-      'Round 3 - AI Master Challenge',
-      'Image-Based Reasoning, Agentic AI Scenarios, Prompt Engineering, AI Reasoning, Decision-Making, AI Workflows & Case Studies',
-
-      'Round 4 - Grand Finalae',
-      'Buzzer Round, Rapid Fire, Surprise Challenge'
+      'Team size Max:4 & Min:2',
+      'Participants should be aware that there will be a prior evaluation, and only those who are shortlisted will have the opportunity to present at the event.',
     ],
     prizes: [
-      { rank: 'First', amount: 'To be announced' },
-      { rank: 'Second', amount: 'To be announced' }
+      { rank: 'First', amount: 'Rs. 5000/-' },
+      { rank: 'Second', amount: 'Rs. 3000/-' },
+      { rank: 'Third', amount: 'Rs. 2000/-' }
     ],
     coordinators: [
-      { name: 'Faculty Coordinator', phone: '+919392960026' },
-      { name: 'Student Coordinator', phone: '+918019171205' }
+      { name: 'Dr. Veera Bhadra Chari', phone: '+91 89789 75688' },
+      { name: 'Mr. Syed Nafees Ahamed', phone: '+91 87904 69105' },
+      { name: 'Student Coordinator', phone: 'To be announced' }
     ]
   },
   'industry-3': {
@@ -144,18 +208,21 @@ export const eventsRulesData = {
     categoryName: 'INDUSTRY & INNOVATION',
     title: 'AI SUMMIT - INDUSTRY INTERACTION',
     cardTitle: 'AI SUMMIT',
-    image: '/images/cat_industry_1786083949042.png',
+    image: '/images/event_summit.png',
     rules: [
       'Keynote presentations and panel sessions featuring tech leaders.',
       'Networking session for students with industry mentors and recruiters.',
       'Open to all registered AI Day participants.'
     ],
     prizes: [
-      { rank: 'Delegates Pass', amount: 'Networking Certificate & Delegate Badge' }
+      { rank: 'First', amount: 'Rs. 3000/-' },
+      { rank: 'Second', amount: 'Rs. 2000/-' },
+      { rank: 'Third', amount: 'Rs. 1000/-' }
     ],
     coordinators: [
-      { name: 'Faculty Coordinator', phone: '+919392960026' },
-      { name: 'Student Coordinator', phone: '+917013639789' }
+      { name: 'Dr. James Deva Koresh', phone: '+91 99947 62822' },
+      { name: 'Dr. T.R. Rajesh', phone: '+91 96765 60542' },
+      { name: 'Student Coordinator', phone: 'To be announced' }
     ]
   },
 
@@ -166,7 +233,7 @@ export const eventsRulesData = {
     categoryName: 'CREATIVE EVENTS',
     title: 'REELS COMPETITION (AI FOR SOCIETY)',
     cardTitle: 'REELS COMPETITION',
-    image: '/images/cat_creative_1786083988989.png',
+    image: '/images/event_reels.png',
     rules: [
       'Reel duration must be strictly 30 to 60 seconds.',
       'Theme: "AI for Society" (showing positive impact of AI in education, health, agriculture, sustainability, etc.).',
@@ -186,13 +253,13 @@ export const eventsRulesData = {
       'Overall Impact & Engagement (10%)'
     ],
     prizes: [
-      { rank: 'First Prize', amount: 'To be announced' },
-      { rank: 'Second Prize', amount: 'To be announced' },
-      { rank: 'Third Prize', amount: 'To be announced' }
+      { rank: 'First', amount: 'Rs. 3000/-' },
+      { rank: 'Second', amount: 'Rs. 2000/-' },
+      { rank: 'Third', amount: 'Rs. 1000/-' }
     ],
     coordinators: [
-      { name: 'Mr. P Vamsi Krishna (Faculty CSE)', phone: '+916309663292' },
-      { name: 'Student Volunteer Coordinator', phone: '+919392960026' }
+      { name: 'Mr. Vamsi Krishna', phone: '+91 94418 18651' },
+      { name: 'Student Coordinator', phone: 'To be announced' }
     ]
   },
   'creative-2': {
@@ -201,22 +268,26 @@ export const eventsRulesData = {
     categoryName: 'CREATIVE EVENTS',
     title: 'AI MUSICAL COMPETITION',
     cardTitle: 'AI MUSICAL',
-    image: '/images/cat_creative_1786083988989.png',
+    image: '/images/event_musical.png',
+    teamSize: 'Strictly 3 members per team',
     rules: [
-      'Compose an original music track or audio-visual piece using generative AI music tools (Suno, Udio, etc.).',
-      'Track duration: 1 to 3 minutes.',
-      'Participants must list all AI audio tools, prompts, and stems used.',
-      'Must be original compositions without copyrighted samples.',
-      'Evaluation based on musical structure, prompt creativity, sound quality, and originality.',
-      "Judges' decision will be final."
+      'Eligibility: Open to all B.Tech students from all departments and all academic years.',
+      'Team Composition: Each team must consist of strictly 3 members.',
+      'Real-Time Generation: Songs must be created entirely during the competition using approved AI tools.',
+      'Theme Announcement: The organizing committee will announce the theme at the start of the competition.',
+      'Evaluation Window: Participants may generate songs of any duration; however, only the first 60 seconds of the submitted song will be considered during the initial evaluation.',
+      'Mandatory Deliverables: Every team must submit: (a) Final audio file (MP3), (b) Generated lyrics, (c) AI prompts used, and (d) List of AI tools used.',
+      'Code of Conduct: Any offensive, inappropriate, or copyrighted content will lead to immediate disqualification.',
+      "Final Decision: The judges' decision shall be final and binding on all participants."
     ],
     prizes: [
-      { rank: 'First', amount: 'To be announced' },
-      { rank: 'Second', amount: 'To be announced' }
+      { rank: 'First', amount: 'Rs. 3000/-' },
+      { rank: 'Second', amount: 'Rs. 2000/-' },
+      { rank: 'Third', amount: 'Rs. 1000/-' }
     ],
     coordinators: [
-      { name: 'Faculty Coordinator', phone: '+919392960026' },
-      { name: 'Student Coordinator', phone: '+917780693439' }
+      { name: 'Mr. Khadarsha', phone: '+91 83093 00881' },
+      { name: 'Student Coordinator', phone: 'To be announced' }
     ]
   },
   'creative-3': {
@@ -225,7 +296,7 @@ export const eventsRulesData = {
     categoryName: 'CREATIVE EVENTS',
     title: 'AGENTIC DAY QUIZ CHALLENGE 2026',
     cardTitle: 'AI QUIZ',
-    image: '/images/cat_creative_1786083988989.png',
+    image: '/images/event_quiz.png',
     topics: [
       'Real-World AI Use Cases & Case Studies',
       'AI Reasoning & Decision-Making',
@@ -266,23 +337,41 @@ export const eventsRulesData = {
       { rank: 'Third', amount: 'Rs. 1000/-' }
     ],
     coordinators: [
-      { name: 'Faculty Coordinator', phone: '+919392960026' },
-      { name: 'Student Coordinator', phone: '+918019171205' }
+      { name: 'Mrs. Spandana', phone: '+91 99483 68555' },
+      { name: 'Ms. Sajida', phone: '+91 79814 03193' },
+      { name: 'Student Coordinator', phone: 'To be announced' }
     ]
   }
 };
 
+
+
 // Helper lookup to get event details by category and event item
 export function getEventDetails(categoryId, eventId, fallbackTitle = '') {
-  const key = `${categoryId}-${eventId}`;
-  if (eventsRulesData[key]) {
-    return eventsRulesData[key];
-  }
-  // Try fallback by matching title
-  const found = Object.values(eventsRulesData).find(e =>
-    e.title.toLowerCase().includes(fallbackTitle.toLowerCase()) ||
-    fallbackTitle.toLowerCase().includes(e.cardTitle.toLowerCase())
-  );
+  // 1. Direct key match: 'technical-1'
+  const key1 = `${categoryId}-${eventId}`;
+  if (eventsRulesData[key1]) return eventsRulesData[key1];
+
+  // 2. Short key match: '1'
+  if (eventsRulesData[eventId]) return eventsRulesData[eventId];
+
+  // 3. Numeric ID match: e.g. '1'
+  const cleanId = String(eventId).replace(/[^0-9]/g, '');
+  const key3 = `${categoryId}-${cleanId}`;
+  if (eventsRulesData[key3]) return eventsRulesData[key3];
+  if (eventsRulesData[cleanId]) return eventsRulesData[cleanId];
+
+  // 4. Robust title matching (stripping numbers like '1.) ')
+  const cleanFallback = fallbackTitle.replace(/^[0-9]+[.)\s]*,?/, '').toLowerCase().trim();
+  const found = Object.values(eventsRulesData).find(e => {
+    const t = (e.title || '').toLowerCase();
+    const ct = (e.cardTitle || '').toLowerCase();
+    if (!cleanFallback) return false;
+    return (
+      (t && (t.includes(cleanFallback) || cleanFallback.includes(t))) ||
+      (ct && (ct.includes(cleanFallback) || cleanFallback.includes(ct)))
+    );
+  });
   if (found) return found;
 
   // Generic fallback if not matched

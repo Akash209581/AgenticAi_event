@@ -1,9 +1,62 @@
 import express from 'express';
 import { User } from '../models/User.js';
+import { Team } from '../models/Team.js';
 import { generateAiId, memoryUsers } from '../utils/idGenerator.js';
 import mongoose from 'mongoose';
 
 const router = express.Router();
+
+export const memoryTeams = [];
+
+const EVENT_CONSTRAINTS = {
+  'technical-1': { min: 4, max: 4, name: 'AGENTIC AI HACKATHON' },
+  'technical-2': { min: 2, max: 3, name: 'AI PROMPT COMBAT' },
+  'technical-3': { min: 1, max: 3, name: 'PAPER / POSTER PRESENTATION' },
+  'industry-2': { min: 2, max: 4, name: 'AI AGENTS EXPO' },
+  'creative-3': { min: 3, max: 5, name: 'AGENTIC DAY QUIZ CHALLENGE 2026' },
+  'creative-2': { min: 3, max: 3, name: 'AI MUSICAL COMPETITION' }
+};
+
+
+/**
+ * POST /cseAI/admin-login
+ * Authentication endpoint for Admin Portal (/Iamadmin)
+ */
+router.post('/admin-login', (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+      return res.status(400).json({ success: false, message: 'Username and Password are required' });
+    }
+
+    const cleanUser = String(username).trim().toLowerCase();
+    const cleanPass = String(password).trim();
+
+    // Valid admin credentials check
+    const isValidAdmin = (cleanUser === 'admin' || cleanUser === 'cseadmin') &&
+                         (cleanPass === 'admin' || cleanPass === 'admin123' || cleanPass === 'vucse2026');
+
+    if (!isValidAdmin) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid Admin Credentials. Default login: admin / admin'
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Admin Authentication Successful!',
+      admin: {
+        username: cleanUser,
+        role: 'SUPER_ADMIN',
+        authenticatedAt: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message || 'Server authentication error' });
+  }
+});
 
 // Helper to validate email format
 const isValidEmail = (email) => {
@@ -16,7 +69,7 @@ const isValidEmail = (email) => {
  */
 router.post('/register', async (req, res) => {
   try {
-    const { name, dob, regNo, year, phone, email } = req.body;
+    const { name, dob, regNo, year, gender, phone, email } = req.body;
 
     // 1. Mandatory Field Checks
     if (!name || !name.trim()) {
@@ -28,15 +81,21 @@ router.post('/register', async (req, res) => {
     if (!regNo || !regNo.trim()) {
       return res.status(400).json({ success: false, message: 'Registration number is a mandatory field' });
     }
-    if (!year || !['1', '2', '3', '4'].includes(String(year).trim())) {
-      return res.status(400).json({ success: false, message: 'Year is a mandatory field (choose 1, 2, 3, or 4)' });
+    const validYears = ['1', '2', '3', '4', 'M.Tech (1st year)', 'M.Tech (2nd year)'];
+    if (!year || !validYears.includes(String(year).trim())) {
+      return res.status(400).json({ success: false, message: 'Year is a mandatory field (choose 1, 2, 3, 4, M.Tech (1st year), or M.Tech (2nd year))' });
     }
+
     if (!phone || !phone.trim()) {
       return res.status(400).json({ success: false, message: 'Phone number is a mandatory field' });
     }
     if (!email || !email.trim()) {
       return res.status(400).json({ success: false, message: 'Email Id is a mandatory field' });
     }
+
+    // Clean Gender
+    const validGenders = ['Male', 'Female', 'Other'];
+    const cleanGender = (gender && validGenders.includes(gender.trim())) ? gender.trim() : 'Male';
 
     // 2. Strict Phone Validation (strictly 10 numeric digits)
     const cleanPhone = phone.trim();
@@ -111,6 +170,7 @@ router.post('/register', async (req, res) => {
             dob: cleanDob,
             regNo: cleanRegNo,
             year: cleanYear,
+            gender: cleanGender,
             phone: cleanPhone,
             email: cleanEmail,
             password
@@ -124,9 +184,11 @@ router.post('/register', async (req, res) => {
             dob: cleanDob,
             regNo: cleanRegNo,
             year: cleanYear,
+            gender: cleanGender,
             phone: cleanPhone,
             email: cleanEmail,
             password,
+            registeredEvents: [],
             createdAt: new Date()
           };
           memoryUsers.push(newRegistration);
@@ -150,6 +212,7 @@ router.post('/register', async (req, res) => {
         dob: newRegistration.dob,
         regNo: newRegistration.regNo,
         year: newRegistration.year,
+        gender: newRegistration.gender,
         phone: newRegistration.phone,
         email: newRegistration.email,
         createdAt: newRegistration.createdAt
@@ -167,38 +230,86 @@ router.post('/register', async (req, res) => {
 
 /**
  * GET /cseAI/registrations
- * Retrieve list of registered attendees (Admin view)
+ * Retrieve list of registered attendees with filters (Admin view)
+ * Supports query params: search, year, gender, event
  */
 router.get('/registrations', async (req, res) => {
   try {
-    const { search } = req.query;
+    const { search, year, gender, event } = req.query;
     let users = [];
 
     if (mongoose.connection.readyState === 1) {
-      let query = {};
-      if (search) {
-        const regex = new RegExp(search.trim(), 'i');
-        query = {
-          $or: [
-            { name: regex },
-            { aiId: regex },
-            { regNo: regex },
-            { email: regex },
-            { phone: regex }
-          ]
-        };
+      const query = {};
+
+      if (year && year !== 'all') {
+        query.year = String(year).trim();
       }
+
+      if (gender && gender !== 'all') {
+        query.gender = String(gender).trim();
+      }
+
+      if (event && event !== 'all') {
+        const cleanEvent = String(event).trim();
+        query.$or = [
+          { 'registeredEvents.id': cleanEvent },
+          { 'registeredEvents.title': new RegExp(cleanEvent, 'i') }
+        ];
+      }
+
+      if (search && search.trim()) {
+        const regex = new RegExp(search.trim(), 'i');
+        const searchConditions = [
+          { name: regex },
+          { aiId: regex },
+          { regNo: regex },
+          { email: regex },
+          { phone: regex }
+        ];
+
+        if (query.$or) {
+          // Combine event filter with search filter using $and
+          const eventConditions = query.$or;
+          delete query.$or;
+          query.$and = [
+            { $or: eventConditions },
+            { $or: searchConditions }
+          ];
+        } else {
+          query.$or = searchConditions;
+        }
+      }
+
       users = await User.find(query).select('-password').sort({ createdAt: -1 });
     } else {
       users = memoryUsers.map(({ password, ...u }) => u);
-      if (search) {
+
+      if (year && year !== 'all') {
+        users = users.filter(u => String(u.year) === String(year).trim());
+      }
+
+      if (gender && gender !== 'all') {
+        users = users.filter(u => String(u.gender || 'Unspecified') === String(gender).trim());
+      }
+
+      if (event && event !== 'all') {
+        const cleanEvent = String(event).trim().toLowerCase();
+        users = users.filter(u =>
+          (u.registeredEvents || []).some(e =>
+            String(e.id) === cleanEvent ||
+            (e.title && e.title.toLowerCase().includes(cleanEvent))
+          )
+        );
+      }
+
+      if (search && search.trim()) {
         const term = search.trim().toLowerCase();
         users = users.filter(u =>
-          u.name.toLowerCase().includes(term) ||
-          u.aiId.toLowerCase().includes(term) ||
-          u.regNo.toLowerCase().includes(term) ||
-          u.email.toLowerCase().includes(term) ||
-          u.phone.includes(term)
+          (u.name && u.name.toLowerCase().includes(term)) ||
+          (u.aiId && u.aiId.toLowerCase().includes(term)) ||
+          (u.regNo && u.regNo.toLowerCase().includes(term)) ||
+          (u.email && u.email.toLowerCase().includes(term)) ||
+          (u.phone && u.phone.includes(term))
         );
       }
     }
@@ -215,21 +326,63 @@ router.get('/registrations', async (req, res) => {
 
 /**
  * GET /cseAI/stats
- * Event stats & dashboard metrics
+ * Event stats & dashboard metrics breakdown
  */
 router.get('/stats', async (req, res) => {
   try {
-    let totalCount = 0;
+    let allUsers = [];
+
     if (mongoose.connection.readyState === 1) {
-      totalCount = await User.countDocuments();
+      allUsers = await User.find().select('year gender registeredEvents');
     } else {
-      totalCount = memoryUsers.length;
+      allUsers = memoryUsers;
     }
+
+    const totalCount = allUsers.length;
+
+    const yearStats = { '1': 0, '2': 0, '3': 0, '4': 0, 'M.Tech (1st year)': 0, 'M.Tech (2nd year)': 0 };
+
+    const genderStats = { 'Male': 0, 'Female': 0, 'Other': 0, 'Unspecified': 0 };
+    const eventStatsMap = {};
+
+    allUsers.forEach(u => {
+      // Year breakdown
+      if (u.year && yearStats[u.year] !== undefined) {
+        yearStats[u.year]++;
+      }
+
+      // Gender breakdown
+      const g = u.gender || 'Unspecified';
+      if (genderStats[g] !== undefined) {
+        genderStats[g]++;
+      } else {
+        genderStats['Unspecified']++;
+      }
+
+      // Event breakdown
+      if (Array.isArray(u.registeredEvents)) {
+        u.registeredEvents.forEach(e => {
+          const key = e.title || e.id || 'Unknown Event';
+          if (!eventStatsMap[key]) {
+            eventStatsMap[key] = {
+              id: e.id,
+              title: e.title || key,
+              categoryName: e.categoryName || 'TECHNICAL EVENTS',
+              count: 0
+            };
+          }
+          eventStatsMap[key].count++;
+        });
+      }
+    });
 
     return res.json({
       success: true,
       stats: {
         totalRegistrations: totalCount,
+        yearStats,
+        genderStats,
+        eventStats: Object.values(eventStatsMap),
         eventName: 'Agentic AI Day 2026',
         idPrefix: 'VUCSE',
         startId: 'VUCSE00001'
@@ -240,4 +393,453 @@ router.get('/stats', async (req, res) => {
   }
 });
 
+const isUserRegisteredForEvent = (user, eventId, eventTitle) => {
+  if (!user || !Array.isArray(user.registeredEvents)) return false;
+  if (user.registeredEvents.length === 0) return false;
+
+  const cleanId = String(eventId || '').toLowerCase().trim();
+  const cleanTitle = String(eventTitle || '').toLowerCase().trim();
+
+  return user.registeredEvents.some(e => {
+    const eId = String(e.id || '').toLowerCase().trim();
+    const eTitle = String(e.title || '').toLowerCase().trim();
+
+    if (eId && cleanId && (eId === cleanId || eId.includes(cleanId) || cleanId.includes(eId))) {
+      return true;
+    }
+    if (eTitle && cleanTitle && (eTitle === cleanTitle || eTitle.includes(cleanTitle) || cleanTitle.includes(eTitle))) {
+      return true;
+    }
+
+    const keywords = ['hackathon', 'prompt', 'paper', 'poster', 'expo', 'quiz', 'musical'];
+    for (const kw of keywords) {
+      if ((cleanTitle.includes(kw) || cleanId.includes(kw)) && (eTitle.includes(kw) || eId.includes(kw))) {
+        return true;
+      }
+    }
+
+    return false;
+  });
+};
+
+/**
+ * GET /cseAI/student/:identifier
+ * Lookup a registered student's details by AI ID, Reg No, or Email
+ * Optionally checks if student is enrolled in a specific event via query params ?eventId=...&eventTitle=...
+ */
+router.get('/student/:identifier', async (req, res) => {
+  try {
+    const { identifier } = req.params;
+    const { eventId, eventTitle } = req.query;
+
+    if (!identifier || !identifier.trim()) {
+      return res.status(400).json({ success: false, message: 'Student AI ID, Reg No, or Email is required.' });
+    }
+
+    const cleanId = identifier.trim().toLowerCase();
+    let user = null;
+
+    if (mongoose.connection.readyState === 1) {
+      user = await User.findOne({
+        $or: [
+          { aiId: { $regex: new RegExp(`^${cleanId}$`, 'i') } },
+          { regNo: { $regex: new RegExp(`^${cleanId}$`, 'i') } },
+          { email: cleanId }
+        ]
+      }).select('-password');
+    } else {
+      user = memoryUsers.find(
+        u => (u.aiId && u.aiId.toLowerCase() === cleanId) ||
+             (u.regNo && u.regNo.toLowerCase() === cleanId) ||
+             (u.email && u.email.toLowerCase() === cleanId)
+      );
+    }
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: `No registered student found matching ID/Email '${identifier}'. Please ensure the student is registered first.`
+      });
+    }
+
+    const isEnrolledInEvent = (eventId || eventTitle)
+      ? isUserRegisteredForEvent(user, eventId, eventTitle)
+      : true;
+
+    return res.json({
+      success: true,
+      student: {
+        aiId: user.aiId,
+        name: user.name,
+        regNo: user.regNo,
+        year: user.year,
+        email: user.email,
+        phone: user.phone,
+        registeredEvents: user.registeredEvents || []
+      },
+      isEnrolledInEvent
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message || 'Server lookup error' });
+  }
+});
+
+
+/**
+ * POST /cseAI/team-register
+ * Handles team registration for event with strict team size & single-team constraints
+ */
+router.post('/team-register', async (req, res) => {
+  try {
+    const { teamName, eventId, eventTitle, members, currentUserAiId } = req.body;
+
+    if (!teamName || !teamName.trim()) {
+      return res.status(400).json({ success: false, message: 'Team Name is a mandatory field.' });
+    }
+    if (!eventId || !eventId.trim()) {
+      return res.status(400).json({ success: false, message: 'Event selection is required.' });
+    }
+    if (!Array.isArray(members) || members.length === 0) {
+      return res.status(400).json({ success: false, message: 'Team must have at least 1 member.' });
+    }
+
+    // Ensure Member #1 (Team Leader) is the registering user's own AI ID if currentUserAiId is supplied
+    if (currentUserAiId && currentUserAiId.trim()) {
+      const leaderId = (members[0]?.aiId || '').trim().toUpperCase();
+      const expectedId = currentUserAiId.trim().toUpperCase();
+      if (leaderId !== expectedId) {
+        return res.status(400).json({
+          success: false,
+          message: `Access Error: As the logged-in user, Member #1 (Team Leader) must be your own AI ID (${expectedId}). You cannot register a team using another student's ID.`
+        });
+      }
+    }
+
+    const cleanTeamName = teamName.trim();
+    const cleanEventId = eventId.trim();
+    const cleanEventTitle = (eventTitle || '').trim() || cleanEventId;
+
+
+    // 1. Verify Event Constraint (Min and Max team size)
+    const constraint = EVENT_CONSTRAINTS[cleanEventId] || { min: 1, max: 5, name: cleanEventTitle };
+    if (members.length < constraint.min || members.length > constraint.max) {
+      return res.status(400).json({
+        success: false,
+        message: `Team size violation for '${constraint.name}': Required ${constraint.min === constraint.max ? constraint.min : `${constraint.min} to ${constraint.max}`} members, but ${members.length} members provided.`
+      });
+    }
+
+    // 2. Validate member details and check duplicates within the team submission
+    const seenAiIds = new Set();
+    for (let i = 0; i < members.length; i++) {
+      const m = members[i];
+      if (!m.aiId || !m.aiId.trim()) {
+        return res.status(400).json({ success: false, message: `Member #${i + 1} AI ID is missing.` });
+      }
+      const upperId = m.aiId.trim().toUpperCase();
+      if (seenAiIds.has(upperId)) {
+        return res.status(400).json({
+          success: false,
+          message: `Duplicate student '${upperId}' in team submission. A student cannot be listed twice in the same team.`
+        });
+      }
+      seenAiIds.add(upperId);
+    }
+
+    // 3. Event Registration Eligibility Check: Ensure every member is registered for this event
+    for (const m of members) {
+      const targetAiId = m.aiId.trim().toUpperCase();
+      let userRecord = null;
+
+      if (mongoose.connection.readyState === 1) {
+        userRecord = await User.findOne({ aiId: { $regex: new RegExp(`^${targetAiId}$`, 'i') } });
+      } else {
+        userRecord = memoryUsers.find(u => u.aiId && u.aiId.toUpperCase() === targetAiId);
+      }
+
+      if (!userRecord) {
+        return res.status(400).json({
+          success: false,
+          message: `Eligibility Error: Student '${m.name || targetAiId}' (${targetAiId}) is not registered in the system.`
+        });
+      }
+
+      const isRegisteredForEvent = isUserRegisteredForEvent(userRecord, cleanEventId, cleanEventTitle);
+      if (!isRegisteredForEvent) {
+        return res.status(400).json({
+          success: false,
+          message: `Eligibility Error: Student '${userRecord.name}' (${targetAiId}) has NOT registered for '${cleanEventTitle}'. Only students who are registered for this event are eligible to form or join a team!`
+        });
+      }
+    }
+
+    // 4. Single Team per Event Constraint: Ensure no student is already in another team for this event
+    let existingTeams = [];
+    if (mongoose.connection.readyState === 1) {
+      existingTeams = await Team.find({
+        $or: [
+          { eventId: cleanEventId },
+          { eventTitle: { $regex: new RegExp(`^${cleanEventTitle}$`, 'i') } }
+        ]
+      });
+    } else {
+      existingTeams = memoryTeams.filter(
+        t => t.eventId === cleanEventId || (t.eventTitle && t.eventTitle.toLowerCase() === cleanEventTitle.toLowerCase())
+      );
+    }
+
+    for (const m of members) {
+      const targetAiId = m.aiId.trim().toUpperCase();
+      const conflictingTeam = existingTeams.find(team =>
+        team.members.some(mem => mem.aiId.trim().toUpperCase() === targetAiId)
+      );
+
+      if (conflictingTeam) {
+        return res.status(400).json({
+          success: false,
+          message: `Constraint Error: Student '${m.name || targetAiId}' (${targetAiId}) is already registered in team '${conflictingTeam.teamName}' for ${cleanEventTitle}. A student can only be in ONE team per event!`
+        });
+      }
+    }
+
+
+    // 4. Generate Team ID
+    const randomCode = Math.floor(1000 + Math.random() * 9000);
+    const teamId = `TEAM-${cleanEventId.toUpperCase()}-${randomCode}`;
+
+    const leaderMember = members[0];
+    const formattedMembers = members.map((m, idx) => ({
+      aiId: m.aiId.trim().toUpperCase(),
+      name: (m.name || '').trim(),
+      regNo: (m.regNo || '').trim(),
+      year: String(m.year || '').trim(),
+      email: (m.email || '').trim().toLowerCase(),
+      phone: (m.phone || '').trim(),
+      isLeader: idx === 0
+    }));
+
+    let savedTeam = null;
+    if (mongoose.connection.readyState === 1) {
+      savedTeam = new Team({
+        teamId,
+        teamName: cleanTeamName,
+        eventId: cleanEventId,
+        eventTitle: cleanEventTitle,
+        leaderAiId: leaderMember.aiId.trim().toUpperCase(),
+        members: formattedMembers
+      });
+      await savedTeam.save();
+    } else {
+      savedTeam = {
+        teamId,
+        teamName: cleanTeamName,
+        eventId: cleanEventId,
+        eventTitle: cleanEventTitle,
+        leaderAiId: leaderMember.aiId.trim().toUpperCase(),
+        members: formattedMembers,
+        createdAt: new Date()
+      };
+      memoryTeams.push(savedTeam);
+    }
+
+    // 5. Update each member's registeredEvents profile
+    for (const m of formattedMembers) {
+      try {
+        if (mongoose.connection.readyState === 1) {
+          await User.updateOne(
+            { aiId: m.aiId },
+            {
+              $addToSet: {
+                registeredEvents: {
+                  id: cleanEventId,
+                  title: cleanEventTitle,
+                  categoryName: constraint.name || 'TEAM EVENT',
+                  categoryId: 'team',
+                  teamId: teamId,
+                  teamName: cleanTeamName,
+                  isTeam: true,
+                  registeredAt: new Date().toISOString()
+                }
+              }
+            }
+          );
+        } else {
+          const userMem = memoryUsers.find(u => u.aiId && u.aiId.toUpperCase() === m.aiId);
+          if (userMem) {
+            if (!userMem.registeredEvents) userMem.registeredEvents = [];
+            const exists = userMem.registeredEvents.some(e => e.id === cleanEventId || e.title === cleanEventTitle);
+            if (!exists) {
+              userMem.registeredEvents.push({
+                id: cleanEventId,
+                title: cleanEventTitle,
+                categoryName: constraint.name || 'TEAM EVENT',
+                categoryId: 'team',
+                teamId: teamId,
+                teamName: cleanTeamName,
+                isTeam: true,
+                registeredAt: new Date().toISOString()
+              });
+            }
+          }
+        }
+      } catch (err) {
+        console.warn(`[User Event Sync Warning] Could not update registeredEvents for ${m.aiId}:`, err.message);
+      }
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: `Team '${cleanTeamName}' successfully registered for ${cleanEventTitle}!`,
+      team: savedTeam
+    });
+
+  } catch (error) {
+    console.error('[Team Registration Error]', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Server error occurred during team registration.'
+    });
+  }
+});
+
+/**
+ * GET /cseAI/team-registrations
+ * Retrieve list of registered teams for Admin Dashboard
+ */
+router.get('/team-registrations', async (req, res) => {
+  try {
+    const { search, event } = req.query;
+    let teams = [];
+
+    if (mongoose.connection.readyState === 1) {
+      const query = {};
+
+      if (event && event !== 'all') {
+        const cleanEvent = String(event).trim();
+        query.$or = [
+          { eventId: cleanEvent },
+          { eventTitle: new RegExp(cleanEvent, 'i') }
+        ];
+      }
+
+      if (search && search.trim()) {
+        const regex = new RegExp(search.trim(), 'i');
+        const searchCond = [
+          { teamName: regex },
+          { teamId: regex },
+          { eventTitle: regex },
+          { 'members.name': regex },
+          { 'members.aiId': regex },
+          { 'members.regNo': regex }
+        ];
+
+        if (query.$or) {
+          const evCond = query.$or;
+          delete query.$or;
+          query.$and = [{ $or: evCond }, { $or: searchCond }];
+        } else {
+          query.$or = searchCond;
+        }
+      }
+
+      teams = await Team.find(query).sort({ createdAt: -1 });
+    } else {
+      teams = [...memoryTeams];
+
+      if (event && event !== 'all') {
+        const cleanEvent = String(event).trim().toLowerCase();
+        teams = teams.filter(t =>
+          String(t.eventId).toLowerCase() === cleanEvent ||
+          (t.eventTitle && t.eventTitle.toLowerCase().includes(cleanEvent))
+        );
+      }
+
+      if (search && search.trim()) {
+        const term = search.trim().toLowerCase();
+        teams = teams.filter(t =>
+          (t.teamName && t.teamName.toLowerCase().includes(term)) ||
+          (t.teamId && t.teamId.toLowerCase().includes(term)) ||
+          (t.eventTitle && t.eventTitle.toLowerCase().includes(term)) ||
+          (t.members && t.members.some(m =>
+            (m.name && m.name.toLowerCase().includes(term)) ||
+            (m.aiId && m.aiId.toLowerCase().includes(term)) ||
+            (m.regNo && m.regNo.toLowerCase().includes(term))
+          ))
+        );
+      }
+    }
+
+    return res.json({
+      success: true,
+      count: teams.length,
+      teams
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message || 'Error fetching teams' });
+  }
+});
+
+/**
+ * DELETE /cseAI/team/:teamId
+ * Removes a team registration from system (Admin action)
+ */
+router.delete('/team/:teamId', async (req, res) => {
+  try {
+    const { teamId } = req.params;
+    if (!teamId || !teamId.trim()) {
+      return res.status(400).json({ success: false, message: 'Team ID is required.' });
+    }
+
+    const cleanTeamId = teamId.trim();
+    let targetTeam = null;
+
+    if (mongoose.connection.readyState === 1) {
+      targetTeam = await Team.findOne({ teamId: cleanTeamId });
+      if (!targetTeam) {
+        return res.status(404).json({ success: false, message: `Team with ID '${cleanTeamId}' not found.` });
+      }
+      await Team.deleteOne({ teamId: cleanTeamId });
+    } else {
+      const idx = memoryTeams.findIndex(t => t.teamId === cleanTeamId);
+      if (idx === -1) {
+        return res.status(404).json({ success: false, message: `Team with ID '${cleanTeamId}' not found.` });
+      }
+      targetTeam = memoryTeams[idx];
+      memoryTeams.splice(idx, 1);
+    }
+
+    // Clean up registeredEvents entries from member User accounts
+    if (targetTeam && Array.isArray(targetTeam.members)) {
+      for (const m of targetTeam.members) {
+        try {
+          if (mongoose.connection.readyState === 1) {
+            await User.updateOne(
+              { aiId: m.aiId },
+              { $pull: { registeredEvents: { teamId: cleanTeamId } } }
+            );
+          } else {
+            const userMem = memoryUsers.find(u => u.aiId && u.aiId.toUpperCase() === m.aiId.toUpperCase());
+            if (userMem && Array.isArray(userMem.registeredEvents)) {
+              userMem.registeredEvents = userMem.registeredEvents.filter(e => e.teamId !== cleanTeamId);
+            }
+          }
+        } catch (err) {
+          console.warn(`[Team Cleanup Warning] Could not remove team event from user ${m.aiId}:`, err.message);
+        }
+      }
+    }
+
+    return res.json({
+      success: true,
+      message: `Team '${targetTeam.teamName}' (${cleanTeamId}) removed successfully.`
+    });
+
+  } catch (error) {
+    console.error('[Delete Team Error]', error);
+    return res.status(500).json({ success: false, message: error.message || 'Server error removing team' });
+  }
+});
+
 export default router;
+
+

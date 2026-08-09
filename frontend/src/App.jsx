@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Cpu, UserPlus, KeyRound, Sparkles, Home, ShieldCheck, Menu, X } from 'lucide-react';
+import { Cpu, UserPlus, KeyRound, Sparkles, Home, ShieldCheck, Menu, X, Users } from 'lucide-react';
 import RegistrationForm from './components/RegistrationForm';
+import TeamRegistrationForm from './components/TeamRegistrationForm';
 import UserProfile from './components/UserProfile';
 import LoginPortal from './components/LoginPortal';
 import AdminDashboard from './components/AdminDashboard';
@@ -12,8 +13,13 @@ import NavOverlay from './components/NavOverlay';
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(() => {
-    const path = window.location.pathname;
-    if (path === '/cseadmin') return 'admin';
+    const path = window.location.pathname.toLowerCase();
+    if (path === '/iamadmin' || path === '/cseadmin') return 'admin';
+    if (path.startsWith('/events')) return 'events';
+    if (path.startsWith('/register')) return 'register';
+    if (path.startsWith('/team-register') || path.startsWith('/teams')) return 'team-register';
+    if (path.startsWith('/login')) return 'login';
+    if (path.startsWith('/profile')) return 'pass';
     return 'home';
   });
   const [currentUser, setCurrentUser] = useState(null);
@@ -22,7 +28,25 @@ export default function App() {
   const [totalCount, setTotalCount] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Helper to change tab and optionally sync browser URL
+  // Sync browser back/forward buttons
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname.toLowerCase();
+      if (path.startsWith('/events')) setActiveTab('events');
+      else if (path.startsWith('/register')) setActiveTab('register');
+      else if (path.startsWith('/team-register') || path.startsWith('/teams')) setActiveTab('team-register');
+      else if (path.startsWith('/login')) setActiveTab('login');
+      else if (path.startsWith('/profile')) setActiveTab('pass');
+      else if (path === '/iamadmin' || path === '/cseadmin') setActiveTab('admin');
+      else setActiveTab('home');
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+
+  // Helper to change tab and sync browser URL
   const changeTab = (tabName, urlPath = '/') => {
     setActiveTab(tabName);
     setIsMobileMenuOpen(false);
@@ -152,6 +176,11 @@ export default function App() {
     return <LoadingScreen onComplete={() => setIsLoading(false)} minDuration={5000} />;
   }
 
+  // Full Screen Admin Portal View
+  if (activeTab === 'admin') {
+    return <AdminDashboard onBack={leaveAdmin} />;
+  }
+
   return (
     <div>
       {/* Background Route Overlay */}
@@ -185,15 +214,24 @@ export default function App() {
 
           <button
             className={`nav-btn ${activeTab === 'events' ? 'active' : ''}`}
-            onClick={() => changeTab('events', '/')}
+            onClick={() => changeTab('events', '/events')}
           >
             <Sparkles size={18} /> Events
           </button>
 
+          {currentUser && (
+            <button
+              className={`nav-btn ${activeTab === 'team-register' ? 'active' : ''}`}
+              onClick={() => changeTab('team-register', '/team-register')}
+            >
+              <Users size={18} /> Team registrations
+            </button>
+          )}
+
           {!currentUser && (
             <button
               className={`nav-btn ${activeTab === 'register' ? 'active' : ''}`}
-              onClick={() => changeTab('register', '/')}
+              onClick={() => changeTab('register', '/register')}
             >
               <UserPlus size={18} /> Register / Signup
             </button>
@@ -201,7 +239,7 @@ export default function App() {
 
           <button
             className={`nav-btn ${activeTab === 'login' || activeTab === 'pass' ? 'active' : ''}`}
-            onClick={() => changeTab(currentUser ? 'pass' : 'login', '/')}
+            onClick={() => changeTab(currentUser ? 'pass' : 'login', currentUser ? '/profile' : '/login')}
           >
             <KeyRound size={18} /> {currentUser ? 'My Profile' : 'Login'}
           </button>
@@ -212,17 +250,39 @@ export default function App() {
       <main className="main-wrapper">
         {/* DASHBOARD VIEW: COUNTDOWN ONLY */}
         {activeTab === 'home' && (
-          <EventCountdown onExploreEvents={() => changeTab('events', '/')} />
+          <EventCountdown onExploreEvents={() => changeTab('events', '/events')} />
         )}
 
         {/* EVENTS PAGE VIEW: 9 EVENT CARDS ONLY */}
         {activeTab === 'events' && (
           <EventsGrid 
-            onRegister={() => changeTab('register', '/')} 
+            onRegister={() => changeTab('register', '/register')} 
             currentUser={currentUser}
             onEnrollEvent={handleEnrollEvent}
           />
         )}
+
+        {/* TEAM REGISTRATIONS VIEW (PROTECTED: LOGIN REQUIRED) */}
+        {activeTab === 'team-register' && (
+          currentUser ? (
+            <TeamRegistrationForm
+              currentUser={currentUser}
+              onBack={() => changeTab('home', '/')}
+              onSuccess={() => fetchStats()}
+            />
+          ) : (
+            <LoginPortal
+              initialIdentifier={prefillLoginId}
+              onLoginSuccess={(user) => {
+                setCurrentUser(user);
+                setIsNewRegistration(false);
+                changeTab('team-register', '/team-register');
+              }}
+              onBack={() => changeTab('home', '/')}
+            />
+          )
+        )}
+
 
         {/* REGISTRATION / SIGNUP FORM VIEW */}
         {activeTab === 'register' && (
@@ -231,9 +291,9 @@ export default function App() {
               user={currentUser}
               onLogout={() => {
                 setCurrentUser(null);
-                changeTab('login', '/');
+                changeTab('login', '/login');
               }}
-              onExploreEvents={() => changeTab('events', '/')}
+              onExploreEvents={() => changeTab('events', '/events')}
               onUnenrollEvent={handleUnenrollEvent}
             />
           ) : (
@@ -253,9 +313,9 @@ export default function App() {
                 user={currentUser}
                 onLogout={() => {
                   setCurrentUser(null);
-                  changeTab('login', '/');
+                  changeTab('login', '/login');
                 }}
-                onExploreEvents={() => changeTab('events', '/')}
+                onExploreEvents={() => changeTab('events', '/events')}
                 onUnenrollEvent={handleUnenrollEvent}
               />
             ) : (
@@ -275,11 +335,6 @@ export default function App() {
             onLoginSuccess={handleLoginSuccess}
             onBack={() => changeTab('home', '/')}
           />
-        )}
-
-        {/* ADMIN DASHBOARD VIEW */}
-        {activeTab === 'admin' && (
-          <AdminDashboard onBack={leaveAdmin} />
         )}
       </main>
 
