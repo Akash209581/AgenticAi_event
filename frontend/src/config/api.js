@@ -50,6 +50,12 @@ export async function apiFetch(endpoint, options = {}) {
   
   if (!contentType.includes('application/json')) {
     const text = await response.text();
+    if (response.status === 413) {
+      throw new Error(
+        `File / Payload size exceeds server limits (Status 413: Request Entity Too Large). ` +
+        `Nginx blocked the upload. Please add 'client_max_body_size 50M;' inside your Nginx server block.`
+      );
+    }
     if (text.trim().startsWith('<')) {
       throw new Error(
         `Server configuration error: Received HTML page instead of JSON API response (Status ${response.status}). ` +

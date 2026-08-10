@@ -112,7 +112,7 @@ export default function LoadingScreen({ onComplete, minDuration = 6000 }) {
       setProgress(rawProgress);
 
       // Update status text based on progress threshold
- 
+
 
       const tSec = elapsed / 1000;
 
@@ -298,10 +298,9 @@ export default function LoadingScreen({ onComplete, minDuration = 6000 }) {
       {/* Header Info */}
       <div className="loading-header">
         <div className="badge-tag">
-          <Cpu size={16} /> COMPUTER SCIENCE & ENGINEERING
+          COMPUTER SCIENCE & ENGINEERING
         </div>
         <h1 className="loading-title">AGENTIC AI DAY 2026</h1>
-        <div className="loading-subtitle">AUTONOMOUS MULTI-AGENT SYSTEMS</div>
       </div>
 
       {/* 3D Robot Canvas Stage */}
