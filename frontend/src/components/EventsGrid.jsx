@@ -120,7 +120,8 @@ const categoriesData = [
 export default function EventsGrid({ onRegister, currentUser = null, onEnrollEvent, onSubmissionUpdate }) {
   // Parse initial route from window.location.pathname
   const parseRoute = () => {
-    const parts = window.location.pathname.toLowerCase().split('/').filter(Boolean);
+    let parts = window.location.pathname.toLowerCase().split('/').filter(Boolean);
+    if (parts[0] === 'aiday') parts = parts.slice(1);
     if (parts[0] === 'events' && parts[1]) {
       const cat = categoriesData.find(c => c.id === parts[1]);
       if (parts[2] && cat) {
@@ -161,7 +162,7 @@ export default function EventsGrid({ onRegister, currentUser = null, onEnrollEve
         event={selectedEventDetail}
         onBack={() => {
           setSelectedEventDetail(null);
-          const backPath = selectedCategory ? `/events/${selectedCategory.id}` : '/events';
+          const backPath = selectedCategory ? `/aiday/events/${selectedCategory.id}` : '/aiday/events';
           window.history.pushState({}, '', backPath);
         }}
         onRegister={onRegister}
@@ -186,7 +187,7 @@ export default function EventsGrid({ onRegister, currentUser = null, onEnrollEve
             className="events-back-btn"
             onClick={() => {
               setSelectedCategory(null);
-              window.history.pushState({}, '', '/events');
+              window.history.pushState({}, '', '/aiday/events');
             }}
           >
             <ArrowLeft size={20} /> Back to Categories
@@ -213,7 +214,7 @@ export default function EventsGrid({ onRegister, currentUser = null, onEnrollEve
                 className="portrait-event-card"
                 onClick={() => {
                   setSelectedCategory(cat);
-                  window.history.pushState({}, '', `/events/${cat.id}`);
+                  window.history.pushState({}, '', `/aiday/events/${cat.id}`);
                 }}
               >
                 {/* Pure Image Container */}
@@ -248,7 +249,7 @@ export default function EventsGrid({ onRegister, currentUser = null, onEnrollEve
                 className="portrait-event-card sub-portrait-card"
                 onClick={() => {
                   const detail = getEventDetails(selectedCategory.id, ev.id, ev.title);
-                  window.history.pushState({}, '', `/events/${selectedCategory.id}/${slug}`);
+                  window.history.pushState({}, '', `/aiday/events/${selectedCategory.id}/${slug}`);
                   setSelectedEventDetail(detail);
                 }}
                 style={{ cursor: 'pointer' }}

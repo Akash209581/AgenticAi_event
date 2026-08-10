@@ -9,6 +9,7 @@ import authRoutes from './routes/auth.js';
 import { mongoSanitizer } from './middleware/sanitizer.js';
 import { authRateLimiter, registrationRateLimiter, publicApiRateLimiter } from './middleware/rateLimiter.js';
 import mongoose from 'mongoose';
+import path from 'path';
 
 dotenv.config();
 
@@ -46,8 +47,11 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // 6. NoSQL Query Injection Sanitization
 app.use(mongoSanitizer);
 
+// Serve static uploaded files (posters / papers)
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads'))); 
+
 // Connect Database
-connectDB();
+connectDB(); 
 
 // 7. Apply NAT-Aware Rate Limiters to Specific Sensitive Routes
 app.use(`${BASE_API}/register`, registrationRateLimiter);

@@ -12,8 +12,15 @@ import NavOverlay from './components/NavOverlay';
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
+  const getNormalizedPath = (pathname) => {
+    const p = pathname.toLowerCase();
+    if (p.startsWith('/aiday/')) return p.substring(6);
+    if (p === '/aiday') return '/';
+    return p;
+  };
+
   const [activeTab, setActiveTab] = useState(() => {
-    const path = window.location.pathname.toLowerCase();
+    const path = getNormalizedPath(window.location.pathname);
     if (path === '/iamadmin' || path === '/cseadmin') return 'admin';
     if (path.startsWith('/events')) return 'events';
     if (path.startsWith('/register')) return 'register';
@@ -48,7 +55,7 @@ export default function App() {
   // Sync browser back/forward buttons
   useEffect(() => {
     const handlePopState = () => {
-      const path = window.location.pathname.toLowerCase();
+      const path = getNormalizedPath(window.location.pathname);
       if (path.startsWith('/events')) setActiveTab('events');
       else if (path.startsWith('/register')) setActiveTab('register');
       else if (path.startsWith('/team-register') || path.startsWith('/teams')) setActiveTab('team-register');
@@ -67,8 +74,12 @@ export default function App() {
   const changeTab = (tabName, urlPath = '/') => {
     setActiveTab(tabName);
     setIsMobileMenuOpen(false);
-    if (urlPath !== window.location.pathname) {
-      window.history.pushState({}, '', urlPath);
+    let target = urlPath;
+    if (!target.startsWith('/aiday')) {
+      target = '/aiday' + (target.startsWith('/') ? target : '/' + target);
+    }
+    if (target !== window.location.pathname) {
+      window.history.pushState({}, '', target);
     }
   };
 

@@ -1551,7 +1551,9 @@ const isEventMatch = (userEvt, catalogEvt) => {
                                   </a>
                                 ) : evSub?.posterFile ? (
                                   <a
-                                    href={evSub.posterFile.fileData}
+                                    href={evSub.posterFile.fileData || evSub.posterFile.serverUrl || evSub.posterFile.savedDiskPath}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
                                     download={evSub.posterFile.fileName || 'Poster_Submission'}
                                     style={{
                                       background: 'rgba(0, 240, 255, 0.15)',

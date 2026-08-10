@@ -532,7 +532,7 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
                           <FileText size={22} color="#00f0ff" />
                           <div>
                             <div style={{ color: '#ffffff', fontWeight: '700', fontSize: '0.95rem' }}>
-                              {fileObj.fileName}
+                              {fileObj.fileName || 'Submitted Poster / Paper'}
                             </div>
                             {fileObj.fileSize && (
                               <span style={{ color: '#94a3b8', fontSize: '0.78rem' }}>{fileObj.fileSize}</span>
@@ -540,9 +540,9 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
                           </div>
                         </div>
 
-                        {fileObj.fileData && (
+                        {(fileObj.fileData || fileObj.serverUrl || fileObj.savedDiskPath) && (
                           <a
-                            href={fileObj.fileData}
+                            href={fileObj.fileData || fileObj.serverUrl || fileObj.savedDiskPath}
                             target="_blank"
                             download={fileObj.fileName || 'submitted_poster'}
                             rel="noopener noreferrer"
@@ -565,16 +565,26 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
                         )}
                       </div>
 
-                      {/* Image Thumbnail Preview if Base64 Data URL is an image */}
-                      {fileObj.fileData && (fileObj.fileData.startsWith('data:image/') || String(fileObj.fileName || '').match(/\.(png|jpg|jpeg|webp)$/i)) && (
-                        <div style={{ textAlign: 'center', marginTop: '0.6rem', background: 'rgba(0,0,0,0.4)', padding: '0.5rem', borderRadius: '10px', overflow: 'hidden' }}>
-                          <img
-                            src={fileObj.fileData}
-                            alt="Submitted Poster Preview"
-                            style={{ maxWidth: '100%', maxHeight: '190px', borderRadius: '8px', objectFit: 'contain', border: '1px solid rgba(0,240,255,0.2)' }}
-                          />
-                        </div>
-                      )}
+                      {/* Image Thumbnail Preview */}
+                      {(() => {
+                        const src = fileObj.fileData || fileObj.serverUrl || fileObj.savedDiskPath;
+                        const isImg = src && (
+                          src.startsWith('data:image/') ||
+                          src.match(/\.(png|jpg|jpeg|webp)$/i) ||
+                          (fileObj.fileName && fileObj.fileName.match(/\.(png|jpg|jpeg|webp)$/i))
+                        );
+                        if (!isImg || !src) return null;
+
+                        return (
+                          <div style={{ textAlign: 'center', marginTop: '0.6rem', background: 'rgba(0,0,0,0.4)', padding: '0.5rem', borderRadius: '10px', overflow: 'hidden' }}>
+                            <img
+                              src={src}
+                              alt="Submitted Poster Preview"
+                              style={{ maxWidth: '100%', maxHeight: '210px', borderRadius: '8px', objectFit: 'contain', border: '1px solid rgba(0,240,255,0.2)' }}
+                            />
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
 

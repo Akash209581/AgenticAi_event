@@ -1,9 +1,15 @@
 import express from 'express';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { User } from '../models/User.js';
 import { Team } from '../models/Team.js';
 import { generateAiId, memoryUsers } from '../utils/idGenerator.js';
 import { requireAdminAuth, getAdminSecretToken } from '../middleware/adminAuth.js';
 import mongoose from 'mongoose';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
@@ -905,6 +911,71 @@ router.delete('/team/:teamId', async (req, res) => {
   } catch (error) {
     console.error('[Delete Team Error]', error);
     return res.status(500).json({ success: false, message: error.message || 'Server error removing team' });
+  }
+});
+
+/**
+ * POST /cseAI/admin/create-backup
+ * Manual or automatic backup trigger for DB records & poster files
+ */
+router.post('/admin/create-backup', requireAdminAuth, async (req, res) => {
+  try {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const backupDbDir = path.resolve(__dirname, '..', 'backups', 'db');
+    const backupPostersDir = path.resolve(__dirname, '..', 'backups', 'posters');
+    const uploadsPostersDir = path.resolve(__dirname, '..', 'uploads', 'posters');
+
+    if (!fs.existsSync(backupDbDir)) fs.mkdirSync(backupDbDir, { recursive: true });
+    if (!fs.existsSync(backupPostersDir)) fs.mkdirSync(backupPostersDir, { recursive: true });
+    if (!fs.existsSync(uploadsPostersDir)) fs.mkdirSync(uploadsPostersDir, { recursive: true });
+
+    let users = [];
+    let teams = [];
+
+    if (mongoose.connection.readyState === 1) {
+      users = await User.find().lean();
+      teams = await Team.find().lean();
+    } else {
+      users = memoryUsers;
+      teams = memoryTeams;
+    }
+
+    // Save JSON snapshots
+    const usersBackupFile = path.join(backupDbDir, `users_backup_${timestamp}.json`);
+    const teamsBackupFile = path.join(backupDbDir, `teams_backup_${timestamp}.json`);
+
+    fs.writeFileSync(usersBackupFile, JSON.stringify(users, null, 2));
+    fs.writeFileSync(teamsBackupFile, JSON.stringify(teams, null, 2));
+
+    // Mirror poster files
+    let copiedCount = 0;
+    if (fs.existsSync(uploadsPostersDir)) {
+      const uploadedFiles = fs.readdirSync(uploadsPostersDir);
+      uploadedFiles.forEach(file => {
+        const src = path.join(uploadsPostersDir, file);
+        const dest = path.join(backupPostersDir, file);
+        if (fs.statSync(src).isFile() && file !== '.gitkeep') {
+          fs.copyFileSync(src, dest);
+          copiedCount++;
+        }
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Backup created successfully on server!',
+      timestamp,
+      userCount: users.length,
+      teamCount: teams.length,
+      postersCopied: copiedCount,
+      files: {
+        users: `backups/db/users_backup_${timestamp}.json`,
+        teams: `backups/db/teams_backup_${timestamp}.json`
+      }
+    });
+  } catch (error) {
+    console.error('[Backup Error]', error);
+    return res.status(500).json({ success: false, message: error.message });
   }
 });
 

@@ -5,6 +5,12 @@ import { memoryUsers } from '../utils/idGenerator.js';
 import { memoryTeams } from './registration.js';
 import { getAdminSecretToken } from '../middleware/adminAuth.js';
 import mongoose from 'mongoose';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
@@ -347,6 +353,8 @@ router.post('/submit-event-content', async (req, res) => {
     }
 
     const cleanId = identifier.trim().toLowerCase();
+    const cleanEvtId = String(eventId || '').trim().toLowerCase();
+    const cleanEvtTitle = String(eventTitle || '').trim().toLowerCase();
 
     let user = null;
 
@@ -419,13 +427,13 @@ router.post('/submit-event-content', async (req, res) => {
 
     let eventIdx = user.registeredEvents.findIndex(e => isMatchEvent(cleanEvtId, cleanEvtTitle, e));
 
-    // Check if user has already submitted content for this event
+    // Check if user has already submitted content for this event (allow file update/overwrite)
     if (eventIdx !== -1) {
       const existingSub = user.registeredEvents[eventIdx].submission;
-      if (existingSub && (existingSub.reelLink || existingSub.posterFile || existingSub.posterLink)) {
+      if (existingSub && existingSub.submittedBy && existingSub.submittedBy.aiId !== user.aiId) {
         return res.status(400).json({
           success: false,
-          message: 'Submission Blocked: You have already submitted your work for this event. Resubmission is not permitted.'
+          message: `Submission Blocked: Your teammate '${existingSub.submittedBy.name}' (${existingSub.submittedBy.aiId}) has already submitted the work for this team.`
         });
       }
     }
@@ -473,6 +481,37 @@ router.post('/submit-event-content', async (req, res) => {
           success: false,
           message: `Submission Blocked: Your teammate '${alreadySubmittedUser.name}' (${alreadySubmittedUser.aiId}) has already submitted the work for this team.`
         });
+      }
+    }
+
+    // Save poster file to local disk folder (backend/uploads/posters/) & backup folder (backend/backups/posters/)
+    if (submission && submission.posterFile && submission.posterFile.fileData && submission.posterFile.fileData.startsWith('data:')) {
+      try {
+        const uploadsDir = path.resolve(__dirname, '..', 'uploads', 'posters');
+        const backupsDir = path.resolve(__dirname, '..', 'backups', 'posters');
+        if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+        if (!fs.existsSync(backupsDir)) fs.mkdirSync(backupsDir, { recursive: true });
+
+        const matches = submission.posterFile.fileData.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+        if (matches && matches[2]) {
+          const buffer = Buffer.from(matches[2], 'base64');
+          const extMatch = (submission.posterFile.fileName || '').match(/\.([a-zA-Z0-9]+)$/);
+          const ext = extMatch ? extMatch[1] : 'png';
+          const safeFileName = `${user.aiId || 'USER'}_${cleanEvtId || 'event'}_${Date.now()}.${ext}`;
+
+          const filePath = path.join(uploadsDir, safeFileName);
+          const backupFilePath = path.join(backupsDir, safeFileName);
+
+          fs.writeFileSync(filePath, buffer);
+          fs.writeFileSync(backupFilePath, buffer);
+          console.log('✅ Poster File Saved to Uploads & Backup:', safeFileName);
+
+          submission.posterFile.savedDiskPath = `uploads/posters/${safeFileName}`;
+          submission.posterFile.serverUrl = `/uploads/posters/${safeFileName}`;
+          submission.posterFile.backupPath = `backups/posters/${safeFileName}`;
+        }
+      } catch (diskErr) {
+        console.warn('[Disk Save Warning]', diskErr.message);
       }
     }
 
