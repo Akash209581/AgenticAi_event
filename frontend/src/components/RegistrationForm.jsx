@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import confetti from 'canvas-confetti';
 import { User, Calendar, Hash, Phone, Mail, Lock, Sparkles, AlertCircle, ArrowRight, ArrowLeft, GraduationCap, Copy, Check, KeyRound } from 'lucide-react';
+import { apiFetch } from '../config/api';
 
 export default function RegistrationForm({ onSuccess, onProceedToLogin, onBack }) {
   const [formData, setFormData] = useState({
@@ -84,13 +85,11 @@ export default function RegistrationForm({ onSuccess, onProceedToLogin, onBack }
     setLoading(true);
 
     try {
-      const response = await fetch('/cseAI/register', {
+      const { response, data } = await apiFetch('/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
-
-      const data = await response.json();
 
       if (!response.ok || !data.success) {
         throw new Error(data.message || 'Registration failed.');

@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import EventDetailsView from './EventDetailsView';
 import { getEventDetails } from '../data/eventsRulesData';
+import { getAssetUrl } from '../config/api';
 
 const categoriesData = [
   {
@@ -162,7 +163,7 @@ export default function EventsGrid({ onRegister, currentUser = null, onEnrollEve
         event={selectedEventDetail}
         onBack={() => {
           setSelectedEventDetail(null);
-          const backPath = selectedCategory ? `/aiday/events/${selectedCategory.id}` : '/aiday/events';
+          const backPath = selectedCategory ? `/events/${selectedCategory.id}` : '/events';
           window.history.pushState({}, '', backPath);
         }}
         onRegister={onRegister}
@@ -187,7 +188,7 @@ export default function EventsGrid({ onRegister, currentUser = null, onEnrollEve
             className="events-back-btn"
             onClick={() => {
               setSelectedCategory(null);
-              window.history.pushState({}, '', '/aiday/events');
+              window.history.pushState({}, '', '/events');
             }}
           >
             <ArrowLeft size={20} /> Back to Categories
@@ -214,13 +215,13 @@ export default function EventsGrid({ onRegister, currentUser = null, onEnrollEve
                 className="portrait-event-card"
                 onClick={() => {
                   setSelectedCategory(cat);
-                  window.history.pushState({}, '', `/aiday/events/${cat.id}`);
+                  window.history.pushState({}, '', `/events/${cat.id}`);
                 }}
               >
                 {/* Pure Image Container */}
                 <div className="portrait-image-stage">
                   <img
-                    src={cat.image}
+                    src={getAssetUrl(cat.image)}
                     alt={cat.title}
                     className="portrait-card-img"
                   />
@@ -249,7 +250,7 @@ export default function EventsGrid({ onRegister, currentUser = null, onEnrollEve
                 className="portrait-event-card sub-portrait-card"
                 onClick={() => {
                   const detail = getEventDetails(selectedCategory.id, ev.id, ev.title);
-                  window.history.pushState({}, '', `/aiday/events/${selectedCategory.id}/${slug}`);
+                  window.history.pushState({}, '', `/events/${selectedCategory.id}/${slug}`);
                   setSelectedEventDetail(detail);
                 }}
                 style={{ cursor: 'pointer' }}
@@ -258,7 +259,7 @@ export default function EventsGrid({ onRegister, currentUser = null, onEnrollEve
                 <div className="portrait-image-stage">
                   {(ev.image || getEventDetails(selectedCategory.id, ev.id, ev.title)?.image) ? (
                     <img
-                      src={ev.image || getEventDetails(selectedCategory.id, ev.id, ev.title)?.image}
+                      src={getAssetUrl(ev.image || getEventDetails(selectedCategory.id, ev.id, ev.title)?.image)}
                       alt={ev.title}
                       className="portrait-card-img"
                     />

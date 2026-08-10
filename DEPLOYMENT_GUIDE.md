@@ -1,180 +1,113 @@
-# 🚀 Production Deployment & Security Guide for Ubuntu Server
+# 🚀 Server Deployment & Troubleshooting Guide (Agentic AI Day 2026)
 
-This guide details step-by-step instructions for deploying the **Agentic AI Day 2026** web application on an Ubuntu server, specifically engineered to handle **6,000+ simultaneous users on university Wi-Fi**.
-
----
-
-## 📌 Prerequisites & Architecture Overview
-
-- **Server OS**: Ubuntu 20.04 / 22.04 / 24.04 LTS
-- **Backend Stack**: Node.js 20+ LTS, Express, Mongoose / MongoDB 6+
-- **Frontend Stack**: React 18, Vite (Static Production Bundle served by Nginx)
-- **Process Manager**: PM2 (Cluster Mode across multi-core CPU)
-- **Reverse Proxy**: Nginx with Gzip compression and SSL (Certbot)
-- **Network Environment**: College Wi-Fi NAT (6,000 users sharing public IP address)
+This document explains why the deployment errors occurred and how to configure your server (Nginx, PM2, and Vite) so both the frontend and backend run seamlessly.
 
 ---
 
-## ⚡ Quick Deployment (Automated Script)
+## 🔍 Root Cause Analysis
 
-If you have fresh Ubuntu server access, simply transfer the codebase and run:
+### 1. `Unexpected token '<', "<html> <h"... is not valid JSON`
+* **Cause**: When submitting forms (Registration, Login, Team Registration, Poster Uploads), the React frontend calls `/cseAI/*`. In production, if Nginx or your web server is NOT configured to reverse proxy `/cseAI` requests to the Node/Express backend (`http://127.0.0.1:6007`), the web server attempts to handle `/cseAI/*` as a static file route. 
+* Because Single Page Apps (SPAs) fall back to `index.html` for unknown routes, the web server returns the `index.html` page (which starts with `<html>...`). When JavaScript calls `response.json()`, parsing HTML as JSON throws this exact syntax error.
 
-```bash
-cd /path/to/Ai_day
-chmod +x deployment/deploy-ubuntu.sh
-./deployment/deploy-ubuntu.sh
-```
-
----
-
-## 🛠️ Step-by-Step Manual Deployment Guide
-
-### Step 1: Install System Dependencies on Ubuntu
-
-Connect to your Ubuntu server via SSH:
-
-```bash
-ssh user@your-server-ip
-```
-
-Update system packages and install Node.js 20 LTS, Nginx, and MongoDB:
-
-```bash
-sudo apt update && sudo apt upgrade -y
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install -y nodejs nginx mongodb-org pm2 certbot python3-certbot-nginx
-
-# Start & Enable MongoDB
-sudo systemctl enable mongod
-sudo systemctl start mongod
-```
+### 2. Broken Category Images (`Technical`, `Industry & Innovation`, `Creative`)
+* **Cause**: Category and event images in the code were referenced with root relative paths (e.g., `/images/Technical.avif`). When deployed under a subpath like `/aiday/` (or with Vite `base: '/aiday/'`), `<img src="/images/Technical.avif">` asks the browser for `http://your-domain.com/images/...` instead of `http://your-domain.com/aiday/images/...`, resulting in 404 Not Found errors.
 
 ---
 
-### Step 2: Clone / Transfer Workspace & Configure Environment
+## ✅ Code Fixes Applied in Workspace
 
-Create application directory:
+1. **`src/config/api.js`**:
+   - Implemented `apiFetch()`, a robust API wrapper that handles non-JSON / HTML responses gracefully.
+   - Implemented `getAssetUrl()`, which automatically formats asset image paths with Vite's `BASE_URL` (`/aiday/` or `/`).
+   - Implemented `getUploadUrl()`, which resolves uploaded poster/paper URLs.
+   - Added support for environment variable `VITE_API_BASE_URL`.
 
-```bash
-sudo mkdir -p /var/www/agentic-ai-day
-sudo chown -R $USER:$USER /var/www/agentic-ai-day
-cd /var/www/agentic-ai-day
-```
-
-Copy your project files into `/var/www/agentic-ai-day`.
-
-#### Configure Production Environment Variables:
-
-```bash
-cd /var/www/agentic-ai-day/backend
-cp .env.production.example .env
-nano .env
-```
-
-Set your production credentials in `.env`:
-```env
-NODE_ENV=production
-PORT=6007
-BASE_API=/cseAI
-MONGODB_URI=mongodb://127.0.0.1:27017/agentic_ai_day
-ADMIN_USERNAME=cseadmin
-ADMIN_PASSWORD=YourStrongSecretPassword2026!
-CORS_ORIGIN=https://yourdomain.com
-```
+2. **Components Updated**:
+   - `RegistrationForm.jsx`, `LoginPortal.jsx`, `TeamRegistrationForm.jsx`, `SubmissionModal.jsx`, `AdminDashboard.jsx`, `App.jsx`, `EventsGrid.jsx`, `EventDetailsView.jsx`, `AiPledge.jsx`, `UserProfile.jsx`.
 
 ---
 
-### Step 3: Install Dependencies & Build Frontend Bundle
+## ⚙️ Server Setup Guide (Nginx & PM2)
 
-#### 1. Backend:
+### Step 1: Start Backend using PM2
+On your production Ubuntu / Linux server, navigate to the backend folder and start the server using PM2:
 ```bash
-cd /var/www/agentic-ai-day/backend
-npm install --production
-```
-
-#### 2. Frontend:
-```bash
-cd /var/www/agentic-ai-day/frontend
+cd /path/to/Ai_day/backend
 npm install
-npm run build
-```
-*(This outputs optimized production assets to `/var/www/agentic-ai-day/frontend/dist`)*
-
----
-
-### Step 4: Launch Backend with PM2 Cluster Mode
-
-PM2 automatically runs Node in cluster mode, spawning worker processes across all available CPU cores on your Ubuntu server:
-
-```bash
-cd /var/www/agentic-ai-day/backend
-pm2 start ecosystem.config.cjs
+pm2 start ecosystem.config.cjs --env production
 pm2 save
-sudo env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u $USER --hp /home/$USER
 ```
-
-#### PM2 Useful Commands:
-- View live cluster status: `pm2 status`
-- Monitor CPU/Memory: `pm2 monit`
-- View live application logs: `pm2 logs`
-- Zero-downtime reload: `pm2 reload agentic-ai-backend`
+Verify the backend is running and listening on port 6007:
+```bash
+curl http://127.0.0.1:6007/cseAI/stats
+```
 
 ---
 
-### Step 5: Configure Nginx & Security Firewall
+### Step 2: Configure Nginx Reverse Proxy & Static Files
 
-Copy the Nginx configuration file:
+Open your Nginx configuration (e.g., `/etc/nginx/sites-available/default`):
 
-```bash
-sudo cp /var/www/agentic-ai-day/deployment/nginx.conf /etc/nginx/sites-available/agentic-ai-day
-sudo ln -sf /etc/nginx/sites-available/agentic-ai-day /etc/nginx/sites-enabled/
-sudo rm -f /etc/nginx/sites-enabled/default
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com; # Or your server IP address
+
+    # 1. FRONTEND STATIC ASSETS (/aiday/ or root /)
+    location /aiday/ {
+        alias /path/to/Ai_day/frontend/dist/;
+        index index.html;
+        try_files $uri $uri/ /aiday/index.html;
+    }
+
+    # If serving at domain root instead of /aiday/, use this:
+    location / {
+        root /path/to/Ai_day/frontend/dist;
+        index index.html;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # 2. BACKEND API REVERSE PROXY (CRUCIAL TO FIX THE HTML JSON ERROR)
+    location /cseAI/ {
+        proxy_pass http://127.0.0.1:6007/cseAI/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        client_max_body_size 50M;
+    }
+
+    # 3. BACKEND UPLOADS (POSTERS / PAPERS)
+    location /uploads/ {
+        proxy_pass http://127.0.0.1:6007/uploads/;
+        client_max_body_size 50M;
+    }
+}
 ```
 
-Test and restart Nginx:
+Test and reload Nginx:
 ```bash
 sudo nginx -t
-sudo systemctl restart nginx
-```
-
-Enable UFW Firewall (Allow SSH, HTTP, HTTPS):
-```bash
-sudo ufw allow OpenSSH
-sudo ufw allow 'Nginx Full'
-sudo ufw --force enable
+sudo systemctl reload nginx
 ```
 
 ---
 
-### Step 6: Enable Free SSL/TLS (HTTPS) with Let's Encrypt Certbot
+### Step 3: Option to point Frontend directly to Backend URL (Alternative)
 
-To secure traffic with `https://`:
-
-```bash
-sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
-```
-Certbot automatically configures Nginx SSL parameters and sets up auto-renewal cron jobs!
-
----
-
-## 🔒 Security & NAT Rate Limiter Verification
-
-### 1. Campus Wi-Fi NAT Rate Limiting Strategy
-- The application uses `app.set('trust proxy', 1)` to accurately read `X-Forwarded-For` from Nginx.
-- Authentication (`/login`, `/enroll-event`) & Registration (`/register`, `/team-register`) rate limits are **keyed by User Email / RegNo** instead of raw IP.
-- This prevents 6,000 students on the same campus IP from locking each other out.
-
-### 2. Microsecond Duplicate Registration Prevention
-- MongoDB schemas enforce unique indexes on `email`, `regNo`, and `aiId`.
-- Consecutive double-clicks on "Register" are blocked at the database layer with zero duplicate entries.
-
----
-
-## 🔍 Verification & Troubleshooting
-
-- **Check Backend API**: `curl http://localhost:6007/`
-- **Check MongoDB Status**: `sudo systemctl status mongod`
-- **Check Nginx Access/Error Logs**:
-  - `sudo tail -f /var/log/nginx/access.log`
-  - `sudo tail -f /var/log/nginx/error.log`
-- **Check Application Logs**: `pm2 logs`
+If backend and frontend are hosted on separate servers or ports (e.g., Frontend on port 80 and Backend on port 6007 without Nginx proxy):
+1. In `frontend/`:
+   Create `.env.production` file:
+   ```env
+   VITE_API_BASE_URL=http://YOUR_SERVER_IP:6007/cseAI
+   ```
+2. Rebuild frontend:
+   ```bash
+   cd frontend
+   npm run build
+   ```

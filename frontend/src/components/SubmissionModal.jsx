@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { X, Video, FileText, Upload, CheckCircle2, AlertCircle, Link as LinkIcon, ExternalLink, Trash2, ShieldCheck } from 'lucide-react';
 import { isSameEvent } from '../data/eventsRulesData';
+import { apiFetch, getUploadUrl } from '../config/api';
 
 export default function SubmissionModal({ isOpen, onClose, event, currentUser, onSubmitSuccess }) {
   const [reelLink, setReelLink] = useState('');
@@ -93,12 +94,11 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
         posterLink: isPoster ? posterLink.trim() : undefined
       };
       const identifier = currentUser?.aiId || currentUser?.regNo || currentUser?.email;
-      const res = await fetch('/cseAI/submit-event-content', {
+      const { res, data } = await apiFetch('/submit-event-content', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier, eventId: event?.id, eventTitle: event?.title, submission: submissionPayload })
       });
-      const data = await res.json();
       if (data.success) {
         setSuccessMsg(isReels ? 'Reel link submitted successfully!' : 'Poster/paper submission saved successfully!');
 
@@ -542,7 +542,7 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
 
                         {(fileObj.fileData || fileObj.serverUrl || fileObj.savedDiskPath) && (
                           <a
-                            href={fileObj.fileData || fileObj.serverUrl || fileObj.savedDiskPath}
+                            href={fileObj.fileData || getUploadUrl(fileObj.serverUrl) || fileObj.savedDiskPath}
                             target="_blank"
                             download={fileObj.fileName || 'submitted_poster'}
                             rel="noopener noreferrer"
@@ -567,7 +567,7 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
 
                       {/* Image Thumbnail Preview */}
                       {(() => {
-                        const src = fileObj.fileData || fileObj.serverUrl || fileObj.savedDiskPath;
+                        const src = fileObj.fileData || getUploadUrl(fileObj.serverUrl) || fileObj.savedDiskPath;
                         const isImg = src && (
                           src.startsWith('data:image/') ||
                           src.match(/\.(png|jpg|jpeg|webp)$/i) ||

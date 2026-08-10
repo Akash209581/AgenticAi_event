@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { apiFetch } from '../config/api';
 import {
   ShieldCheck,
   Lock,
@@ -75,13 +76,11 @@ export default function AdminDashboard({ onBack }) {
     setLoginLoading(true);
 
     try {
-      const res = await fetch('/cseAI/admin-login', {
+      const { res, data } = await apiFetch('/admin-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(loginForm)
       });
-
-      const data = await res.json();
 
       if (data && data.success) {
         setIsAuthenticated(true);
@@ -149,13 +148,10 @@ export default function AdminDashboard({ onBack }) {
       const adminToken = sessionStorage.getItem('vucse_admin_token') || '';
       const reqHeaders = adminToken ? { 'x-admin-token': adminToken } : {};
 
-      const [regRes, statsRes] = await Promise.all([
-        fetch(`/cseAI/registrations?${params.toString()}`, { headers: reqHeaders }),
-        fetch('/cseAI/stats')
+      const [{ data: regData }, { data: statsData }] = await Promise.all([
+        apiFetch(`/registrations?${params.toString()}`, { headers: reqHeaders }),
+        apiFetch('/stats')
       ]);
-
-      const regData = await regRes.json();
-      const statsData = await statsRes.json();
 
       if (regData.success) {
         setRegistrations(regData.registrations || []);
@@ -185,8 +181,7 @@ export default function AdminDashboard({ onBack }) {
       const adminToken = sessionStorage.getItem('vucse_admin_token') || '';
       const reqHeaders = adminToken ? { 'x-admin-token': adminToken } : {};
 
-      const res = await fetch(`/cseAI/team-registrations?${params.toString()}`, { headers: reqHeaders });
-      const data = await res.json();
+      const { res, data } = await apiFetch(`/team-registrations?${params.toString()}`, { headers: reqHeaders });
       if (data.success) {
         setTeams(data.teams || []);
       }
@@ -262,10 +257,9 @@ export default function AdminDashboard({ onBack }) {
     if (!window.confirm(confirmMsg)) return;
 
     try {
-      const res = await fetch(`/cseAI/team/${encodeURIComponent(team.teamId)}`, {
+      const { res, data } = await apiFetch(`/team/${encodeURIComponent(team.teamId)}`, {
         method: 'DELETE'
       });
-      const data = await res.json();
 
       if (data.success) {
         alert(data.message || `Team '${team.teamName}' removed successfully.`);

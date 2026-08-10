@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ArrowLeft, Award, Phone, UserPlus, Sparkles, ShieldCheck, Calendar, Video, FileText, CheckCircle2, Bot, Zap } from 'lucide-react';
 import SubmissionModal from './SubmissionModal';
 import { isSameEvent } from '../data/eventsRulesData';
+import { getAssetUrl } from '../config/api';
 
 export default function EventDetailsView({ event, onBack, onRegister, currentUser = null, onEnrollEvent, onSubmissionUpdate }) {
   const [isSubmissionModalOpen, setIsSubmissionModalOpen] = useState(false);
@@ -46,7 +47,7 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
           <div className="event-card-column">
             <div className="event-poster-card">
               <img
-                src={event.image || '/images/event_hackathon_1786084020517.png'}
+                src={getAssetUrl(event.image || '/images/event_hackathon_1786084020517.png')}
                 alt={event.title}
                 className="event-poster-image"
               />

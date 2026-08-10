@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { KeyRound, Hash, Calendar, ArrowRight, AlertCircle, ArrowLeft } from 'lucide-react';
+import { apiFetch } from '../config/api';
 
 export default function LoginPortal({ onLoginSuccess, onBack, initialIdentifier = '' }) {
   const [identifier, setIdentifier] = useState(initialIdentifier);
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-
 
   useEffect(() => {
     if (initialIdentifier) {
@@ -32,13 +31,11 @@ export default function LoginPortal({ onLoginSuccess, onBack, initialIdentifier 
     setLoading(true);
 
     try {
-      const response = await fetch('/cseAI/login', {
+      const { response, data } = await apiFetch('/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier, password })
       });
-
-      const data = await response.json();
 
       if (!response.ok || !data.success) {
         throw new Error(data.message || 'Login failed.');

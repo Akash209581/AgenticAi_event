@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Cpu, UserPlus, KeyRound, Sparkles, Home, ShieldCheck, Menu, X, Users } from 'lucide-react';
+import { apiFetch, getAssetUrl } from './config/api';
 import RegistrationForm from './components/RegistrationForm';
 import TeamRegistrationForm from './components/TeamRegistrationForm';
 import UserProfile from './components/UserProfile';
@@ -74,20 +75,15 @@ export default function App() {
   const changeTab = (tabName, urlPath = '/') => {
     setActiveTab(tabName);
     setIsMobileMenuOpen(false);
-    let target = urlPath;
-    if (!target.startsWith('/aiday')) {
-      target = '/aiday' + (target.startsWith('/') ? target : '/' + target);
-    }
+    const target = urlPath.startsWith('/') ? urlPath : '/' + urlPath;
     if (target !== window.location.pathname) {
       window.history.pushState({}, '', target);
     }
   };
 
-  // Fetch total registration stats
   const fetchStats = async () => {
     try {
-      const res = await fetch('/cseAI/stats');
-      const data = await res.json();
+      const { res, data } = await apiFetch('/stats');
       if (data.success && data.stats) {
         setTotalCount(data.stats.totalRegistrations);
       }
@@ -121,7 +117,7 @@ export default function App() {
     if (!currentUser) return;
 
     try {
-      const response = await fetch('/cseAI/enroll-event', {
+      const { response, data } = await apiFetch('/enroll-event', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -135,8 +131,6 @@ export default function App() {
           }
         })
       });
-
-      const data = await response.json();
       if (data.success && data.registeredEvents) {
         setCurrentUser(prev => ({
           ...prev,
@@ -166,7 +160,7 @@ export default function App() {
     if (!currentUser) return;
 
     try {
-      const response = await fetch('/cseAI/unenroll-event', {
+      const { response, data } = await apiFetch('/unenroll-event', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -175,8 +169,6 @@ export default function App() {
           eventTitle
         })
       });
-
-      const data = await response.json();
       if (data.success && data.registeredEvents !== undefined) {
         setCurrentUser(prev => ({
           ...prev,
@@ -228,7 +220,7 @@ export default function App() {
         {/* Left Side: CSE Logo Image + Blinking CSE Badge + Mobile Title */}
         <div className="brand" onClick={() => changeTab('home', '/')}>
           <img
-            src="/images/cse logo.png"
+            src={getAssetUrl('/images/cse logo.png')}
             alt="CSE Logo"
             className="cse-header-logo-img"
             style={{
@@ -254,7 +246,7 @@ export default function App() {
         {/* Mobile Right Controls: CSE Logo + Blinking CSE Badge + Hamburger Menu Toggle */}
         <div className="mobile-right-controls">
           <img
-            src="/images/cse logo.png"
+            src={getAssetUrl('/images/cse logo.png')}
             alt="CSE Logo"
             className="mobile-cse-logo-img"
             style={{

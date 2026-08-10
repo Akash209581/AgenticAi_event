@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiFetch } from '../config/api';
 import {
   Users,
   UserCheck,
@@ -138,9 +139,8 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
     updateSlot(slotIndex, { loading: true, error: '' }, currentSlots);
 
     try {
-      const url = `/cseAI/student/${encodeURIComponent(trimmed)}?eventId=${encodeURIComponent(selectedEvent.id)}&eventTitle=${encodeURIComponent(selectedEvent.title)}`;
-      const res = await fetch(url);
-      const data = await res.json();
+      const url = `/student/${encodeURIComponent(trimmed)}?eventId=${encodeURIComponent(selectedEvent.id)}&eventTitle=${encodeURIComponent(selectedEvent.title)}`;
+      const { res, data } = await apiFetch(url);
 
       if (data.success && data.student) {
         if (data.isEnrolledInEvent === false) {
@@ -353,7 +353,7 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
         isLeader: idx === 0
       }));
 
-      const res = await fetch('/cseAI/team-register', {
+      const { res, data } = await apiFetch('/team-register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -364,9 +364,6 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
           members: membersPayload
         })
       });
-
-
-      const data = await res.json();
 
       if (data.success && data.team) {
         setRegistrationSuccess(data.team);

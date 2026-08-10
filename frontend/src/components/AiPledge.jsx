@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { getAssetUrl } from '../config/api';
 import { ShieldCheck, Award, ArrowRight, ArrowLeft, CheckCircle2, Download, RotateCcw, Sparkles, User, CheckCircle, XCircle, Lightbulb } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -128,7 +129,7 @@ function ThreeDBadgeCard({ name }) {
         {/* Base Badge Image Layer */}
         <div className="badge-3d-layer base-layer">
           <img
-            src="/ai-badge.png"
+            src={getAssetUrl('/ai-badge.png')}
             alt="AI Pledge Badge 3D"
             className="badge-image"
           />
@@ -260,7 +261,7 @@ export default function AiPledge() {
   const handleDownloadBadge = () => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    img.src = '/ai-badge.png';
+    img.src = getAssetUrl('/ai-badge.png');
 
     img.onload = () => {
       const canvas = document.createElement('canvas');
