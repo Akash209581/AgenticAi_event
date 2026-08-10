@@ -243,21 +243,8 @@ export default function App() {
           <span className="brand-title-center">AGENTIC AI DAY - 2026</span>
         </div>
 
-        {/* Mobile Right Controls: CSE Logo + Blinking CSE Badge + Hamburger Menu Toggle */}
+        {/* Mobile Right Controls: Blinking CSE Badge + Hamburger Menu Toggle */}
         <div className="mobile-right-controls">
-          <img
-            src={getAssetUrl('/images/cse logo.png')}
-            alt="CSE Logo"
-            className="mobile-cse-logo-img"
-            style={{
-              height: '38px',
-              width: 'auto',
-              objectFit: 'contain',
-              background: 'transparent',
-              mixBlendMode: 'screen',
-              filter: 'drop-shadow(0 0 6px rgba(0, 240, 255, 0.4))'
-            }}
-          />
           <span className="mobile-cse-badge blinking-cse-badge">CSE</span>
           <button
             className="mobile-menu-toggle"

@@ -2,9 +2,8 @@
  * API & Asset Base URL Configuration
  */
 
-// If VITE_API_BASE_URL is set in environment (e.g., VITE_API_BASE_URL=http://localhost:6007/cseAI),
-// use that; otherwise fallback to relative path '/cseAI'
-const RAW_API_BASE = (import.meta.env.VITE_API_BASE_URL || '/cseAI').trim();
+// If VITE_API_BASE_URL is set in environment, use that; otherwise fallback to 'https://vucse.app/cseAI'
+const RAW_API_BASE = (import.meta.env.VITE_API_BASE_URL || 'https://vucse.app/cseAI').trim();
 
 // Ensure no trailing slash
 export const API_BASE_URL = RAW_API_BASE.replace(/\/+$/, '');
