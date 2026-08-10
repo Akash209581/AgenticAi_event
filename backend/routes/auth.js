@@ -8,6 +8,7 @@ import mongoose from 'mongoose';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { BACKUP_POSTERS_DIR } from '../config/paths.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -488,7 +489,7 @@ router.post('/submit-event-content', async (req, res) => {
     if (submission && submission.posterFile && submission.posterFile.fileData && submission.posterFile.fileData.startsWith('data:')) {
       try {
         const uploadsDir = path.resolve(__dirname, '..', 'uploads', 'posters');
-        const backupsDir = path.resolve(__dirname, '..', 'backups', 'posters');
+        const backupsDir = BACKUP_POSTERS_DIR;
         if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
         if (!fs.existsSync(backupsDir)) fs.mkdirSync(backupsDir, { recursive: true });
 
@@ -504,11 +505,11 @@ router.post('/submit-event-content', async (req, res) => {
 
           fs.writeFileSync(filePath, buffer);
           fs.writeFileSync(backupFilePath, buffer);
-          console.log('✅ Poster File Saved to Uploads & Backup:', safeFileName);
+          console.log('✅ Poster File Saved to Uploads & External Backup:', backupFilePath);
 
           submission.posterFile.savedDiskPath = `uploads/posters/${safeFileName}`;
           submission.posterFile.serverUrl = `/uploads/posters/${safeFileName}`;
-          submission.posterFile.backupPath = `backups/posters/${safeFileName}`;
+          submission.posterFile.backupPath = backupFilePath;
         }
       } catch (diskErr) {
         console.warn('[Disk Save Warning]', diskErr.message);

@@ -42,25 +42,33 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
     setSuccessMsg('');
   }, [isOpen, event?.id, event?.title, currentUser]);
 
-  // Handle File selection
+  // Handle File selection (PDF ONLY, Max 10MB)
   const handleFileChange = useCallback((e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 12 * 1024 * 1024) {
-      setErrorMsg('File size exceeds 12MB limit. Please upload a smaller file or provide a Google Drive / cloud link.');
+
+    const isPdf = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
+    if (!isPdf) {
+      setErrorMsg('Invalid file format: Only PDF files (.pdf) are allowed for poster/paper submission.');
       return;
     }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setErrorMsg('File size exceeds 10MB limit. Please upload a PDF file under 10MB.');
+      return;
+    }
+
     setErrorMsg('');
     const reader = new FileReader();
     reader.onload = () => {
       setFileObj({
         fileName: file.name,
         fileSize: (file.size / (1024 * 1024)).toFixed(2) + ' MB',
-        fileType: file.type || file.name.split('.').pop(),
+        fileType: 'application/pdf',
         fileData: reader.result
       });
     };
-    reader.onerror = () => setErrorMsg('Failed to read the file. Please try again.');
+    reader.onerror = () => setErrorMsg('Failed to read the PDF file. Please try again.');
     reader.readAsDataURL(file);
   }, []);
 
@@ -70,9 +78,18 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
     setSuccessMsg('');
 
     if (isReels) {
-      if (!reelLink || !reelLink.trim()) { setErrorMsg('Please enter your video reel link.'); return; }
-      if (!reelLink.trim().startsWith('http://') && !reelLink.trim().startsWith('https://')) {
+      if (!reelLink || !reelLink.trim()) { setErrorMsg('Please enter your Public Google Drive video link.'); return; }
+      const trimmedLink = reelLink.trim().toLowerCase();
+      if (!trimmedLink.startsWith('http://') && !trimmedLink.startsWith('https://')) {
         setErrorMsg('Please enter a valid URL starting with http:// or https://'); return;
+      }
+      if (trimmedLink.includes('instagram.com') || trimmedLink.includes('insta.com')) {
+        setErrorMsg('Instagram reels are NOT allowed. Please upload your video to Google Drive, set access permission to "Anyone with the link (Public)", and submit the Google Drive link.');
+        return;
+      }
+      if (!trimmedLink.includes('drive.google.com') && !trimmedLink.includes('docs.google.com') && !trimmedLink.includes('google.com') && !trimmedLink.includes('cloud')) {
+        setErrorMsg('Please submit a Public Google Drive video link (e.g., https://drive.google.com/file/d/...).');
+        return;
       }
     }
 
@@ -331,12 +348,12 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
               {!hasSubmitted ? (
                 <>
                   <label style={{ display: 'block', fontSize: '0.88rem', fontWeight: '600', color: '#e2e8f0', marginBottom: '0.5rem' }}>
-                    Reel / Video Link: <span style={{ color: '#ef4444' }}>*</span>
+                    Public Google Drive Reel Video Link: <span style={{ color: '#ef4444' }}>*</span>
                   </label>
                   <div style={{ position: 'relative' }}>
                     <input
                       type="url"
-                      placeholder="https://www.instagram.com/reel/... or YouTube Shorts link"
+                      placeholder="https://drive.google.com/file/d/... (Public Link)"
                       value={reelLink}
                       onChange={(e) => setReelLink(e.target.value)}
                       style={{
@@ -354,7 +371,7 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
                     <LinkIcon size={18} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: '#fbbf24' }} />
                   </div>
                   <p style={{ color: '#94a3b8', fontSize: '0.78rem', marginTop: '0.5rem', lineHeight: '1.4' }}>
-                    💡 Tip: Ensure your reel link is set to <strong>Public</strong> so judges can view it.
+                    📌 <strong>Requirement:</strong> Upload your reel video to <strong>Google Drive</strong>, set General Access to <strong>"Anyone with the link (Public)"</strong>, and paste the link here. <em>(Instagram links are not accepted)</em>.
                   </p>
                 </>
               ) : (
@@ -373,10 +390,10 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
                     <Video size={24} color="#fbbf24" style={{ flexShrink: 0 }} />
                     <div style={{ overflow: 'hidden' }}>
                       <div style={{ color: '#fbbf24', fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase' }}>
-                        Submitted Reel Link
+                        Submitted Google Drive Reel Link
                       </div>
                       <div style={{ color: '#ffffff', fontSize: '0.9rem', fontWeight: '700', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                        {reelLink || 'Reel link submitted'}
+                        {reelLink || 'Google Drive reel link submitted'}
                       </div>
                     </div>
                   </div>
@@ -414,7 +431,7 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
               {!hasSubmitted ? (
                 <>
                   <label style={{ display: 'block', fontSize: '0.88rem', fontWeight: '600', color: '#e2e8f0', marginBottom: '0.5rem' }}>
-                    Upload Poster or Paper File (.pdf, .ppt, .pptx, .png, .jpg):
+                    Upload Poster or Paper PDF File (.pdf only, max 10MB):
                   </label>
 
                   {/* Upload Drop Area */}
@@ -434,16 +451,16 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
                     <input
                       id="poster-file-input"
                       type="file"
-                      accept=".pdf,.ppt,.pptx,.png,.jpg,.jpeg"
+                      accept=".pdf,application/pdf"
                       onChange={handleFileChange}
                       style={{ display: 'none' }}
                     />
                     <Upload size={32} color="#00f0ff" style={{ margin: '0 auto 0.5rem auto' }} />
                     <p style={{ color: '#f8fafc', fontSize: '0.9rem', fontWeight: '600', margin: '0 0 0.25rem 0' }}>
-                      Click to select poster/paper file
+                      Click to select PDF poster/paper file
                     </p>
                     <p style={{ color: '#94a3b8', fontSize: '0.78rem', margin: 0 }}>
-                      Supports PDF, PPT, PPTX, PNG, JPG (Max 12MB)
+                      Supports PDF files only (Max 10MB)
                     </p>
                   </div>
 
@@ -520,73 +537,72 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
               ) : (
                 /* READ-ONLY PREVIEW MODE FOR POSTER / PAPER */
                 <div style={{ display: 'grid', gap: '1.25rem' }}>
-                  {fileObj && (
-                    <div style={{
-                      background: 'rgba(0, 240, 255, 0.06)',
-                      border: '1px solid rgba(0, 240, 255, 0.3)',
-                      borderRadius: '14px',
-                      padding: '1.25rem'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                          <FileText size={22} color="#00f0ff" />
-                          <div>
-                            <div style={{ color: '#ffffff', fontWeight: '700', fontSize: '0.95rem' }}>
-                              {fileObj.fileName || 'Submitted Poster / Paper'}
+                  {(() => {
+                    const activeFile = fileObj || matchedEvent?.submission?.posterFile;
+                    if (!activeFile) return null;
+                    const src = activeFile.fileData || getUploadUrl(activeFile.serverUrl) || activeFile.savedDiskPath;
+
+                    return (
+                      <div style={{
+                        background: 'rgba(0, 240, 255, 0.06)',
+                        border: '1px solid rgba(0, 240, 255, 0.3)',
+                        borderRadius: '14px',
+                        padding: '1.25rem'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                            <FileText size={22} color="#00f0ff" />
+                            <div>
+                              <div style={{ color: '#ffffff', fontWeight: '700', fontSize: '0.95rem' }}>
+                                {activeFile.fileName || 'Submitted Poster / Paper (.pdf)'}
+                              </div>
+                              {activeFile.fileSize && (
+                                <span style={{ color: '#94a3b8', fontSize: '0.78rem' }}>{activeFile.fileSize}</span>
+                              )}
                             </div>
-                            {fileObj.fileSize && (
-                              <span style={{ color: '#94a3b8', fontSize: '0.78rem' }}>{fileObj.fileSize}</span>
-                            )}
                           </div>
+
+                          {src && (
+                            <a
+                              href={src}
+                              target="_blank"
+                              download={activeFile.fileName || 'submitted_poster.pdf'}
+                              rel="noopener noreferrer"
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.4rem',
+                                padding: '0.5rem 1rem',
+                                borderRadius: '8px',
+                                background: 'linear-gradient(135deg, #00f0ff, #0072ff)',
+                                color: '#ffffff',
+                                fontSize: '0.85rem',
+                                fontWeight: '700',
+                                textDecoration: 'none',
+                                boxShadow: '0 2px 12px rgba(0, 240, 255, 0.3)'
+                              }}
+                            >
+                              <ExternalLink size={15} /> Open / Download PDF
+                            </a>
+                          )}
                         </div>
 
-                        {(fileObj.fileData || fileObj.serverUrl || fileObj.savedDiskPath) && (
-                          <a
-                            href={fileObj.fileData || getUploadUrl(fileObj.serverUrl) || fileObj.savedDiskPath}
-                            target="_blank"
-                            download={fileObj.fileName || 'submitted_poster'}
-                            rel="noopener noreferrer"
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.4rem',
-                              padding: '0.5rem 1rem',
-                              borderRadius: '8px',
-                              background: 'linear-gradient(135deg, #00f0ff, #0072ff)',
-                              color: '#ffffff',
-                              fontSize: '0.85rem',
-                              fontWeight: '700',
-                              textDecoration: 'none',
-                              boxShadow: '0 2px 12px rgba(0, 240, 255, 0.3)'
-                            }}
-                          >
-                            <ExternalLink size={15} /> Open / Download File
-                          </a>
-                        )}
-                      </div>
-
-                      {/* Image Thumbnail Preview */}
-                      {(() => {
-                        const src = fileObj.fileData || getUploadUrl(fileObj.serverUrl) || fileObj.savedDiskPath;
-                        const isImg = src && (
-                          src.startsWith('data:image/') ||
-                          src.match(/\.(png|jpg|jpeg|webp)$/i) ||
-                          (fileObj.fileName && fileObj.fileName.match(/\.(png|jpg|jpeg|webp)$/i))
-                        );
-                        if (!isImg || !src) return null;
-
-                        return (
-                          <div style={{ textAlign: 'center', marginTop: '0.6rem', background: 'rgba(0,0,0,0.4)', padding: '0.5rem', borderRadius: '10px', overflow: 'hidden' }}>
-                            <img
+                        {/* Interactive PDF Document Preview */}
+                        {src && (
+                          <div style={{ textAlign: 'center', marginTop: '0.8rem', background: 'rgba(15, 23, 42, 0.8)', padding: '0.75rem', borderRadius: '10px', border: '1px solid rgba(0, 240, 255, 0.25)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.6rem', color: '#38bdf8', fontSize: '0.85rem', fontWeight: '600' }}>
+                              <FileText size={16} /> PDF Document Preview Loaded
+                            </div>
+                            <iframe
                               src={src}
-                              alt="Submitted Poster Preview"
-                              style={{ maxWidth: '100%', maxHeight: '210px', borderRadius: '8px', objectFit: 'contain', border: '1px solid rgba(0,240,255,0.2)' }}
+                              title="Submitted PDF Document Preview"
+                              style={{ width: '100%', height: '280px', borderRadius: '8px', border: 'none', background: '#ffffff' }}
                             />
                           </div>
-                        );
-                      })()}
-                    </div>
-                  )}
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {posterLink && (
                     <div style={{

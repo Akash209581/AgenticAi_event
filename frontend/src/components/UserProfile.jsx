@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { 
   User, Calendar, Hash, Phone, Mail, GraduationCap, Copy, Check, 
   Sparkles, LogOut, ShieldCheck, Trophy, Brain, Zap, FileText, 
-  Mic, Bot, Users, Video, Music, HelpCircle, ArrowRight, Trash2, Lock, Upload, ExternalLink
+  Mic, Bot, Users, Video, Music, HelpCircle, ArrowRight, Trash2, Lock, Upload, ExternalLink, MessageCircle
 } from 'lucide-react';
 import SubmissionModal from './SubmissionModal';
+import { getEventDetails } from '../data/eventsRulesData';
 
 const registeredEventsList = [
   // Technical Category
@@ -445,7 +446,36 @@ export default function UserProfile({ user, onLogout, onExploreEvents, onUnenrol
                   </div>
 
                   {/* Footer status button */}
-                  <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {/* WhatsApp Group Link for Registered Participant */}
+                    {(() => {
+                      const groupLink = item.whatsappGroupLink || getEventDetails(item.categoryId || item.catId, item.id, item.title)?.whatsappGroupLink || 'https://chat.whatsapp.com/YOUR_WHATSAPP_GROUP_LINK';
+                      return (
+                        <a
+                          href={groupLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="whatsapp-pass-btn"
+                          title="Join official WhatsApp group for event updates & announcements"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            padding: '0.35rem 0.75rem',
+                            borderRadius: '6px',
+                            background: 'linear-gradient(135deg, #25D366, #128C7E)',
+                            color: '#ffffff',
+                            fontSize: '0.75rem',
+                            fontWeight: '700',
+                            textDecoration: 'none',
+                            boxShadow: '0 2px 10px rgba(37, 211, 102, 0.35)'
+                          }}
+                        >
+                          <MessageCircle size={14} /> Join WhatsApp Group
+                        </a>
+                      );
+                    })()}
+
                     {item.isTeam || item.teamId ? (
                       <span
                         title="Team Registration Locked: You are part of an active team. Only Admin can remove team registrations."

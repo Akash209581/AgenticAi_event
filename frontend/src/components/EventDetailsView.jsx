@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Award, Phone, UserPlus, Sparkles, ShieldCheck, Calendar, Video, FileText, CheckCircle2, Bot, Zap } from 'lucide-react';
+import { ArrowLeft, Award, Phone, UserPlus, Sparkles, ShieldCheck, Calendar, Video, FileText, CheckCircle2, Bot, Zap, MessageCircle, ExternalLink, Lock } from 'lucide-react';
 import SubmissionModal from './SubmissionModal';
-import { isSameEvent } from '../data/eventsRulesData';
+import { isSameEvent, getEventDetails } from '../data/eventsRulesData';
 import { getAssetUrl } from '../config/api';
 
 export default function EventDetailsView({ event, onBack, onRegister, currentUser = null, onEnrollEvent, onSubmissionUpdate }) {
@@ -25,12 +25,47 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
   return (
     <div className="event-detail-page">
       <div className="event-detail-container">
-        {/* PROMINENT STANDALONE BACK BUTTON BAR */}
-        <div className="event-details-back-bar">
+        {/* PROMINENT STANDALONE BACK BUTTON BAR WITH TOP-RIGHT WHATSAPP BUTTON */}
+        <div className="event-details-back-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
           <button className="back-to-events-btn" onClick={onBack} type="button">
             <ArrowLeft size={18} />
             <span>Back to Events</span>
           </button>
+
+          {/* TOP-RIGHT WHATSAPP GROUP BUTTON */}
+          {(() => {
+            const groupLink = event.whatsappGroupLink || getEventDetails(event.categoryId, event.id, event.title)?.whatsappGroupLink || 'https://chat.whatsapp.com/YOUR_WHATSAPP_GROUP_LINK';
+            
+            if (isEnrolled) {
+              return (
+                <a
+                  href={groupLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="whatsapp-top-btn active"
+                  title="Join official WhatsApp group for event updates & announcements"
+                >
+                  <MessageCircle size={18} />
+                  <span>Join WhatsApp Group</span>
+                  <ExternalLink size={14} style={{ opacity: 0.85 }} />
+                </a>
+              );
+            }
+
+            return (
+              <button
+                type="button"
+                className="whatsapp-top-btn locked"
+                onClick={() => {
+                  alert(`🔒 Registration Required:\n\nPlease register for '${event.title}' first to unlock access to the official WhatsApp group!`);
+                }}
+                title="Register for this event to unlock the WhatsApp group link"
+              >
+                <Lock size={16} />
+                <span>Join WhatsApp Group</span>
+              </button>
+            );
+          })()}
         </div>
 
         {/* TOP HEADER WITH CENTERED HEADINGS */}

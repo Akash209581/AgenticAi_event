@@ -7,6 +7,7 @@ export const eventsRulesData = {
     title: 'AGENTIC AI HACKATHON',
     cardTitle: 'AGENTIC AI HACKATHON',
     image: '/images/event_hackathon_1786084020517.png',
+    whatsappGroupLink: 'https://chat.whatsapp.com/DY7Ok514zSmCLiueVk2lq2',
     eventDate: '27th & 28th August 2026',
     registrationDeadline: '26th August 2026',
     teamSize: 'Strictly 4 members (1x 4th Year, 2x 3rd Year, 1x 2nd Year)',
@@ -39,7 +40,8 @@ export const eventsRulesData = {
       { name: 'Dr. Veeranjaneyulu (Faculty)', phone: '+91 94922 46551' },
       { name: 'Mrs. J. Dayanika (Faculty)', phone: '+91 70134 47336' },
       { name: 'Ms. Sk. Kareena Yashmin (Faculty)', phone: '+91 78010 17820' },
-      { name: 'Student Coordinator', phone: 'To be announced' }
+      { name: 'Ayinampudi Susmitha Chowdary (student)', phone: '+91 63015 23026' },
+      { name: 'Leeladhar (student)', phone: '+91 99089 11201' }
     ]
   },
   'technical-2': {
@@ -49,6 +51,7 @@ export const eventsRulesData = {
     title: 'AI PROMPT COMBAT',
     cardTitle: 'AI PROMPT COMBAT',
     image: '/images/event_prompt_1786084056457.png',
+    whatsappGroupLink: 'https://chat.whatsapp.com/GwFj6uLSo2LEx2P3qoQjhH',
     registrationDeadline: '26 August 2026',
     eventDate: '29 August 2026',
     reportingTime: '10:00 AM',
@@ -112,6 +115,8 @@ export const eventsRulesData = {
     title: 'PAPER / POSTER PRESENTATION',
     cardTitle: 'PAPER / POSTER',
     image: '/images/event_paper_poster.png',
+    whatsappGroupLink: ' https://chat.whatsapp.com/Fnp1kBsezE88pohkcMkQ02',
+    registrationDeadline: '26 August 2026',
     rules: [
       'Maximum 3 students per team.',
       'Participants must carry their college ID card.',
@@ -163,6 +168,8 @@ export const eventsRulesData = {
     title: 'PODCAST WITH INDUSTRY PROFESSIONALS',
     cardTitle: 'AI PODCAST',
     image: '/images/event_podcast.png',
+    whatsappGroupLink: 'https://chat.whatsapp.com/KBmnvLXFihgAEAiDXTvmcL',
+    eventDate: '28 August 2026',
     rules: [
       'Interactive live discussion with AI industry experts and leaders.',
       'Participants can submit questions during registration or live during Q&A.',
@@ -187,6 +194,8 @@ export const eventsRulesData = {
     title: 'AI AGENTS EXPO',
     cardTitle: 'AI AGENTS EXPO',
     image: '/images/event_expo.png',
+    whatsappGroupLink: ' https://chat.whatsapp.com/FHIm45h2bt560DT2Mt8nVb',
+    eventDate: '28 August 2026',
     rules: [
       'Team size Max:4 & Min:2',
       'Participants should be aware that there will be a prior evaluation, and only those who are shortlisted will have the opportunity to present at the event.',
@@ -209,6 +218,8 @@ export const eventsRulesData = {
     title: 'AI SUMMIT - INDUSTRY INTERACTION',
     cardTitle: 'AI SUMMIT',
     image: '/images/event_summit.png',
+    whatsappGroupLink: ' https://chat.whatsapp.com/BP9ozDg2pno4CZT2KQOfoF',
+    eventDate: '29 August 2026',
     rules: [
       'Keynote presentations and panel sessions featuring tech leaders.',
       'Networking session for students with industry mentors and recruiters.',
@@ -234,13 +245,14 @@ export const eventsRulesData = {
     title: 'REELS COMPETITION (AI FOR SOCIETY)',
     cardTitle: 'REELS COMPETITION',
     image: '/images/event_reels.png',
+    whatsappGroupLink: ' https://chat.whatsapp.com/H5k9zmXALxEJmxBCatChv7',
     rules: [
       'Reel duration must be strictly 30 to 60 seconds.',
       'Theme: "AI for Society" (showing positive impact of AI in education, health, agriculture, sustainability, etc.).',
       'Content must be AI-generated or AI-assisted (visuals, voiceover, music, or animations).',
       'Participants must mention all AI tools used in content creation / description.',
-      'Upload the reel on designated social media platform with official event hashtags.',
-      'Submit the post link before the registration deadline.',
+      'Upload the reel/video file to Google Drive and ensure link access permission is set to "Anyone with the link (Public)".',
+      'Submit the public Google Drive video link before the registration deadline (Instagram links are NOT accepted).',
       'Content must be original, watermarks removed, and strictly non-copyright violating.',
       'Offensive, misleading, hateful, or inappropriate content will lead to immediate disqualification.',
       "Judges' decision will be final."
@@ -269,6 +281,8 @@ export const eventsRulesData = {
     title: 'AI MUSICAL COMPETITION',
     cardTitle: 'AI MUSICAL',
     image: '/images/event_musical.png',
+    whatsappGroupLink: ' https://chat.whatsapp.com/F5kLamLrx1i8Q2ehFdgWyP',
+    eventDate: '29 August 2026',
     teamSize: 'Strictly 3 members per team',
     rules: [
       'Eligibility: Open to all B.Tech students from all departments and all academic years.',
@@ -297,6 +311,8 @@ export const eventsRulesData = {
     title: 'AGENTIC DAY QUIZ CHALLENGE 2026',
     cardTitle: 'AI QUIZ',
     image: '/images/event_quiz.png',
+    whatsappGroupLink: 'https://chat.whatsapp.com/Lp6H85SdIyf9mKFxFV0iDm',
+    eventDate: '29 August 2026',
     topics: [
       'Real-World AI Use Cases & Case Studies',
       'AI Reasoning & Decision-Making',
@@ -339,7 +355,9 @@ export const eventsRulesData = {
     coordinators: [
       { name: 'Mrs. Spandana (Faculty)', phone: '+91 99483 68555' },
       { name: 'Ms. Sajida (Faculty)', phone: '+91 79814 03193' },
-      { name: 'Student Coordinator', phone: 'To be announced' }
+      { name: 'Mulpuri Mukunda Naga Datta Sarma (Student)', phone: '+91 91821 41804' },
+      { name: 'Manukonda Deepak Sai (Student)', phone: '+91 77807 70159' },
+      { name: 'Nagineni Venkata Sai Krishna (Student)', phone: '+91 63043 68343' }
     ]
   }
 };

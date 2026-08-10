@@ -7,6 +7,7 @@ import { Team } from '../models/Team.js';
 import { generateAiId, memoryUsers } from '../utils/idGenerator.js';
 import { requireAdminAuth, getAdminSecretToken } from '../middleware/adminAuth.js';
 import mongoose from 'mongoose';
+import { BACKUP_DB_DIR, BACKUP_POSTERS_DIR, BACKUP_DIR } from '../config/paths.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -921,8 +922,8 @@ router.delete('/team/:teamId', async (req, res) => {
 router.post('/admin/create-backup', requireAdminAuth, async (req, res) => {
   try {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const backupDbDir = path.resolve(__dirname, '..', 'backups', 'db');
-    const backupPostersDir = path.resolve(__dirname, '..', 'backups', 'posters');
+    const backupDbDir = BACKUP_DB_DIR;
+    const backupPostersDir = BACKUP_POSTERS_DIR;
     const uploadsPostersDir = path.resolve(__dirname, '..', 'uploads', 'posters');
 
     if (!fs.existsSync(backupDbDir)) fs.mkdirSync(backupDbDir, { recursive: true });
@@ -963,14 +964,15 @@ router.post('/admin/create-backup', requireAdminAuth, async (req, res) => {
 
     return res.json({
       success: true,
-      message: 'Backup created successfully on server!',
+      message: 'Backup created successfully on external server directory!',
       timestamp,
+      backupLocation: BACKUP_DIR,
       userCount: users.length,
       teamCount: teams.length,
       postersCopied: copiedCount,
       files: {
-        users: `backups/db/users_backup_${timestamp}.json`,
-        teams: `backups/db/teams_backup_${timestamp}.json`
+        users: path.join(backupDbDir, `users_backup_${timestamp}.json`),
+        teams: path.join(backupDbDir, `teams_backup_${timestamp}.json`)
       }
     });
   } catch (error) {
