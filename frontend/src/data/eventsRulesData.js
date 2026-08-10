@@ -51,7 +51,7 @@ export const eventsRulesData = {
     title: 'AI PROMPT COMBAT',
     cardTitle: 'AI PROMPT COMBAT',
     image: '/images/event_prompt_1786084056457.png',
-    whatsappGroupLink: 'https://chat.whatsapp.com/GwFj6uLSo2LEx2P3qoQjhH',
+    whatsappGroupLink: 'https://chat.whatsapp.com/Dip9w8RQeulBuPvgcaPas0?s=cl&p=a&ilr=4',
     registrationDeadline: '26 August 2026',
     eventDate: '29 August 2026',
     reportingTime: '10:00 AM',
@@ -115,7 +115,7 @@ export const eventsRulesData = {
     title: 'PAPER / POSTER PRESENTATION',
     cardTitle: 'PAPER / POSTER',
     image: '/images/event_paper_poster.png',
-    whatsappGroupLink: ' https://chat.whatsapp.com/Fnp1kBsezE88pohkcMkQ02',
+    whatsappGroupLink: 'https://chat.whatsapp.com/Fnp1kBsezE88pohkcMkQ02',
     registrationDeadline: '26 August 2026',
     rules: [
       'Maximum 3 students per team.',
@@ -176,11 +176,6 @@ export const eventsRulesData = {
       'Certificates of active participation will be awarded.',
       'Strict decorum and professional etiquette must be maintained throughout.'
     ],
-    prizes: [
-      { rank: 'First', amount: 'Rs. 3000/-' },
-      { rank: 'Second', amount: 'Rs. 2000/-' },
-      { rank: 'Third', amount: 'Rs. 1000/-' }
-    ],
     coordinators: [
       { name: 'Dr. O. Baskaru (Faculty)', phone: '+91 63015 77419' },
       { name: 'Mr. Rajulu (Faculty)', phone: '+91 97050 21183' },
@@ -194,7 +189,7 @@ export const eventsRulesData = {
     title: 'AI AGENTS EXPO',
     cardTitle: 'AI AGENTS EXPO',
     image: '/images/event_expo.png',
-    whatsappGroupLink: ' https://chat.whatsapp.com/FHIm45h2bt560DT2Mt8nVb',
+    whatsappGroupLink: 'https://chat.whatsapp.com/FHIm45h2bt560DT2Mt8nVb',
     eventDate: '28 August 2026',
     rules: [
       'Team size Max:4 & Min:2',
@@ -218,7 +213,7 @@ export const eventsRulesData = {
     title: 'AI SUMMIT - INDUSTRY INTERACTION',
     cardTitle: 'AI SUMMIT',
     image: '/images/event_summit.png',
-    whatsappGroupLink: ' https://chat.whatsapp.com/BP9ozDg2pno4CZT2KQOfoF',
+    whatsappGroupLink: 'https://chat.whatsapp.com/BP9ozDg2pno4CZT2KQOfoF',
     eventDate: '29 August 2026',
     rules: [
       'Keynote presentations and panel sessions featuring tech leaders.',
@@ -245,7 +240,7 @@ export const eventsRulesData = {
     title: 'REELS COMPETITION (AI FOR SOCIETY)',
     cardTitle: 'REELS COMPETITION',
     image: '/images/event_reels.png',
-    whatsappGroupLink: ' https://chat.whatsapp.com/H5k9zmXALxEJmxBCatChv7',
+    whatsappGroupLink: 'https://chat.whatsapp.com/H5k9zmXALxEJmxBCatChv7',
     rules: [
       'Reel duration must be strictly 30 to 60 seconds.',
       'Theme: "AI for Society" (showing positive impact of AI in education, health, agriculture, sustainability, etc.).',
@@ -281,7 +276,7 @@ export const eventsRulesData = {
     title: 'AI MUSICAL COMPETITION',
     cardTitle: 'AI MUSICAL',
     image: '/images/event_musical.png',
-    whatsappGroupLink: ' https://chat.whatsapp.com/F5kLamLrx1i8Q2ehFdgWyP',
+    whatsappGroupLink: 'https://chat.whatsapp.com/F5kLamLrx1i8Q2ehFdgWyP',
     eventDate: '29 August 2026',
     teamSize: 'Strictly 3 members per team',
     rules: [
@@ -301,7 +296,7 @@ export const eventsRulesData = {
     ],
     coordinators: [
       { name: 'Mr. Khadarsha (Faculty)', phone: '+91 83093 00881' },
-      { name: 'Student Coordinator', phone: 'To be announced' }
+      { name: 'Hara naga sai (student)', phone: '+91 93462 51951' }
     ]
   },
   'creative-3': {

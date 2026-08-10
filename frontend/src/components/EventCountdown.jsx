@@ -41,9 +41,14 @@ export default function EventCountdown({ onExploreEvents }) {
         <span className="spark-dot spark-bottom"></span>
         <span className="spark-dot spark-left"></span>
 
+        {/* Presenter Subtitle */}
+        <div className="countdown-presenter-tag">
+          <span className="cse-blink-text">CSE</span> PRESENTS...
+        </div>
+
         {/* Clean Heading */}
         <h2 className="countdown-clean-title">
-          Live Countdown to Agentic AI Day
+          Agentic Day-2026
         </h2>
         <p className="countdown-date-sub">29th August 2026</p>
 

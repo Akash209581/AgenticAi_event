@@ -234,12 +234,15 @@ export default function App() {
 
   return (
     <div>
+      {/* Home Main Background */}
+      <div className="home-background" />
+
       {/* Background Route Overlay */}
       <NavOverlay activeTab={activeTab} />
 
       {/* Navbar Header */}
       <nav className="navbar">
-        {/* Left Side: CSE Logo Image + Blinking CSE Badge + Mobile Title */}
+        {/* Left Side: CSE Logo Image + Mobile Title */}
         <div className="brand" onClick={() => changeTab('home', '/')}>
           <img
             src={getAssetUrl('/images/cse logo.png')}
@@ -256,8 +259,7 @@ export default function App() {
               cursor: 'pointer'
             }}
           />
-          <span className="desktop-cse-badge blinking-cse-badge">CSE</span>
-          <span className="mobile-brand-title">AGENTIC AI DAY - 2026</span>
+          <span className="mobile-brand-title">AGENTIC DAY - 2026</span>
         </div>
 
         {/* Center: AGENTIC AI DAY - 2026 (Desktop) */}
@@ -265,9 +267,8 @@ export default function App() {
           <span className="brand-title-center">AGENTIC AI DAY - 2026</span>
         </div>
 
-        {/* Mobile Right Controls: Blinking CSE Badge + Hamburger Menu Toggle */}
+        {/* Mobile Right Controls: Hamburger Menu Toggle */}
         <div className="mobile-right-controls">
-          <span className="mobile-cse-badge blinking-cse-badge">CSE</span>
           <button
             className="mobile-menu-toggle"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
