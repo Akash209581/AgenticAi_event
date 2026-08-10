@@ -8,6 +8,7 @@ export default defineConfig({
     emptyOutDir: true
   },
   server: {
+    host: true,
     port: 3000,
     proxy: {
       '/cseAI': {

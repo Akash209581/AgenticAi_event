@@ -1,57 +1,24 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Award, Phone, UserPlus, Sparkles, ShieldCheck, Calendar, Video, FileText, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Award, Phone, UserPlus, Sparkles, ShieldCheck, Calendar, Video, FileText, CheckCircle2, Bot, Zap } from 'lucide-react';
 import SubmissionModal from './SubmissionModal';
+import { isSameEvent } from '../data/eventsRulesData';
 
 export default function EventDetailsView({ event, onBack, onRegister, currentUser = null, onEnrollEvent, onSubmissionUpdate }) {
   const [isSubmissionModalOpen, setIsSubmissionModalOpen] = useState(false);
+  // Track freshly submitted data locally so button updates even before parent re-renders
+  const [localSubmission, setLocalSubmission] = useState(null);
 
   if (!event) return null;
 
-  const cleanTargetTitle = String(event.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-  const targetCat = String(event.categoryId || event.categoryName || '').toLowerCase();
-  const targetId = String(event.id || '').toLowerCase();
-
-  const isEnrolled = currentUser?.registeredEvents?.some(e => {
-    const cleanETitle = String(e.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-    const eCat = String(e.categoryId || e.categoryName || '').toLowerCase();
-    const eId = String(e.id || '').toLowerCase();
-
-    // 1. Title match
-    if (cleanTargetTitle && cleanETitle) {
-      if (cleanTargetTitle === cleanETitle || cleanTargetTitle.includes(cleanETitle) || cleanETitle.includes(cleanTargetTitle)) {
-        return true;
-      }
-    }
-
-    // 2. ID match (ensure category match if numeric ID)
-    if (targetId && eId && targetId === eId) {
-      if (!/^[0-9]+$/.test(targetId)) {
-        return true;
-      }
-      if (targetCat && eCat && (targetCat.includes(eCat) || eCat.includes(targetCat))) {
-        return true;
-      }
-    }
-
-    return false;
-  });
+  const isEnrolled = currentUser?.registeredEvents?.some(e => isSameEvent(event, e));
 
   const isReels = event.id === 'creative-1' || (event.id === '1' && (event.categoryId === 'creative' || String(event.categoryId).toLowerCase() === 'creative')) || (event.title && event.title.toLowerCase().includes('reel'));
   const isPoster = event.id === 'technical-3' || (event.id === '3' && (event.categoryId === 'technical' || String(event.categoryId).toLowerCase() === 'technical')) || (event.title && (event.title.toLowerCase().includes('poster') || event.title.toLowerCase().includes('paper')));
 
-  const matchedRegisteredEvent = currentUser?.registeredEvents?.find(e => {
-    const cleanETitle = String(e.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-    if (cleanTargetTitle && cleanETitle && (cleanTargetTitle.includes(cleanETitle) || cleanETitle.includes(cleanTargetTitle))) {
-      return true;
-    }
-    const eId = String(e.id || '').toLowerCase();
-    if (targetId && eId && targetId === eId && !/^[0-9]+$/.test(targetId)) {
-      return true;
-    }
-    return false;
-  });
+  const matchedRegisteredEvent = currentUser?.registeredEvents?.find(e => isSameEvent(event, e));
 
-  const existingSubmission = matchedRegisteredEvent?.submission;
+  // Merge: use locally tracked submission data as fallback if parent hasn't re-rendered yet
+  const existingSubmission = matchedRegisteredEvent?.submission || localSubmission;
 
 
   return (
@@ -113,21 +80,23 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
                 onClick={() => setIsSubmissionModalOpen(true)}
               >
                 <Video size={18} />
-                <span>{existingSubmission?.reelLink ? 'View / Update Reel Link' : 'Submit Reel Link'}</span>
+                <span>{existingSubmission?.reelLink ? 'Reel Submitted (Preview)' : 'Submit Reel Link'}</span>
               </button>
             ) : isPoster ? (
               <button
-                className="card-quick-register-btn"
+                className={`card-quick-register-btn ${(existingSubmission?.posterFile || existingSubmission?.posterLink) ? '' : 'poster-upload-btn-blinking'}`}
                 style={{
                   background: (existingSubmission?.posterFile || existingSubmission?.posterLink)
                     ? 'linear-gradient(135deg, #10b981, #059669)'
-                    : 'linear-gradient(135deg, #00f0ff, #0072ff)',
-                  borderColor: '#00f0ff'
+                    : undefined,
+                  borderColor: (existingSubmission?.posterFile || existingSubmission?.posterLink)
+                    ? '#10b981'
+                    : undefined
                 }}
                 onClick={() => setIsSubmissionModalOpen(true)}
               >
                 <FileText size={18} />
-                <span>{(existingSubmission?.posterFile || existingSubmission?.posterLink) ? 'View / Update Poster / Paper' : 'Upload Poster / Paper'}</span>
+                <span>{(existingSubmission?.posterFile || existingSubmission?.posterLink) ? 'Poster Submitted (Preview)' : 'Upload Poster / Paper'}</span>
               </button>
             ) : (
               <div
@@ -151,9 +120,9 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
               marginTop: '0.85rem',
               padding: '0.65rem 0.85rem',
               borderRadius: '12px',
-              background: 'rgba(239, 68, 68, 0.15)',
-              border: '1.5px solid rgba(248, 113, 113, 0.45)',
-              color: '#f87171',
+              background: 'rgba(0, 114, 255, 0.15)',
+              border: '1.5px solid rgba(0, 240, 255, 0.5)',
+              color: '#00f0ff',
               fontSize: '0.85rem',
               fontWeight: '700',
               textAlign: 'center',
@@ -161,10 +130,10 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
               alignItems: 'center',
               justifyContent: 'center',
               gap: '0.45rem',
-              boxShadow: '0 4px 15px rgba(239, 68, 68, 0.2)',
+              boxShadow: '0 4px 15px rgba(0, 114, 255, 0.25)',
               width: '100%'
             }}>
-              <Calendar size={16} style={{ color: '#002affff', flexShrink: 0 }} />
+              <Calendar size={16} style={{ color: '#00f0ff', flexShrink: 0 }} />
               <span>Registration Deadline: <strong>{event.registrationDeadline || '26 August 2026'}</strong></span>
             </div>
           </div>
@@ -199,6 +168,76 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
                       </li>
                     ))}
                   </ul>
+                </div>
+              )}
+
+              {/* SPECIAL AI AGENT BOOTCAMP PROMO BANNER FOR AI AGENTS EXPO */}
+              {(event.id === 'industry-2' || (event.title && event.title.toLowerCase().includes('expo'))) && (
+                <div className="bootcamp-promo-banner-card">
+                  <div className="bootcamp-top-header">
+                    <h4 className="bootcamp-question-subtitle">DON’T KNOW HOW TO BUILD AN AI AGENT?</h4>
+                    <h2 className="bootcamp-main-heading">JOIN THE AI AGENT BOOTCAMP!</h2>
+                  </div>
+
+                  <div className="bootcamp-meta-row">
+                    <div className="bootcamp-date-badge">
+                      <Calendar size={18} style={{ color: '#00f0ff' }} />
+                      <span><strong>14 AUGUST 2026</strong></span>
+                    </div>
+                    <div className="bootcamp-ambassador-badge">
+                      <Award size={18} style={{ color: '#fbbf24' }} />
+                      <span>Hands-on Bootcamp with <strong>Google Student Ambassador</strong></span>
+                    </div>
+                  </div>
+
+                  <div className="bootcamp-pillars-container">
+                    <div className="bootcamp-pillar-item">
+                      <div className="pillar-icon-circle cyan">
+                        <Bot size={22} />
+                      </div>
+                      <span className="pillar-label-text">Learn to Build AI Agent</span>
+                    </div>
+
+                    <div className="bootcamp-pillar-item">
+                      <div className="pillar-icon-circle gold">
+                        <Sparkles size={22} />
+                      </div>
+                      <span className="pillar-label-text">Create Agent workflows</span>
+                    </div>
+
+                    <div className="bootcamp-pillar-item">
+                      <div className="pillar-icon-circle purple">
+                        <Zap size={22} />
+                      </div>
+                      <span className="pillar-label-text">Integrate Tools</span>
+                    </div>
+
+                    <div className="bootcamp-pillar-item">
+                      <div className="pillar-icon-circle green">
+                        <ShieldCheck size={22} />
+                      </div>
+                      <span className="pillar-label-text">Build & Test Your Own Agent</span>
+                    </div>
+                  </div>
+
+                  {/* BOTTOM TIMELINE FLOW */}
+                  <div className="bootcamp-timeline-bar">
+                    <div className="timeline-node">
+                      <span className="node-text">LEARN ON 14 AUG</span>
+                    </div>
+                    <span className="timeline-arrow">➔</span>
+                    <div className="timeline-node gold">
+                      <span className="node-text">BUILD</span>
+                    </div>
+                    <span className="timeline-arrow">➔</span>
+                    <div className="timeline-node purple">
+                      <span className="node-text">REGISTER</span>
+                    </div>
+                    <span className="timeline-arrow">➔</span>
+                    <div className="timeline-node cyan">
+                      <span className="node-text">SHOWCASE ON 29 AUG</span>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -289,22 +328,28 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
               </h2>
               <div className="contacts-list">
                 {event.coordinators && event.coordinators.length > 0 ? (
-                  event.coordinators.map((c, idx) => (
-                    <div key={idx} className="contact-item-row">
-                      {c.name && <span className="contact-name-text">{c.name}:</span>}{' '}
-                      {c.phone ? (
-                        c.phone.trim().startsWith('+') ? (
-                          <a href={`tel:${c.phone}`} className="contact-phone-link">
-                            {c.phone}
-                          </a>
-                        ) : (
-                          <span className="contact-phone-link" style={{ textDecoration: 'none' }}>
-                            {c.phone}
-                          </span>
-                        )
-                      ) : null}
-                    </div>
-                  ))
+                  event.coordinators.map((c, idx) => {
+                    let formattedName = c.name || '';
+                    if (formattedName && !formattedName.toLowerCase().includes('student') && !formattedName.includes('(Faculty)')) {
+                      formattedName = `${formattedName} (Faculty)`;
+                    }
+                    return (
+                      <div key={idx} className="contact-item-row">
+                        {formattedName && <span className="contact-name-text">{formattedName}:</span>}{' '}
+                        {c.phone ? (
+                          c.phone.trim().startsWith('+') ? (
+                            <a href={`tel:${c.phone}`} className="contact-phone-link">
+                              {c.phone}
+                            </a>
+                          ) : (
+                            <span className="contact-phone-link" style={{ textDecoration: 'none' }}>
+                              {c.phone}
+                            </span>
+                          )
+                        ) : null}
+                      </div>
+                    );
+                  })
                 ) : (
                   <>
                     <div className="contact-item-row">
@@ -334,6 +379,17 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
         event={event}
         currentUser={currentUser}
         onSubmitSuccess={(updatedEvents) => {
+          // Find submitted item in updated events and store locally
+          if (Array.isArray(updatedEvents)) {
+            const cleanT = String(event?.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+            const match = updatedEvents.find(e => {
+              const eT = String(e.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+              return cleanT && eT && (cleanT.includes(eT) || eT.includes(cleanT));
+            });
+            if (match && match.submission) {
+              setLocalSubmission(match.submission);
+            }
+          }
           if (onSubmissionUpdate) {
             onSubmissionUpdate(updatedEvents);
           }

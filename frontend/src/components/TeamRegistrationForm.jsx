@@ -15,6 +15,7 @@ import {
   Zap,
   Award
 } from 'lucide-react';
+import { isSameEvent } from '../data/eventsRulesData';
 
 const TEAM_EVENTS = [
   {
@@ -93,6 +94,16 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
   const [registrationSuccess, setRegistrationSuccess] = useState(null);
 
   const selectedEvent = TEAM_EVENTS.find(e => e.id === selectedEventId) || TEAM_EVENTS[0];
+  const teamFormRef = React.useRef(null);
+
+  const handleSelectEvent = (eventId) => {
+    setSelectedEventId(eventId);
+    setTimeout(() => {
+      if (teamFormRef.current) {
+        teamFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+  };
 
   // Initialize or re-adjust slots whenever selected event changes
   useEffect(() => {
@@ -228,21 +239,10 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
 
   const currentUserHasSubmittedSelectedEvent = React.useMemo(() => {
     if (!currentUser || !Array.isArray(currentUser.registeredEvents)) return false;
-    const cleanEventTitle = String(selectedEvent.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
     
     return currentUser.registeredEvents.some(e => {
-      const cleanETitle = String(e.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-      const hasSub = e.submission && (e.submission.reelLink || e.submission.posterFile || e.submission.posterLink);
-      
-      if (cleanEventTitle && cleanETitle && (cleanEventTitle.includes(cleanETitle) || cleanETitle.includes(cleanEventTitle))) {
-        return hasSub;
-      }
-      const eId = String(e.id || '').toLowerCase();
-      const selId = String(selectedEvent.id || '').toLowerCase();
-      if (eId && selId && (eId === selId || selId.includes(eId))) {
-        return hasSub;
-      }
-      return false;
+      const hasSub = Boolean(e.submission && (e.submission.reelLink || e.submission.posterFile || e.submission.posterLink));
+      return hasSub && isSameEvent(selectedEvent, e);
     });
   }, [currentUser, selectedEvent]);
 
@@ -543,13 +543,13 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
           <Award size={20} /> SELECT COMPETITION EVENT (6 EVENTS AVAILABLE)
         </h3>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.85rem' }}>
           {TEAM_EVENTS.map(event => {
             const isSelected = event.id === selectedEventId;
             return (
               <div
                 key={event.id}
-                onClick={() => setSelectedEventId(event.id)}
+                onClick={() => handleSelectEvent(event.id)}
                 style={{
                   background: isSelected ? 'rgba(0, 242, 254, 0.12)' : 'rgba(15, 23, 42, 0.6)',
                   border: isSelected ? '2px solid var(--primary-cyan)' : '1px solid rgba(255, 255, 255, 0.1)',
@@ -580,6 +580,10 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)', margin: 0, lineHeight: 1.5 }}>
                   {event.note}
                 </p>
+
+                <div style={{ marginTop: '1rem', fontSize: '0.8rem', fontWeight: '700', color: isSelected ? 'var(--primary-cyan)' : '#64748b', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <span>{isSelected ? '✓ Selected — Form Team Below' : 'Click to Select & Form Team ➔'}</span>
+                </div>
               </div>
             );
           })}
@@ -587,7 +591,18 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
       </div>
 
       {/* STEP 2: TEAM DETAILS FORM */}
-      <form onSubmit={handleSubmit} className="form-card" style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '16px', padding: '2.5rem' }}>
+      <form
+        ref={teamFormRef}
+        onSubmit={handleSubmit}
+        className="form-card"
+        style={{
+          background: 'rgba(15, 23, 42, 0.8)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '16px',
+          padding: '2.5rem',
+          scrollMarginTop: '100px'
+        }}
+      >
         <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#ffffff', marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Zap size={20} style={{ color: 'var(--primary-cyan)' }} />
           TEAM FORMATION FOR <span style={{ color: 'var(--primary-cyan)' }}>{selectedEvent.title}</span>

@@ -374,17 +374,50 @@ router.post('/submit-event-content', async (req, res) => {
       user.registeredEvents = [];
     }
 
-    const cleanEvtId = String(eventId || '').trim().toLowerCase();
-    const cleanEvtTitle = String(eventTitle || '').trim().toLowerCase();
-
-    let eventIdx = user.registeredEvents.findIndex(e => {
+    const isMatchEvent = (targetId, targetTitle, e) => {
       const eId = String(e.id || '').trim().toLowerCase();
       const eTitle = String(e.title || '').trim().toLowerCase();
-      if (cleanEvtId && eId === cleanEvtId) return true;
-      if (cleanEvtTitle && eTitle === cleanEvtTitle) return true;
-      if (cleanEvtTitle && (eTitle.includes(cleanEvtTitle) || cleanEvtTitle.includes(eTitle))) return true;
+      const tId = String(targetId || '').trim().toLowerCase();
+      const tTitle = String(targetTitle || '').trim().toLowerCase();
+
+      // Check domain keyword matches first (prevents Reels matching Hackathon even if both have id='1')
+      const isReelsTarget = tTitle.includes('reel') || tId.includes('creative-1');
+      const isReelsE = eTitle.includes('reel') || eId.includes('creative-1');
+      if (isReelsTarget || isReelsE) return isReelsTarget && isReelsE;
+
+      const isPosterTarget = tTitle.includes('poster') || tTitle.includes('paper') || tId.includes('technical-3');
+      const isPosterE = eTitle.includes('poster') || eTitle.includes('paper') || eId.includes('technical-3');
+      if (isPosterTarget || isPosterE) return isPosterTarget && isPosterE;
+
+      const isHackTarget = tTitle.includes('hack') || tId.includes('technical-1');
+      const isHackE = eTitle.includes('hack') || eId.includes('technical-1');
+      if (isHackTarget || isHackE) return isHackTarget && isHackE;
+
+      // Non-numeric direct ID match (e.g. 'creative-1')
+      if (tId && eId && tId === eId && !/^[0-9]+$/.test(tId)) return true;
+
+      // Exact title match or normalized title match
+      if (tTitle && eTitle) {
+        if (tTitle === eTitle || tTitle.includes(eTitle) || eTitle.includes(tTitle)) return true;
+        const norm1 = tTitle.replace(/competation/g, 'competition').replace(/[^a-z0-9]/g, '');
+        const norm2 = eTitle.replace(/competation/g, 'competition').replace(/[^a-z0-9]/g, '');
+        if (norm1 && norm2 && (norm1.includes(norm2) || norm2.includes(norm1))) return true;
+      }
+
       return false;
-    });
+    };
+
+    // Self-healing: if submitting a reel, clean up any misplaced reel submission on non-reels events (e.g. Hackathon)
+    if (submission && (submission.type === 'reels' || submission.reelLink)) {
+      user.registeredEvents.forEach(e => {
+        const eTitle = (e.title || '').toLowerCase();
+        if (!eTitle.includes('reel') && e.id !== 'creative-1' && e.submission && (e.submission.type === 'reels' || e.submission.reelLink)) {
+          delete e.submission;
+        }
+      });
+    }
+
+    let eventIdx = user.registeredEvents.findIndex(e => isMatchEvent(cleanEvtId, cleanEvtTitle, e));
 
     // Check if user has already submitted content for this event
     if (eventIdx !== -1) {
@@ -431,11 +464,7 @@ router.post('/submit-event-content', async (req, res) => {
 
       const alreadySubmittedUser = teamUsers.find(u => {
         if (!u.registeredEvents) return false;
-        const match = u.registeredEvents.find(e => {
-          const eId = String(e.id || '').trim().toLowerCase();
-          const eTitle = String(e.title || '').trim().toLowerCase();
-          return (cleanEvtId && eId === cleanEvtId) || (cleanEvtTitle && eTitle === cleanEvtTitle);
-        });
+        const match = u.registeredEvents.find(e => isMatchEvent(eventId, eventTitle, e));
         return match && match.submission && (match.submission.reelLink || match.submission.posterFile || match.submission.posterLink);
       });
 

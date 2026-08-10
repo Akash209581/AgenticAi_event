@@ -18,25 +18,25 @@ const categoriesData = [
     glowColor: 'rgba(0, 240, 255, 0.4)',
     events: [
       {
-        id: '1',
+        id: 'technical-1',
         num: '1',
-        title: '1.) Agentic AI Hackthon',
+        title: 'Agentic AI Hackathon',
         icon: Brain,
         image: '/images/event_hackathon_1786084020517.png',
         gradient: 'linear-gradient(135deg, #0ea5e9, #6366f1)'
       },
       {
-        id: '2',
+        id: 'technical-2',
         num: '2',
-        title: '2.) AI prompt combat',
+        title: 'AI Prompt Combat',
         icon: Zap,
         image: '/images/event_prompt_1786084056457.png',
         gradient: 'linear-gradient(135deg, #38bdf8, #0284c7)'
       },
       {
-        id: '3',
+        id: 'technical-3',
         num: '3',
-        title: '3.) paper/poster presentation',
+        title: 'Paper / Poster Presentation',
         icon: FileText,
         image: '/images/event_paper_poster.png',
         gradient: 'linear-gradient(135deg, #0284c7, #1e40af)'
@@ -45,7 +45,7 @@ const categoriesData = [
   },
   {
     id: 'industry',
-    title: 'Industry & innovation',
+    title: 'Industry & Innovation',
     subtitle: 'Podcasts with leaders, AI agent expos & industry summits',
     badge: '3 Events',
     image: '/images/industrial.avif',
@@ -54,25 +54,25 @@ const categoriesData = [
     glowColor: 'rgba(192, 132, 252, 0.4)',
     events: [
       {
-        id: '1',
+        id: 'industry-1',
         num: '1',
-        title: '1.) podcast with industry proffesionals',
+        title: 'Podcast with Industry Professionals',
         icon: Mic,
         image: '/images/event_podcast.png',
         gradient: 'linear-gradient(135deg, #a855f7, #ec4899)'
       },
       {
-        id: '2',
+        id: 'industry-2',
         num: '2',
-        title: '2.) AI Agents expo',
+        title: 'AI Agents Expo',
         icon: Bot,
         image: '/images/event_expo.png',
         gradient: 'linear-gradient(135deg, #c084fc, #9333ea)'
       },
       {
-        id: '3',
+        id: 'industry-3',
         num: '3',
-        title: '3.) AI summit-industry interaction',
+        title: 'AI Summit - Industry Interaction',
         icon: Users,
         image: '/images/event_summit.png',
         gradient: 'linear-gradient(135deg, #e879f9, #7e22ce)'
@@ -81,7 +81,7 @@ const categoriesData = [
   },
   {
     id: 'creative',
-    title: 'creative',
+    title: 'Creative',
     subtitle: 'Reels competition, AI music synthesis & interactive quiz',
     badge: '3 Events',
     image: '/images/creative.avif',
@@ -90,25 +90,25 @@ const categoriesData = [
     glowColor: 'rgba(251, 191, 36, 0.4)',
     events: [
       {
-        id: '1',
+        id: 'creative-1',
         num: '1',
-        title: '1.) Reels competation',
+        title: 'Reels Competition',
         icon: Video,
         image: '/images/event_reels.png',
         gradient: 'linear-gradient(135deg, #f59e0b, #ef4444)'
       },
       {
-        id: '2',
+        id: 'creative-2',
         num: '2',
-        title: '2.) AI musical competation',
+        title: 'AI Musical Competition',
         icon: Music,
         image: '/images/event_musical.png',
         gradient: 'linear-gradient(135deg, #fbbf24, #d97706)'
       },
       {
-        id: '3',
+        id: 'creative-3',
         num: '3',
-        title: '3.) AI Quiz',
+        title: 'AI Quiz',
         icon: HelpCircle,
         image: '/images/event_quiz.png',
         gradient: 'linear-gradient(135deg, #f59e0b, #b45309)'

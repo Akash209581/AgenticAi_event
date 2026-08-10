@@ -313,6 +313,7 @@ export default function RegistrationForm({ onSuccess, onProceedToLogin, onBack }
                 name="dob"
                 value={formData.dob}
                 onChange={handleChange}
+                max="2011-12-31"
                 className={`cyber-input ${errors.dob ? 'input-error' : ''}`}
                 required
               />

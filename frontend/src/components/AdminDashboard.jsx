@@ -23,7 +23,7 @@ import {
   Trash2
 } from 'lucide-react';
 
-import { eventsRulesData } from '../data/eventsRulesData';
+import { eventsRulesData, isSameEvent } from '../data/eventsRulesData';
 
 export default function AdminDashboard({ onBack }) {
   // Authentication State
@@ -382,8 +382,16 @@ const isEventMatch = (userEvt, catalogEvt) => {
     let rawList = eventParticipantsMap[key] || eventParticipantsMap[eventObj.title] || [];
 
     let filteredList = rawList.filter(user => {
-      if (eventYearFilter !== 'all' && String(user.year) !== String(eventYearFilter)) {
-        return false;
+      if (eventYearFilter !== 'all') {
+        const selY = String(eventYearFilter).trim().toLowerCase();
+        const uY = String(user.year || '').trim().toLowerCase();
+        if (selY === 'mtech') {
+          if (!uY.includes('m.tech') && !uY.includes('mtech')) return false;
+        } else if (selY.includes('m.tech') || selY.includes('mtech')) {
+          if (!uY.includes(selY) && !uY.includes(selY.replace('m.tech', 'mtech'))) return false;
+        } else if (uY !== selY) {
+          return false;
+        }
       }
       if (eventGenderFilter !== 'all' && String(user.gender || 'Unspecified') !== String(eventGenderFilter)) {
         return false;
@@ -1085,6 +1093,7 @@ const isEventMatch = (userEvt, catalogEvt) => {
                   <option value="4">4th Year Only</option>
                   <option value="M.Tech (1st year)">M.Tech (1st year)</option>
                   <option value="M.Tech (2nd year)">M.Tech (2nd year)</option>
+                  <option value="mtech">All M.Tech (1st & 2nd Year)</option>
                 </select>
 
               </div>
@@ -1182,7 +1191,7 @@ const isEventMatch = (userEvt, catalogEvt) => {
                             borderRadius: '6px',
                             border: '1px solid rgba(56, 189, 248, 0.3)'
                           }}>
-                            Yr {user.year || '1'}
+                            {user.year ? (String(user.year).toLowerCase().includes('m') ? user.year : `Yr ${user.year}`) : 'Yr 1'}
                           </span>
                         </td>
                         <td style={{ textAlign: 'center' }}>
@@ -1409,6 +1418,9 @@ const isEventMatch = (userEvt, catalogEvt) => {
                       <option value="2">2nd Year Only</option>
                       <option value="3">3rd Year Only</option>
                       <option value="4">4th Year Only</option>
+                      <option value="M.Tech (1st year)">M.Tech (1st year)</option>
+                      <option value="M.Tech (2nd year)">M.Tech (2nd year)</option>
+                      <option value="mtech">All M.Tech (1st & 2nd Year)</option>
                     </select>
                   </div>
 
@@ -1481,13 +1493,7 @@ const isEventMatch = (userEvt, catalogEvt) => {
                       </thead>
                       <tbody>
                         {selectedEventData.filteredList.map((user) => {
-                          const evSub = user.registeredEvents?.find(e => {
-                            const curTitle = selectedEventData?.event?.title || '';
-                            const curId = selectedEventData?.event?.id || '';
-                            if (curId && e.id === curId) return true;
-                            if (curTitle && e.title && e.title.toLowerCase() === curTitle.toLowerCase()) return true;
-                            return Boolean(e.submission);
-                          })?.submission;
+                          const evSub = user.registeredEvents?.find(e => isSameEvent(selectedEventData?.event, e))?.submission;
 
                           return (
                             <tr key={user.aiId || user._id}>
@@ -1504,7 +1510,7 @@ const isEventMatch = (userEvt, catalogEvt) => {
                                   borderRadius: '6px',
                                   border: '1px solid rgba(56, 189, 248, 0.3)'
                                 }}>
-                                  Yr {user.year || '1'}
+                                  {user.year ? (String(user.year).toLowerCase().includes('m') ? user.year : `Yr ${user.year}`) : 'Yr 1'}
                                 </span>
                               </td>
                               <td style={{ textAlign: 'center' }}>

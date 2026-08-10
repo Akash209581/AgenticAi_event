@@ -35,10 +35,10 @@ export const eventsRulesData = {
       { rank: 'Third', amount: 'Rs. 1000/-' }
     ],
     coordinators: [
-      { name: 'Dr. Phanindra Thota', phone: '+91 80964 65667' },
-      { name: 'Dr. Veeranjaneyulu', phone: '+91 94922 46551' },
-      { name: 'Mrs. J. Dayanika', phone: '+91 70134 47336' },
-      { name: 'Ms. Sk. Kareena Yashmin', phone: '+91 78010 17820' },
+      { name: 'Dr. Phanindra Thota (Faculty)', phone: '+91 80964 65667' },
+      { name: 'Dr. Veeranjaneyulu (Faculty)', phone: '+91 94922 46551' },
+      { name: 'Mrs. J. Dayanika (Faculty)', phone: '+91 70134 47336' },
+      { name: 'Ms. Sk. Kareena Yashmin (Faculty)', phone: '+91 78010 17820' },
       { name: 'Student Coordinator', phone: 'To be announced' }
     ]
   },
@@ -100,8 +100,8 @@ export const eventsRulesData = {
       { rank: 'Third', amount: 'Rs. 1000/-' }
     ],
     coordinators: [
-      { name: 'Mr. Veerendra', phone: '+91 95736 32919' },
-      { name: 'Mr. Latesh Babu', phone: '+91 95508 18722' },
+      { name: 'Mr. Veerendra (Faculty)', phone: '+91 95736 32919' },
+      { name: 'Mr. Latesh Babu (Faculty)', phone: '+91 95508 18722' },
       { name: 'Student Coordinator', phone: 'To be announced' }
     ]
   },
@@ -149,8 +149,8 @@ export const eventsRulesData = {
       { rank: 'Third', amount: 'Rs. 1000/-' }
     ],
     coordinators: [
-      { name: 'Dr. Vijitha Ananthi', phone: '+91 97906 28946' },
-      { name: 'Ms. B. Jyothika', phone: '+91 79893 66515' },
+      { name: 'Dr. Vijitha Ananthi (Faculty)', phone: '+91 97906 28946' },
+      { name: 'Ms. B. Jyothika (Faculty)', phone: '+91 79893 66515' },
       { name: 'Student Coordinator', phone: 'To be announced' }
     ]
   },
@@ -175,8 +175,8 @@ export const eventsRulesData = {
       { rank: 'Third', amount: 'Rs. 1000/-' }
     ],
     coordinators: [
-      { name: 'Dr. O. Baskaru', phone: '+91 63015 77419' },
-      { name: 'Mr. Rajulu', phone: '+91 97050 21183' },
+      { name: 'Dr. O. Baskaru (Faculty)', phone: '+91 63015 77419' },
+      { name: 'Mr. Rajulu (Faculty)', phone: '+91 97050 21183' },
       { name: 'Student Coordinator', phone: 'To be announced' }
     ]
   },
@@ -197,8 +197,8 @@ export const eventsRulesData = {
       { rank: 'Third', amount: 'Rs. 2000/-' }
     ],
     coordinators: [
-      { name: 'Dr. Veera Bhadra Chari', phone: '+91 89789 75688' },
-      { name: 'Mr. Syed Nafees Ahamed', phone: '+91 87904 69105' },
+      { name: 'Dr. Veera Bhadra Chari (Faculty)', phone: '+91 89789 75688' },
+      { name: 'Mr. Syed Nafees Ahamed (Faculty)', phone: '+91 87904 69105' },
       { name: 'Student Coordinator', phone: 'To be announced' }
     ]
   },
@@ -220,8 +220,8 @@ export const eventsRulesData = {
       { rank: 'Third', amount: 'Rs. 1000/-' }
     ],
     coordinators: [
-      { name: 'Dr. James Deva Koresh', phone: '+91 99947 62822' },
-      { name: 'Dr. T.R. Rajesh', phone: '+91 96765 60542' },
+      { name: 'Dr. James Deva Koresh (Faculty)', phone: '+91 99947 62822' },
+      { name: 'Dr. T.R. Rajesh (Faculty)', phone: '+91 96765 60542' },
       { name: 'Student Coordinator', phone: 'To be announced' }
     ]
   },
@@ -258,7 +258,7 @@ export const eventsRulesData = {
       { rank: 'Third', amount: 'Rs. 1000/-' }
     ],
     coordinators: [
-      { name: 'Mr. Vamsi Krishna', phone: '+91 94418 18651' },
+      { name: 'Mr. Vamsi Krishna (Faculty)', phone: '+91 94418 18651' },
       { name: 'Student Coordinator', phone: 'To be announced' }
     ]
   },
@@ -286,7 +286,7 @@ export const eventsRulesData = {
       { rank: 'Third', amount: 'Rs. 1000/-' }
     ],
     coordinators: [
-      { name: 'Mr. Khadarsha', phone: '+91 83093 00881' },
+      { name: 'Mr. Khadarsha (Faculty)', phone: '+91 83093 00881' },
       { name: 'Student Coordinator', phone: 'To be announced' }
     ]
   },
@@ -337,8 +337,8 @@ export const eventsRulesData = {
       { rank: 'Third', amount: 'Rs. 1000/-' }
     ],
     coordinators: [
-      { name: 'Mrs. Spandana', phone: '+91 99483 68555' },
-      { name: 'Ms. Sajida', phone: '+91 79814 03193' },
+      { name: 'Mrs. Spandana (Faculty)', phone: '+91 99483 68555' },
+      { name: 'Ms. Sajida (Faculty)', phone: '+91 79814 03193' },
       { name: 'Student Coordinator', phone: 'To be announced' }
     ]
   }
@@ -397,4 +397,81 @@ export function getEventDetails(categoryId, eventId, fallbackTitle = '') {
       { name: 'Student Coordinator', phone: '+918019171205' }
     ]
   };
+}
+
+/**
+ * Universal helper to check if two event objects reference the same event.
+ */
+export function isSameEvent(e1, e2) {
+  if (!e1 || !e2) return false;
+
+  const id1 = String(e1.id || '').toLowerCase().trim();
+  const id2 = String(e2.id || '').toLowerCase().trim();
+  const cat1 = String(e1.categoryId || e1.categoryName || '').toLowerCase().trim();
+  const cat2 = String(e2.categoryId || e2.categoryName || '').toLowerCase().trim();
+  const title1 = String(e1.title || '').toLowerCase().trim();
+  const title2 = String(e2.title || '').toLowerCase().trim();
+
+  // 1. Direct ID match (e.g. 'creative-1' === 'creative-1' or '1' === '1' with same category)
+  if (id1 && id2) {
+    if (id1 === id2 && (id1.includes('-') || !cat1 || !cat2 || cat1 === cat2 || cat1.includes(cat2) || cat2.includes(cat1))) {
+      return true;
+    }
+    const normId1 = id1.includes('-') ? id1.split('-')[1] : id1;
+    const normId2 = id2.includes('-') ? id2.split('-')[1] : id2;
+    const normCat1 = id1.includes('-') ? id1.split('-')[0] : cat1;
+    const normCat2 = id2.includes('-') ? id2.split('-')[0] : cat2;
+
+    if (normId1 && normId2 && normId1 === normId2) {
+      if (!normCat1 || !normCat2 || normCat1.includes(normCat2) || normCat2.includes(normCat1)) {
+        return true;
+      }
+    }
+  }
+
+  // 2. Domain-based keyword matching for all 9 events
+  const isReels1 = title1.includes('reel') || id1.includes('creative-1');
+  const isReels2 = title2.includes('reel') || id2.includes('creative-1');
+  if (isReels1 && isReels2) return true;
+
+  const isPoster1 = title1.includes('poster') || title1.includes('paper') || id1.includes('technical-3');
+  const isPoster2 = title2.includes('poster') || title2.includes('paper') || id2.includes('technical-3');
+  if (isPoster1 && isPoster2) return true;
+
+  const isHack1 = title1.includes('hack') || id1.includes('technical-1');
+  const isHack2 = title2.includes('hack') || id2.includes('technical-1');
+  if (isHack1 && isHack2) return true;
+
+  const isPrompt1 = title1.includes('prompt') || id1.includes('technical-2');
+  const isPrompt2 = title2.includes('prompt') || id2.includes('technical-2');
+  if (isPrompt1 && isPrompt2) return true;
+
+  const isPodcast1 = title1.includes('podcast') || id1.includes('industry-1');
+  const isPodcast2 = title2.includes('podcast') || id2.includes('industry-1');
+  if (isPodcast1 && isPodcast2) return true;
+
+  const isExpo1 = title1.includes('expo') || id1.includes('industry-2');
+  const isExpo2 = title2.includes('expo') || id2.includes('industry-2');
+  if (isExpo1 && isExpo2) return true;
+
+  const isSummit1 = title1.includes('summit') || id1.includes('industry-3');
+  const isSummit2 = title2.includes('summit') || id2.includes('industry-3');
+  if (isSummit1 && isSummit2) return true;
+
+  const isMusical1 = title1.includes('music') || id1.includes('creative-2');
+  const isMusical2 = title2.includes('music') || id2.includes('creative-2');
+  if (isMusical1 && isMusical2) return true;
+
+  const isQuiz1 = title1.includes('quiz') || id1.includes('creative-3');
+  const isQuiz2 = title2.includes('quiz') || id2.includes('creative-3');
+  if (isQuiz1 && isQuiz2) return true;
+
+  // 3. Fallback normalized string comparison (handles 'competation' vs 'competition')
+  const clean1 = title1.replace(/competation/g, 'competition').replace(/[^a-z0-9]/g, '');
+  const clean2 = title2.replace(/competation/g, 'competition').replace(/[^a-z0-9]/g, '');
+  if (clean1 && clean2 && (clean1.includes(clean2) || clean2.includes(clean1))) {
+    return true;
+  }
+
+  return false;
 }

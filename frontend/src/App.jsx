@@ -214,11 +214,23 @@ export default function App() {
 
       {/* Navbar Header */}
       <nav className="navbar">
-        {/* Left Side: Brand Icon + Desktop CSE Badge + Mobile Title */}
+        {/* Left Side: CSE Logo Image + Blinking CSE Badge + Mobile Title */}
         <div className="brand" onClick={() => changeTab('home', '/')}>
-          <div className="brand-icon">
-            <Cpu size={22} />
-          </div>
+          <img
+            src="/images/cse logo.png"
+            alt="CSE Logo"
+            className="cse-header-logo-img"
+            style={{
+              height: '52px',
+              width: 'auto',
+              maxHeight: '100%',
+              objectFit: 'contain',
+              background: 'transparent',
+              mixBlendMode: 'screen',
+              filter: 'drop-shadow(0 0 10px rgba(0, 240, 255, 0.5))',
+              cursor: 'pointer'
+            }}
+          />
           <span className="desktop-cse-badge blinking-cse-badge">CSE</span>
           <span className="mobile-brand-title">AGENTIC AI DAY - 2026</span>
         </div>
@@ -228,8 +240,21 @@ export default function App() {
           <span className="brand-title-center">AGENTIC AI DAY - 2026</span>
         </div>
 
-        {/* Mobile Right Controls: Blinking CSE + Hamburger Menu Toggle */}
+        {/* Mobile Right Controls: CSE Logo + Blinking CSE Badge + Hamburger Menu Toggle */}
         <div className="mobile-right-controls">
+          <img
+            src="/images/cse logo.png"
+            alt="CSE Logo"
+            className="mobile-cse-logo-img"
+            style={{
+              height: '38px',
+              width: 'auto',
+              objectFit: 'contain',
+              background: 'transparent',
+              mixBlendMode: 'screen',
+              filter: 'drop-shadow(0 0 6px rgba(0, 240, 255, 0.4))'
+            }}
+          />
           <span className="mobile-cse-badge blinking-cse-badge">CSE</span>
           <button
             className="mobile-menu-toggle"

@@ -84,7 +84,8 @@ export default function EventCountdown({ onExploreEvents }) {
         {onExploreEvents && (
           <div className="events-btn-wrapper">
             <button className="events-hero-btn" onClick={onExploreEvents}>
-              Explore All 9 Events ↓
+              <span>Explore All 9 Events</span>
+              <span className="bouncing-arrow">↓</span>
             </button>
           </div>
         )}

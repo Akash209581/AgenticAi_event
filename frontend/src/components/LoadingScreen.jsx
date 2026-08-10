@@ -103,10 +103,10 @@ export default function LoadingScreen({ onComplete, minDuration = 6000 }) {
     window.addEventListener('keydown', enableFootsteps, { once: true });
 
     const animate = (currentTime) => {
-      const elapsed = currentTime - startTime;
+      const elapsed = Math.max(0, currentTime - startTime);
 
-      // Progress calculation: minimum minDuration ms (5000ms = 5 sec)
-      const rawProgress = Math.min(100, Math.floor((elapsed / minDuration) * 100));
+      // Progress calculation: strictly clamped between 0 and 100
+      const rawProgress = Math.max(0, Math.min(100, Math.floor((elapsed / minDuration) * 100)));
       const pRatio = rawProgress / 100;
 
       setProgress(rawProgress);
@@ -316,9 +316,9 @@ export default function LoadingScreen({ onComplete, minDuration = 6000 }) {
           ></div>
           <div
             className="loading-percentage-text"
-            style={{ left: `${4 + progress * 0.92}%` }}
+            style={{ left: `${Math.max(4, Math.min(96, 4 + progress * 0.92))}%` }}
           >
-            {progress}%
+            {Math.max(0, progress)}%
           </div>
         </div>
 

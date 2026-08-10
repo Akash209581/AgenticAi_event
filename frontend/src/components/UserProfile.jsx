@@ -403,7 +403,7 @@ export default function UserProfile({ user, onLogout, onExploreEvents, onUnenrol
                               }}
                             >
                               <Video size={14} />
-                              <span>{hasSub ? 'View / Update Reel Link ✓' : 'Submit Reel Link'}</span>
+                              <span>{hasSub ? 'Reel Submitted (Preview) ✓' : 'Submit Reel Link'}</span>
                             </button>
                           </div>
                         );
@@ -415,13 +415,14 @@ export default function UserProfile({ user, onLogout, onExploreEvents, onUnenrol
                             <button
                               type="button"
                               onClick={() => setActiveSubmissionModalEvent({ id: item.id, title: item.title, categoryId: 'technical' })}
+                              className={hasSub ? '' : 'poster-upload-btn-blinking'}
                               style={{
                                 width: '100%',
-                                padding: '0.5rem 0.8rem',
+                                padding: '0.55rem 0.8rem',
                                 borderRadius: '8px',
-                                border: '1px solid #00f0ff',
-                                background: hasSub ? 'rgba(16, 185, 129, 0.15)' : 'rgba(0, 240, 255, 0.15)',
-                                color: hasSub ? '#34d399' : '#00f0ff',
+                                border: hasSub ? '1px solid #10b981' : undefined,
+                                background: hasSub ? 'rgba(16, 185, 129, 0.15)' : undefined,
+                                color: hasSub ? '#34d399' : undefined,
                                 fontSize: '0.8rem',
                                 fontWeight: '700',
                                 cursor: 'pointer',
@@ -433,7 +434,7 @@ export default function UserProfile({ user, onLogout, onExploreEvents, onUnenrol
                               }}
                             >
                               <Upload size={14} />
-                              <span>{hasSub ? 'View / Update Poster ✓' : 'Upload Poster / Paper'}</span>
+                              <span>{hasSub ? 'Poster Submitted (Preview) ✓' : 'Upload Poster / Paper'}</span>
                             </button>
                           </div>
                         );

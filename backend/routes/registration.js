@@ -250,7 +250,14 @@ router.get('/registrations', requireAdminAuth, async (req, res) => {
       const query = {};
 
       if (year && year !== 'all') {
-        query.year = String(year).trim();
+        const yStr = String(year).trim();
+        if (yStr.toLowerCase() === 'mtech') {
+          query.year = new RegExp('m\\.?tech', 'i');
+        } else if (yStr.toLowerCase().includes('m.tech') || yStr.toLowerCase().includes('mtech')) {
+          query.year = new RegExp(yStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+        } else {
+          query.year = yStr;
+        }
       }
 
       if (gender && gender !== 'all') {
@@ -293,7 +300,17 @@ router.get('/registrations', requireAdminAuth, async (req, res) => {
       users = memoryUsers.map(({ password, ...u }) => u);
 
       if (year && year !== 'all') {
-        users = users.filter(u => String(u.year) === String(year).trim());
+        const yStr = String(year).trim().toLowerCase();
+        users = users.filter(u => {
+          const uYear = String(u.year || '').trim().toLowerCase();
+          if (yStr === 'mtech') {
+            return uYear.includes('m.tech') || uYear.includes('mtech');
+          }
+          if (yStr.includes('m.tech')) {
+            return uYear.includes(yStr) || uYear.includes(yStr.replace('m.tech', 'mtech'));
+          }
+          return uYear === yStr;
+        });
       }
 
       if (gender && gender !== 'all') {
