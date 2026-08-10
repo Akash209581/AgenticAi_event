@@ -1342,7 +1342,18 @@ label {
   font-weight: 900;
   color: #00f2fe;
   text-shadow: 0 0 10px rgba(0, 242, 254, 1), 0 0 20px rgba(0, 242, 254, 0.6);
-  filter: drop-shadow(0 0 8px #00f2fe);
+  animation: cseTextBlink 1.2s infinite ease-in-out;
+}
+
+@keyframes cseTextBlink {
+  0%, 100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 10px #00f2fe);
+  }
+  50% {
+    opacity: 0.2;
+    filter: drop-shadow(0 0 2px #00f2fe);
+  }
 }
 
 .countdown-clean-title {
@@ -1534,7 +1545,6 @@ label {
   box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
   margin-top: 0.75rem;
   letter-spacing: 0.5px;
-  animation: pulseExploreBlink 1.5s infinite ease-in-out;
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
