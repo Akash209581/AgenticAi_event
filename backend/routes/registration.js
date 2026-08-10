@@ -474,6 +474,31 @@ router.get('/student/:identifier', async (req, res) => {
       ? isUserRegisteredForEvent(user, eventId, eventTitle)
       : true;
 
+    let hasSubmittedEvent = false;
+    if (user.registeredEvents && (eventId || eventTitle)) {
+      const match = user.registeredEvents.find(e => {
+        const eId = String(e.id || '').trim().toLowerCase();
+        const eTitle = String(e.title || '').trim().toLowerCase();
+        const cleanEventId = String(eventId || '').trim().toLowerCase();
+        const cleanEventTitle = String(eventTitle || '').trim().toLowerCase();
+        
+        if (cleanEventId && eId === cleanEventId) return true;
+        if (cleanEventTitle && eTitle === cleanEventTitle) return true;
+        if (cleanEventTitle && (eTitle.includes(cleanEventTitle) || cleanEventTitle.includes(eTitle))) return true;
+        
+        const keywords = ['hackathon', 'prompt', 'paper', 'poster', 'expo', 'quiz', 'musical'];
+        for (const kw of keywords) {
+          if ((cleanEventTitle.includes(kw) || cleanEventId.includes(kw)) && (eTitle.includes(kw) || eId.includes(kw))) {
+            return true;
+          }
+        }
+        return false;
+      });
+      if (match && match.submission && (match.submission.reelLink || match.submission.posterFile || match.submission.posterLink)) {
+        hasSubmittedEvent = true;
+      }
+    }
+
     return res.json({
       success: true,
       student: {
@@ -485,7 +510,8 @@ router.get('/student/:identifier', async (req, res) => {
         phone: user.phone,
         registeredEvents: user.registeredEvents || []
       },
-      isEnrolledInEvent
+      isEnrolledInEvent,
+      hasSubmittedEvent
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message || 'Server lookup error' });
@@ -578,6 +604,23 @@ router.post('/team-register', async (req, res) => {
           success: false,
           message: `Eligibility Error: Student '${userRecord.name}' (${targetAiId}) has NOT registered for '${cleanEventTitle}'. Only students who are registered for this event are eligible to form or join a team!`
         });
+      }
+
+      // Check if user has already submitted content for this event
+      if (userRecord.registeredEvents) {
+        const matchingEnrollment = userRecord.registeredEvents.find(e => {
+          const eId = String(e.id || '').trim().toLowerCase();
+          const eTitle = String(e.title || '').trim().toLowerCase();
+          return (cleanEventId && eId === cleanEventId.toLowerCase()) || 
+                 (cleanEventTitle && eTitle === cleanEventTitle.toLowerCase());
+        });
+        
+        if (matchingEnrollment && matchingEnrollment.submission && (matchingEnrollment.submission.reelLink || matchingEnrollment.submission.posterFile || matchingEnrollment.submission.posterLink)) {
+          return res.status(400).json({
+            success: false,
+            message: `Eligibility Error: Student '${userRecord.name}' (${targetAiId}) has already submitted the work/poster for '${cleanEventTitle}'. Team registration is disabled for students who have already submitted!`
+          });
+        }
       }
     }
 

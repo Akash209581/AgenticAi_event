@@ -1476,45 +1476,124 @@ const isEventMatch = (userEvt, catalogEvt) => {
                           <th>Gender</th>
                           <th>Phone</th>
                           <th>Email ID</th>
+                          <th>Submission</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {selectedEventData.filteredList.map((user) => (
-                          <tr key={user.aiId || user._id}>
-                            <td>
-                              <span className="id-badge">{user.aiId}</span>
-                            </td>
-                            <td style={{ fontWeight: 600, color: '#f8fafc' }}>{user.name}</td>
-                            <td style={{ fontFamily: 'var(--font-mono)' }}>{user.regNo}</td>
-                            <td style={{ textAlign: 'center', fontWeight: 700 }}>
-                              <span style={{
-                                background: 'rgba(56, 189, 248, 0.12)',
-                                color: '#38bdf8',
-                                padding: '0.2rem 0.55rem',
-                                borderRadius: '6px',
-                                border: '1px solid rgba(56, 189, 248, 0.3)'
-                              }}>
-                                Yr {user.year || '1'}
-                              </span>
-                            </td>
-                            <td style={{ textAlign: 'center' }}>
-                              <span style={{
-                                background: user.gender === 'Female' ? 'rgba(236, 72, 153, 0.12)' : 'rgba(59, 130, 246, 0.12)',
-                                color: user.gender === 'Female' ? '#f472b6' : '#60a5fa',
-                                padding: '0.2rem 0.55rem',
-                                borderRadius: '6px',
-                                fontSize: '0.8rem',
-                                fontWeight: 600
-                              }}>
-                                {user.gender || 'Unspecified'}
-                              </span>
-                            </td>
-                            <td>{user.phone}</td>
-                            <td style={{ color: '#94a3b8' }}>{user.email}</td>
-                          </tr>
-                        ))}
+                        {selectedEventData.filteredList.map((user) => {
+                          const evSub = user.registeredEvents?.find(e => {
+                            const curTitle = selectedEventData?.event?.title || '';
+                            const curId = selectedEventData?.event?.id || '';
+                            if (curId && e.id === curId) return true;
+                            if (curTitle && e.title && e.title.toLowerCase() === curTitle.toLowerCase()) return true;
+                            return Boolean(e.submission);
+                          })?.submission;
+
+                          return (
+                            <tr key={user.aiId || user._id}>
+                              <td>
+                                <span className="id-badge">{user.aiId}</span>
+                              </td>
+                              <td style={{ fontWeight: 600, color: '#f8fafc' }}>{user.name}</td>
+                              <td style={{ fontFamily: 'var(--font-mono)' }}>{user.regNo}</td>
+                              <td style={{ textAlign: 'center', fontWeight: 700 }}>
+                                <span style={{
+                                  background: 'rgba(56, 189, 248, 0.12)',
+                                  color: '#38bdf8',
+                                  padding: '0.2rem 0.55rem',
+                                  borderRadius: '6px',
+                                  border: '1px solid rgba(56, 189, 248, 0.3)'
+                                }}>
+                                  Yr {user.year || '1'}
+                                </span>
+                              </td>
+                              <td style={{ textAlign: 'center' }}>
+                                <span style={{
+                                  background: user.gender === 'Female' ? 'rgba(236, 72, 153, 0.12)' : 'rgba(59, 130, 246, 0.12)',
+                                  color: user.gender === 'Female' ? '#f472b6' : '#60a5fa',
+                                  padding: '0.2rem 0.55rem',
+                                  borderRadius: '6px',
+                                  fontSize: '0.8rem',
+                                  fontWeight: 600
+                                }}>
+                                  {user.gender || 'Unspecified'}
+                                </span>
+                              </td>
+                              <td>{user.phone}</td>
+                              <td style={{ color: '#94a3b8' }}>{user.email}</td>
+                              <td>
+                                {evSub?.reelLink ? (
+                                  <a
+                                    href={evSub.reelLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                      background: 'rgba(251, 191, 36, 0.15)',
+                                      border: '1px solid rgba(251, 191, 36, 0.4)',
+                                      color: '#fbbf24',
+                                      padding: '0.25rem 0.6rem',
+                                      borderRadius: '6px',
+                                      fontSize: '0.75rem',
+                                      fontWeight: 700,
+                                      textDecoration: 'none',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '0.3rem'
+                                    }}
+                                  >
+                                    Watch Reel ↗
+                                  </a>
+                                ) : evSub?.posterFile ? (
+                                  <a
+                                    href={evSub.posterFile.fileData}
+                                    download={evSub.posterFile.fileName || 'Poster_Submission'}
+                                    style={{
+                                      background: 'rgba(0, 240, 255, 0.15)',
+                                      border: '1px solid rgba(0, 240, 255, 0.4)',
+                                      color: '#00f0ff',
+                                      padding: '0.25rem 0.6rem',
+                                      borderRadius: '6px',
+                                      fontSize: '0.75rem',
+                                      fontWeight: 700,
+                                      textDecoration: 'none',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '0.3rem'
+                                    }}
+                                  >
+                                    Download File ⬇
+                                  </a>
+                                ) : evSub?.posterLink ? (
+                                  <a
+                                    href={evSub.posterLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                      background: 'rgba(0, 240, 255, 0.15)',
+                                      border: '1px solid rgba(0, 240, 255, 0.4)',
+                                      color: '#00f0ff',
+                                      padding: '0.25rem 0.6rem',
+                                      borderRadius: '6px',
+                                      fontSize: '0.75rem',
+                                      fontWeight: 700,
+                                      textDecoration: 'none',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '0.3rem'
+                                    }}
+                                  >
+                                    View Link ↗
+                                  </a>
+                                ) : (
+                                  <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Pending</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
+
                   </div>
                 )}
               </div>

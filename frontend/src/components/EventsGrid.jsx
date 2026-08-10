@@ -117,9 +117,42 @@ const categoriesData = [
   }
 ];
 
-export default function EventsGrid({ onRegister, currentUser = null, onEnrollEvent }) {
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [selectedEventDetail, setSelectedEventDetail] = useState(null);
+export default function EventsGrid({ onRegister, currentUser = null, onEnrollEvent, onSubmissionUpdate }) {
+  // Parse initial route from window.location.pathname
+  const parseRoute = () => {
+    const parts = window.location.pathname.toLowerCase().split('/').filter(Boolean);
+    if (parts[0] === 'events' && parts[1]) {
+      const cat = categoriesData.find(c => c.id === parts[1]);
+      if (parts[2] && cat) {
+        const slug = decodeURIComponent(parts[2]).trim();
+        const ev = cat.events.find(e =>
+          e.id === slug ||
+          (e.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-') === slug ||
+          slug.includes(e.id) ||
+          (e.title || '').toLowerCase().includes(slug)
+        );
+        if (ev) {
+          return { cat, detail: getEventDetails(cat.id, ev.id, ev.title) };
+        }
+        return { cat, detail: getEventDetails(cat.id, slug, slug) };
+      }
+      return { cat: cat || null, detail: null };
+    }
+    return { cat: null, detail: null };
+  };
+
+  const [selectedCategory, setSelectedCategory] = useState(() => parseRoute().cat);
+  const [selectedEventDetail, setSelectedEventDetail] = useState(() => parseRoute().detail);
+
+  React.useEffect(() => {
+    const handlePopState = () => {
+      const { cat, detail } = parseRoute();
+      setSelectedCategory(cat);
+      setSelectedEventDetail(detail);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   // Handle Event Detail View render
   if (selectedEventDetail) {
@@ -134,6 +167,7 @@ export default function EventsGrid({ onRegister, currentUser = null, onEnrollEve
         onRegister={onRegister}
         currentUser={currentUser}
         onEnrollEvent={onEnrollEvent}
+        onSubmissionUpdate={onSubmissionUpdate}
       />
     );
   }

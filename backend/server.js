@@ -38,9 +38,10 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-// 5. Body Parsing with Payload Size Guard (Prevent DoS memory crash)
-app.use(express.json({ limit: '10kb' }));
-app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+// 5. Body Parsing with Payload Size Guard
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
 
 // 6. NoSQL Query Injection Sanitization
 app.use(mongoSanitizer);
@@ -48,13 +49,12 @@ app.use(mongoSanitizer);
 // Connect Database
 connectDB();
 
-// 7. Apply NAT-Aware Rate Limiters to Specific Routes
+// 7. Apply NAT-Aware Rate Limiters to Specific Sensitive Routes
 app.use(`${BASE_API}/register`, registrationRateLimiter);
 app.use(`${BASE_API}/team-register`, registrationRateLimiter);
 app.use(`${BASE_API}/login`, authRateLimiter);
 app.use(`${BASE_API}/admin-login`, authRateLimiter);
-app.use(`${BASE_API}/enroll-event`, authRateLimiter);
-app.use(`${BASE_API}/unenroll-event`, authRateLimiter);
+
 
 // Public API Rate Limiting for all other endpoints
 app.use(BASE_API, publicApiRateLimiter);

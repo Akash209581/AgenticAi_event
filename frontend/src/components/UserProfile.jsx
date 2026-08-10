@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { 
   User, Calendar, Hash, Phone, Mail, GraduationCap, Copy, Check, 
   Sparkles, LogOut, ShieldCheck, Trophy, Brain, Zap, FileText, 
-  Mic, Bot, Users, Video, Music, HelpCircle, ArrowRight, Trash2, Lock
+  Mic, Bot, Users, Video, Music, HelpCircle, ArrowRight, Trash2, Lock, Upload, ExternalLink
 } from 'lucide-react';
-
+import SubmissionModal from './SubmissionModal';
 
 const registeredEventsList = [
   // Technical Category
@@ -23,8 +23,10 @@ const registeredEventsList = [
   { id: 'cre-3', catId: 'creative', category: 'Creative', title: 'AI Quiz', icon: HelpCircle, color: '#d97706' }
 ];
 
-export default function UserProfile({ user, onLogout, onExploreEvents, onUnenrollEvent }) {
+export default function UserProfile({ user, onLogout, onExploreEvents, onUnenrollEvent, onSubmissionUpdate }) {
   const [copied, setCopied] = useState(false);
+  const [activeSubmissionModalEvent, setActiveSubmissionModalEvent] = useState(null);
+
 
   if (!user) return null;
 
@@ -360,9 +362,7 @@ export default function UserProfile({ user, onLogout, onExploreEvents, onUnenrol
                         flexShrink: 0
                       }}>
                         <IconComp size={22} color={itemColor} />
-                      </div>
-
-                      <h3 style={{
+                      </div>                      <h3 style={{
                         fontSize: '1rem',
                         fontWeight: '700',
                         color: '#f8fafc',
@@ -372,6 +372,75 @@ export default function UserProfile({ user, onLogout, onExploreEvents, onUnenrol
                         {item.title}
                       </h3>
                     </div>
+
+                    {/* Submission Button for Reels & Poster */}
+                    {(() => {
+                      const isReelsItem = item.id === 'cre-1' || item.id === 'creative-1' || (item.title && item.title.toLowerCase().includes('reel'));
+                      const isPosterItem = item.id === 'tech-3' || item.id === 'technical-3' || (item.title && (item.title.toLowerCase().includes('poster') || item.title.toLowerCase().includes('paper')));
+                      const hasSub = item.submission && (item.submission.reelLink || item.submission.posterFile || item.submission.posterLink);
+
+                      if (isReelsItem) {
+                        return (
+                          <div style={{ marginTop: '0.6rem', marginBottom: '0.2rem' }}>
+                            <button
+                              type="button"
+                              onClick={() => setActiveSubmissionModalEvent({ id: item.id, title: item.title, categoryId: 'creative' })}
+                              style={{
+                                width: '100%',
+                                padding: '0.5rem 0.8rem',
+                                borderRadius: '8px',
+                                border: '1px solid #fbbf24',
+                                background: hasSub ? 'rgba(16, 185, 129, 0.15)' : 'rgba(251, 191, 36, 0.15)',
+                                color: hasSub ? '#34d399' : '#fbbf24',
+                                fontSize: '0.8rem',
+                                fontWeight: '700',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '0.4rem',
+                                transition: 'all 0.2s ease'
+                              }}
+                            >
+                              <Video size={14} />
+                              <span>{hasSub ? 'View / Update Reel Link ✓' : 'Submit Reel Link'}</span>
+                            </button>
+                          </div>
+                        );
+                      }
+
+                      if (isPosterItem) {
+                        return (
+                          <div style={{ marginTop: '0.6rem', marginBottom: '0.2rem' }}>
+                            <button
+                              type="button"
+                              onClick={() => setActiveSubmissionModalEvent({ id: item.id, title: item.title, categoryId: 'technical' })}
+                              style={{
+                                width: '100%',
+                                padding: '0.5rem 0.8rem',
+                                borderRadius: '8px',
+                                border: '1px solid #00f0ff',
+                                background: hasSub ? 'rgba(16, 185, 129, 0.15)' : 'rgba(0, 240, 255, 0.15)',
+                                color: hasSub ? '#34d399' : '#00f0ff',
+                                fontSize: '0.8rem',
+                                fontWeight: '700',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '0.4rem',
+                                transition: 'all 0.2s ease'
+                              }}
+                            >
+                              <Upload size={14} />
+                              <span>{hasSub ? 'View / Update Poster ✓' : 'Upload Poster / Paper'}</span>
+                            </button>
+                          </div>
+                        );
+                      }
+
+                      return null;
+                    })()}
                   </div>
 
                   {/* Footer status button */}
@@ -454,6 +523,20 @@ export default function UserProfile({ user, onLogout, onExploreEvents, onUnenrol
           </div>
         )}
       </div>
+
+      {/* Submission Modal for UserProfile */}
+      <SubmissionModal
+        isOpen={Boolean(activeSubmissionModalEvent)}
+        onClose={() => setActiveSubmissionModalEvent(null)}
+        event={activeSubmissionModalEvent}
+        currentUser={user}
+        onSubmitSuccess={(updatedEvents) => {
+          if (onSubmissionUpdate) {
+            onSubmissionUpdate(updatedEvents);
+          }
+        }}
+      />
     </div>
   );
 }
+

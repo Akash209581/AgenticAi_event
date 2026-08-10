@@ -1,10 +1,58 @@
-import React from 'react';
-import { ArrowLeft, Award, Phone, UserPlus, Sparkles, ShieldCheck, Calendar } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowLeft, Award, Phone, UserPlus, Sparkles, ShieldCheck, Calendar, Video, FileText, CheckCircle2 } from 'lucide-react';
+import SubmissionModal from './SubmissionModal';
 
-export default function EventDetailsView({ event, onBack, onRegister, currentUser = null, onEnrollEvent }) {
+export default function EventDetailsView({ event, onBack, onRegister, currentUser = null, onEnrollEvent, onSubmissionUpdate }) {
+  const [isSubmissionModalOpen, setIsSubmissionModalOpen] = useState(false);
+
   if (!event) return null;
 
-  const isEnrolled = currentUser?.registeredEvents?.some(e => e.id === event.id || e.title === event.title);
+  const cleanTargetTitle = String(event.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const targetCat = String(event.categoryId || event.categoryName || '').toLowerCase();
+  const targetId = String(event.id || '').toLowerCase();
+
+  const isEnrolled = currentUser?.registeredEvents?.some(e => {
+    const cleanETitle = String(e.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const eCat = String(e.categoryId || e.categoryName || '').toLowerCase();
+    const eId = String(e.id || '').toLowerCase();
+
+    // 1. Title match
+    if (cleanTargetTitle && cleanETitle) {
+      if (cleanTargetTitle === cleanETitle || cleanTargetTitle.includes(cleanETitle) || cleanETitle.includes(cleanTargetTitle)) {
+        return true;
+      }
+    }
+
+    // 2. ID match (ensure category match if numeric ID)
+    if (targetId && eId && targetId === eId) {
+      if (!/^[0-9]+$/.test(targetId)) {
+        return true;
+      }
+      if (targetCat && eCat && (targetCat.includes(eCat) || eCat.includes(targetCat))) {
+        return true;
+      }
+    }
+
+    return false;
+  });
+
+  const isReels = event.id === 'creative-1' || (event.id === '1' && (event.categoryId === 'creative' || String(event.categoryId).toLowerCase() === 'creative')) || (event.title && event.title.toLowerCase().includes('reel'));
+  const isPoster = event.id === 'technical-3' || (event.id === '3' && (event.categoryId === 'technical' || String(event.categoryId).toLowerCase() === 'technical')) || (event.title && (event.title.toLowerCase().includes('poster') || event.title.toLowerCase().includes('paper')));
+
+  const matchedRegisteredEvent = currentUser?.registeredEvents?.find(e => {
+    const cleanETitle = String(e.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (cleanTargetTitle && cleanETitle && (cleanTargetTitle.includes(cleanETitle) || cleanETitle.includes(cleanTargetTitle))) {
+      return true;
+    }
+    const eId = String(e.id || '').toLowerCase();
+    if (targetId && eId && targetId === eId && !/^[0-9]+$/.test(targetId)) {
+      return true;
+    }
+    return false;
+  });
+
+  const existingSubmission = matchedRegisteredEvent?.submission;
+
 
   return (
     <div className="event-detail-page">
@@ -36,7 +84,7 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
                 className="event-poster-image"
               />
             </div>
-            {/* Quick Register Button Below Poster */}
+            {/* Quick Register / Submission Button Place */}
             {!currentUser ? (
               <button
                 className="card-quick-register-btn"
@@ -53,7 +101,50 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
                 <Sparkles size={18} />
                 <span>Register for this Event</span>
               </button>
-            ) : null}
+            ) : isReels ? (
+              <button
+                className="card-quick-register-btn"
+                style={{
+                  background: existingSubmission?.reelLink
+                    ? 'linear-gradient(135deg, #10b981, #059669)'
+                    : 'linear-gradient(135deg, #f59e0b, #ef4444)',
+                  borderColor: '#fbbf24'
+                }}
+                onClick={() => setIsSubmissionModalOpen(true)}
+              >
+                <Video size={18} />
+                <span>{existingSubmission?.reelLink ? 'View / Update Reel Link' : 'Submit Reel Link'}</span>
+              </button>
+            ) : isPoster ? (
+              <button
+                className="card-quick-register-btn"
+                style={{
+                  background: (existingSubmission?.posterFile || existingSubmission?.posterLink)
+                    ? 'linear-gradient(135deg, #10b981, #059669)'
+                    : 'linear-gradient(135deg, #00f0ff, #0072ff)',
+                  borderColor: '#00f0ff'
+                }}
+                onClick={() => setIsSubmissionModalOpen(true)}
+              >
+                <FileText size={18} />
+                <span>{(existingSubmission?.posterFile || existingSubmission?.posterLink) ? 'View / Update Poster / Paper' : 'Upload Poster / Paper'}</span>
+              </button>
+            ) : (
+              <div
+                className="card-quick-register-btn"
+                style={{
+                  background: 'rgba(16, 185, 129, 0.2)',
+                  border: '1px solid rgba(16, 185, 129, 0.5)',
+                  color: '#34d399',
+                  justifyContent: 'center',
+                  cursor: 'default'
+                }}
+              >
+                <CheckCircle2 size={18} />
+                <span>Registered for Event</span>
+              </div>
+            )}
+
 
             {/* REGISTRATION DEADLINE BADGE BELOW REGISTER BUTTON */}
             <div className="registration-deadline-badge" style={{
@@ -235,6 +326,20 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
           </div>
         </div>
       </div>
+
+      {/* Submission Modal for Reels and Poster */}
+      <SubmissionModal
+        isOpen={isSubmissionModalOpen}
+        onClose={() => setIsSubmissionModalOpen(false)}
+        event={event}
+        currentUser={currentUser}
+        onSubmitSuccess={(updatedEvents) => {
+          if (onSubmissionUpdate) {
+            onSubmissionUpdate(updatedEvents);
+          }
+        }}
+      />
     </div>
   );
 }
+

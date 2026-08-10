@@ -22,7 +22,24 @@ export default function App() {
     if (path.startsWith('/profile')) return 'pass';
     return 'home';
   });
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('vucse_current_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  // Sync currentUser changes to localStorage
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem('vucse_current_user', JSON.stringify(currentUser));
+    } else {
+      localStorage.removeItem('vucse_current_user');
+    }
+  }, [currentUser]);
+
   const [isNewRegistration, setIsNewRegistration] = useState(false);
   const [prefillLoginId, setPrefillLoginId] = useState('');
   const [totalCount, setTotalCount] = useState(0);
@@ -168,9 +185,18 @@ export default function App() {
     }
   };
 
+  const handleSubmissionUpdate = (updatedEvents) => {
+    if (!currentUser || !Array.isArray(updatedEvents)) return;
+    setCurrentUser(prev => ({
+      ...prev,
+      registeredEvents: updatedEvents
+    }));
+  };
+
   const leaveAdmin = () => {
     changeTab('home', '/');
   };
+
 
   if (isLoading) {
     return <LoadingScreen onComplete={() => setIsLoading(false)} minDuration={5000} />;
@@ -270,6 +296,7 @@ export default function App() {
             onRegister={() => changeTab('register', '/register')}
             currentUser={currentUser}
             onEnrollEvent={handleEnrollEvent}
+            onSubmissionUpdate={handleSubmissionUpdate}
           />
         )}
 
@@ -306,6 +333,7 @@ export default function App() {
               }}
               onExploreEvents={() => changeTab('events', '/events')}
               onUnenrollEvent={handleUnenrollEvent}
+              onSubmissionUpdate={handleSubmissionUpdate}
             />
           ) : (
             <RegistrationForm
@@ -328,6 +356,7 @@ export default function App() {
                 }}
                 onExploreEvents={() => changeTab('events', '/events')}
                 onUnenrollEvent={handleUnenrollEvent}
+                onSubmissionUpdate={handleSubmissionUpdate}
               />
             ) : (
               <LoginPortal

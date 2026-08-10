@@ -143,6 +143,17 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
             },
             currentSlots
           );
+        } else if (data.hasSubmittedEvent === true) {
+          updateSlot(
+            slotIndex,
+            {
+              student: data.student,
+              loading: false,
+              isEnrolled: true,
+              error: `Student ${data.student.name} (${data.student.aiId}) has already submitted the work/poster for this event. Team registration is disabled after submission!`
+            },
+            currentSlots
+          );
         } else {
           updateSlot(
             slotIndex,
@@ -215,6 +226,26 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
     setSlots(prev => prev.filter((_, i) => i !== index));
   };
 
+  const currentUserHasSubmittedSelectedEvent = React.useMemo(() => {
+    if (!currentUser || !Array.isArray(currentUser.registeredEvents)) return false;
+    const cleanEventTitle = String(selectedEvent.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    
+    return currentUser.registeredEvents.some(e => {
+      const cleanETitle = String(e.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const hasSub = e.submission && (e.submission.reelLink || e.submission.posterFile || e.submission.posterLink);
+      
+      if (cleanEventTitle && cleanETitle && (cleanEventTitle.includes(cleanETitle) || cleanETitle.includes(cleanEventTitle))) {
+        return hasSub;
+      }
+      const eId = String(e.id || '').toLowerCase();
+      const selId = String(selectedEvent.id || '').toLowerCase();
+      if (eId && selId && (eId === selId || selId.includes(eId))) {
+        return hasSub;
+      }
+      return false;
+    });
+  }, [currentUser, selectedEvent]);
+
   // Hackathon Year Distribution Check helper
   const checkHackathonYearComposition = () => {
     if (selectedEvent.id !== 'technical-1') return null;
@@ -247,6 +278,32 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
       return;
     }
 
+    // Check if current user has already submitted this event
+    const currentUserHasSubmittedSelectedEvent = (() => {
+      if (!currentUser || !Array.isArray(currentUser.registeredEvents)) return false;
+      const cleanEventTitle = String(selectedEvent.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      
+      return currentUser.registeredEvents.some(e => {
+        const cleanETitle = String(e.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        const hasSub = e.submission && (e.submission.reelLink || e.submission.posterFile || e.submission.posterLink);
+        
+        if (cleanEventTitle && cleanETitle && (cleanEventTitle.includes(cleanETitle) || cleanETitle.includes(cleanEventTitle))) {
+          return hasSub;
+        }
+        const eId = String(e.id || '').toLowerCase();
+        const selId = String(selectedEvent.id || '').toLowerCase();
+        if (eId && selId && (eId === selId || selId.includes(eId))) {
+          return hasSub;
+        }
+        return false;
+      });
+    })();
+
+    if (currentUserHasSubmittedSelectedEvent) {
+      setFormError('Team Registration Blocked: You have already submitted the work/poster for this event. Team creation is only allowed BEFORE submission.');
+      return;
+    }
+
     // Validate slots completeness
     for (let i = 0; i < slots.length; i++) {
       const s = slots[i];
@@ -260,6 +317,10 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
       }
       if (s.isEnrolled === false) {
         setFormError(`Member #${i + 1} (${s.student.name}) is NOT registered for ${selectedEvent.shortName}. Only students registered for this event are eligible to form or join a team.`);
+        return;
+      }
+      if (s.error) {
+        setFormError(`Member #${i + 1} (${s.student?.name || s.aiId}) has a validation error: ${s.error}`);
         return;
       }
     }
@@ -532,6 +593,26 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
           TEAM FORMATION FOR <span style={{ color: 'var(--primary-cyan)' }}>{selectedEvent.title}</span>
         </h3>
 
+        {currentUserHasSubmittedSelectedEvent && (
+          <div style={{
+            background: 'rgba(239, 68, 68, 0.15)',
+            border: '1.5px solid rgba(248, 113, 113, 0.45)',
+            color: '#f87171',
+            padding: '1.25rem',
+            borderRadius: '12px',
+            marginBottom: '2rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            fontSize: '0.95rem'
+          }}>
+            <AlertCircle size={24} style={{ flexShrink: 0 }} />
+            <div>
+              <strong>Team Registration Disabled:</strong> You have already submitted the work/poster for <strong>{selectedEvent.title}</strong>. Team formation is not permitted after work has been submitted.
+            </div>
+          </div>
+        )}
+
         {/* Team Name Input */}
         <div className="form-group" style={{ marginBottom: '2.5rem' }}>
           <label style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--text-dim)', marginBottom: '0.75rem', display: 'block' }}>
@@ -544,7 +625,8 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
             value={teamName}
             onChange={(e) => setTeamName(e.target.value)}
             required
-            style={{ width: '100%', fontSize: '1.1rem', padding: '0.95rem 1.25rem' }}
+            disabled={currentUserHasSubmittedSelectedEvent}
+            style={{ width: '100%', fontSize: '1.1rem', padding: '0.95rem 1.25rem', cursor: currentUserHasSubmittedSelectedEvent ? 'not-allowed' : 'text' }}
           />
         </div>
 
@@ -578,7 +660,7 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
 
             {/* Add / Remove buttons if within range */}
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              {slots.length < selectedEvent.maxSize && (
+              {slots.length < selectedEvent.maxSize && !currentUserHasSubmittedSelectedEvent && (
                 <button
                   type="button"
                   onClick={addSlot}
@@ -659,7 +741,7 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
                         className="form-control"
                         placeholder="ENTER STUDENT AI ID (E.G. VUCSE00001)"
                         value={slot.aiId}
-                        readOnly={isLeader && !!currentUser?.aiId}
+                        readOnly={(isLeader && !!currentUser?.aiId) || currentUserHasSubmittedSelectedEvent}
                         onChange={(e) => handleAiIdChange(index, e.target.value)}
                         onBlur={() => handleAiIdBlur(index)}
                         style={{
@@ -669,9 +751,9 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
                           fontWeight: '700',
                           padding: '0.85rem 1.25rem',
                           fontSize: '1rem',
-                          background: (isLeader && !!currentUser?.aiId) ? 'rgba(0, 242, 254, 0.05)' : undefined,
-                          borderColor: (isLeader && !!currentUser?.aiId) ? 'rgba(0, 242, 254, 0.3)' : undefined,
-                          cursor: (isLeader && !!currentUser?.aiId) ? 'not-allowed' : undefined
+                          background: ((isLeader && !!currentUser?.aiId) || currentUserHasSubmittedSelectedEvent) ? 'rgba(0, 242, 254, 0.05)' : undefined,
+                          borderColor: ((isLeader && !!currentUser?.aiId) || currentUserHasSubmittedSelectedEvent) ? 'rgba(0, 242, 254, 0.3)' : undefined,
+                          cursor: ((isLeader && !!currentUser?.aiId) || currentUserHasSubmittedSelectedEvent) ? 'not-allowed' : undefined
                         }}
                       />
                       {slot.loading && (
@@ -685,7 +767,7 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
                       type="button"
                       onClick={() => lookupStudent(slot.aiId, index)}
                       className="btn btn-secondary"
-                      disabled={isLeader && !!currentUser?.aiId && !!slot.student}
+                      disabled={(isLeader && !!currentUser?.aiId && !!slot.student) || currentUserHasSubmittedSelectedEvent}
                       style={{
                         padding: '0.85rem 1.5rem',
                         fontSize: '0.9rem',
@@ -693,8 +775,8 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '0.4rem',
-                        opacity: (isLeader && !!currentUser?.aiId && !!slot.student) ? 0.6 : 1,
-                        cursor: (isLeader && !!currentUser?.aiId && !!slot.student) ? 'not-allowed' : 'pointer'
+                        opacity: ((isLeader && !!currentUser?.aiId && !!slot.student) || currentUserHasSubmittedSelectedEvent) ? 0.6 : 1,
+                        cursor: ((isLeader && !!currentUser?.aiId && !!slot.student) || currentUserHasSubmittedSelectedEvent) ? 'not-allowed' : 'pointer'
                       }}
                     >
                       <Search size={16} /> {isLeader && !!currentUser?.aiId && !!slot.student ? 'Auto Verified' : 'Verify'}
@@ -768,11 +850,27 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
         <button
           type="submit"
           className="btn btn-primary"
-          disabled={submitLoading}
-          style={{ width: '100%', padding: '1.15rem', fontSize: '1.15rem', fontWeight: '800', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.6rem', marginTop: '1rem' }}
+          disabled={submitLoading || currentUserHasSubmittedSelectedEvent}
+          style={{
+            width: '100%',
+            padding: '1.15rem',
+            fontSize: '1.15rem',
+            fontWeight: '800',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '0.6rem',
+            marginTop: '1rem',
+            opacity: currentUserHasSubmittedSelectedEvent ? 0.5 : 1,
+            cursor: currentUserHasSubmittedSelectedEvent ? 'not-allowed' : 'pointer'
+          }}
         >
           {submitLoading ? (
             'REGISTERING TEAM...'
+          ) : currentUserHasSubmittedSelectedEvent ? (
+            <>
+              <AlertCircle size={22} /> TEAM REGISTRATION DISABLED (ALREADY SUBMITTED)
+            </>
           ) : (
             <>
               <Sparkles size={22} /> REGISTER TEAM FOR {selectedEvent.shortName.toUpperCase()}
