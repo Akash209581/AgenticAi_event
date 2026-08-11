@@ -218,7 +218,7 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
                   <div className="bootcamp-meta-row">
                     <div className="bootcamp-date-badge">
                       <Calendar size={18} style={{ color: '#00f0ff' }} />
-                      <span><strong>14 AUGUST 2026</strong></span>
+                      <span><strong>AUGUST 2026</strong></span>
                     </div>
                     <div className="bootcamp-ambassador-badge">
                       <Award size={18} style={{ color: '#fbbf24' }} />
@@ -259,7 +259,7 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
                   {/* BOTTOM TIMELINE FLOW */}
                   <div className="bootcamp-timeline-bar">
                     <div className="timeline-node">
-                      <span className="node-text">LEARN ON 14 AUG</span>
+                      <span className="node-text">LEARN</span>
                     </div>
                     <span className="timeline-arrow">➔</span>
                     <div className="timeline-node gold">
@@ -327,35 +327,37 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
           {/* COLUMN 3: RIGHT PRIZES & CONTACTS (BESIDE RULES) */}
           <div className="event-sidebar-column">
             {/* CASH PRIZES BOX */}
-            <div className="sidebar-glass-box">
-              <h2 className="section-gold-heading">
-                <Award size={20} className="gold-heading-icon" /> Cash Prizes:
-              </h2>
-              <div className="prizes-list">
-                {event.prizes && event.prizes.length > 0 ? (
-                  event.prizes.map((p, idx) => (
-                    <div key={idx} className="prize-item-row">
-                      <span className="prize-rank-text">{p.rank}</span>
-                      <span className="prize-dash-text">-</span>
-                      <span className="prize-amount-text">{p.amount}</span>
-                    </div>
-                  ))
-                ) : (
-                  <>
-                    <div className="prize-item-row">
-                      <span className="prize-rank-text">First</span>
-                      <span className="prize-dash-text">-</span>
-                      <span className="prize-amount-text">To be announced</span>
-                    </div>
-                    <div className="prize-item-row">
-                      <span className="prize-rank-text">Second</span>
-                      <span className="prize-dash-text">-</span>
-                      <span className="prize-amount-text">To be announced</span>
-                    </div>
-                  </>
-                )}
+            {event.prizes !== null && event.prizes !== false && !event.hidePrizes && (
+              <div className="sidebar-glass-box">
+                <h2 className="section-gold-heading">
+                  <Award size={20} className="gold-heading-icon" /> Cash Prizes:
+                </h2>
+                <div className="prizes-list">
+                  {event.prizes && event.prizes.length > 0 ? (
+                    event.prizes.map((p, idx) => (
+                      <div key={idx} className="prize-item-row">
+                        <span className="prize-rank-text">{p.rank}</span>
+                        <span className="prize-dash-text">-</span>
+                        <span className="prize-amount-text">{p.amount}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <>
+                      <div className="prize-item-row">
+                        <span className="prize-rank-text">First</span>
+                        <span className="prize-dash-text">-</span>
+                        <span className="prize-amount-text">To be announced</span>
+                      </div>
+                      <div className="prize-item-row">
+                        <span className="prize-rank-text">Second</span>
+                        <span className="prize-dash-text">-</span>
+                        <span className="prize-amount-text">To be announced</span>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* CONTACT / COORDINATORS BOX */}
             <div className="sidebar-glass-box" style={{ marginTop: '1.25rem' }}>

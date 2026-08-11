@@ -8,11 +8,11 @@ export const eventsRulesData = {
     cardTitle: 'AGENTIC AI HACKATHON',
     image: '/images/event_hackathon_1786084020517.png',
     whatsappGroupLink: 'https://chat.whatsapp.com/DY7Ok514zSmCLiueVk2lq2',
-    eventDate: '27th & 28th August 2026',
-    registrationDeadline: '26th August 2026',
+    eventDate: '21st & 22nd August 2026',
+    registrationDeadline: '20th August 2026',
     teamSize: 'Strictly 4 members (1x 4th Year, 2x 3rd Year, 1x 2nd Year)',
     rules: [
-      'Hackathon Dates: 27th & 28th August 2026.',
+      'Hackathon Dates: 21st & 22nd August 2026.',
       'All participants must complete registration through the official registration form before the specified deadline.',
       'Theme Selection: During registration, only the Team Leader is required to select one theme from the list of given themes. The selected theme will apply to the entire team. The theme must be finalized on or before 26th August 2026. No changes to the selected theme will be permitted after the deadline.',
       'Team Composition: Each team must consist of strictly 4 members — 1 Student from 4th Year, 2 Students from 3rd Year, and 1 Student from 2nd Year.',
@@ -31,9 +31,9 @@ export const eventsRulesData = {
       'Final Decision: The decision of the judging panel shall be considered final and binding.'
     ],
     prizes: [
-      { rank: 'First', amount: 'Rs. 3000/-' },
-      { rank: 'Second', amount: 'Rs. 2000/-' },
-      { rank: 'Third', amount: 'Rs. 1000/-' }
+      { rank: 'Top 3 teams', amount: 'Rs. 5000/-' },
+      { rank: 'Next Top 5 teams', amount: 'Rs. 3000/-' },
+      { rank: 'Next Top 5 teams', amount: 'Rs. 2000/-' }
     ],
     coordinators: [
       { name: 'Dr. Phanindra Thota (Faculty)', phone: '+91 80964 65667' },
@@ -169,7 +169,9 @@ export const eventsRulesData = {
     cardTitle: 'AI PODCAST',
     image: '/images/event_podcast.png',
     whatsappGroupLink: 'https://chat.whatsapp.com/KBmnvLXFihgAEAiDXTvmcL',
-    eventDate: '28 August 2026',
+    registrationDeadline: '28 August 2026',
+    eventDate: 'August 2026',
+    prizes: null,
     rules: [
       'Interactive live discussion with AI industry experts and leaders.',
       'Participants can submit questions during registration or live during Q&A.',
@@ -190,7 +192,7 @@ export const eventsRulesData = {
     cardTitle: 'AI AGENTS EXPO',
     image: '/images/event_expo.png',
     whatsappGroupLink: 'https://chat.whatsapp.com/FHIm45h2bt560DT2Mt8nVb',
-    eventDate: '28 August 2026',
+    eventDate: 'August 2026',
     rules: [
       'Team size Max:4 & Min:2',
       'Participants should be aware that there will be a prior evaluation, and only those who are shortlisted will have the opportunity to present at the event.',
@@ -215,15 +217,12 @@ export const eventsRulesData = {
     image: '/images/event_summit.png',
     whatsappGroupLink: 'https://chat.whatsapp.com/BP9ozDg2pno4CZT2KQOfoF',
     eventDate: '29 August 2026',
+    registrationDeadline: '28 August 2026',
+    prizes: null,
     rules: [
       'Keynote presentations and panel sessions featuring tech leaders.',
       'Networking session for students with industry mentors and recruiters.',
       'Open to all registered AI Day participants.'
-    ],
-    prizes: [
-      { rank: 'First', amount: 'Rs. 3000/-' },
-      { rank: 'Second', amount: 'Rs. 2000/-' },
-      { rank: 'Third', amount: 'Rs. 1000/-' }
     ],
     coordinators: [
       { name: 'Dr. James Deva Koresh (Faculty)', phone: '+91 99947 62822' },
