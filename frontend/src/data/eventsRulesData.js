@@ -31,9 +31,9 @@ export const eventsRulesData = {
       'Final Decision: The decision of the judging panel shall be considered final and binding.'
     ],
     prizes: [
-      { rank: 'Top 3 teams', amount: 'Rs. 5000/-' },
-      { rank: 'Next Top 5 teams', amount: 'Rs. 3000/-' },
-      { rank: 'Next Top 5 teams', amount: 'Rs. 2000/-' }
+      { rank: 'Top 3 teams', amount: 'Rs. 5000/- per each team' },
+      { rank: 'Next Top 5 teams', amount: 'Rs. 3000/- per each team' },
+      { rank: 'Next Top 5 teams', amount: 'Rs. 2000/- per each team' }
     ],
     coordinators: [
       { name: 'Dr. Phanindra Thota (Faculty)', phone: '+91 80964 65667' },
@@ -199,9 +199,9 @@ export const eventsRulesData = {
       'Participants should be aware that there will be a prior evaluation, and only those who are shortlisted will have the opportunity to present at the event.',
     ],
     prizes: [
-      { rank: 'Top 3 teams', amount: 'Rs. 5000/-' },
-      { rank: 'Next Top 5 teams', amount: 'Rs. 3000/-' },
-      { rank: 'Next Top 5 teams', amount: 'Rs. 2000/-' }
+      { rank: 'Top 3 teams', amount: 'Rs. 5000/- per each team' },
+      { rank: 'Next Top 5 teams', amount: 'Rs. 3000/- per each team' },
+      { rank: 'Next Top 5 teams', amount: 'Rs. 2000/- per each team' }
     ],
     coordinators: [
       { name: 'Dr. Veera Bhadra Chari (Faculty)', phone: '+91 89789 75688' },
@@ -380,6 +380,25 @@ export const eventsRulesData = {
 
 
 // Helper lookup to get event details by category and event item
+export function isRegistrationClosed(deadlineString, eventTitle = '', eventId = '') {
+  const isBootcamp = (eventTitle && eventTitle.toLowerCase().includes('bootcamp')) ||
+                     (eventId && eventId.toLowerCase().includes('bootcamp'));
+
+  // Bootcamp registration strictly ends on 18th August 2026 23:59:59 IST
+  if (isBootcamp) {
+    const bootcampDeadline = new Date('2026-08-18T23:59:59.999+05:30');
+    return new Date() > bootcampDeadline;
+  }
+
+  const effectiveDeadline = deadlineString || '26 August 2026';
+  const cleanStr = String(effectiveDeadline).replace(/(\d+)(st|nd|rd|th)/i, '$1').trim();
+  const parsed = new Date(cleanStr);
+  if (isNaN(parsed.getTime())) return false;
+
+  parsed.setHours(23, 59, 59, 999);
+  return new Date() > parsed;
+}
+
 export function getEventDetails(categoryId, eventId, fallbackTitle = '') {
   // 1. Direct key match: 'technical-1'
   const key1 = `${categoryId}-${eventId}`;

@@ -178,23 +178,12 @@ export default function App() {
           ...prev,
           registeredEvents: data.registeredEvents
         }));
+      } else if (data.message) {
+        alert(data.message);
       }
     } catch (err) {
       console.warn('Failed to enroll event:', err);
-      setCurrentUser(prev => {
-        const existing = prev?.registeredEvents || [];
-        if (existing.some(e => e.id === event.id || e.title === event.title)) return prev;
-        return {
-          ...prev,
-          registeredEvents: [...existing, {
-            id: event.id,
-            title: event.title,
-            categoryName: event.categoryName || event.category || 'TECHNICAL EVENTS',
-            categoryId: event.categoryId || 'technical',
-            image: event.image || ''
-          }]
-        };
-      });
+      alert(err.message || 'Unable to register for event. Registration deadline may have passed.');
     }
   };
 

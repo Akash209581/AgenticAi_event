@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Award, Phone, UserPlus, Sparkles, ShieldCheck, Calendar, Video, FileText, CheckCircle2, Bot, Zap, MessageCircle, ExternalLink, Lock } from 'lucide-react';
 import SubmissionModal from './SubmissionModal';
-import { isSameEvent, getEventDetails } from '../data/eventsRulesData';
+import { isSameEvent, getEventDetails, isRegistrationClosed } from '../data/eventsRulesData';
 import { getAssetUrl } from '../config/api';
 
 export default function EventDetailsView({ event, onBack, onRegister, currentUser = null, onEnrollEvent, onSubmissionUpdate }) {
@@ -88,67 +88,105 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
               />
             </div>
             {/* Quick Register / Submission Button Place */}
-            {!currentUser ? (
-              <button
-                className="card-quick-register-btn"
-                onClick={() => onRegister && onRegister(event)}
-              >
-                <Sparkles size={18} />
-                <span>Register For Event</span>
-              </button>
-            ) : !isEnrolled ? (
-              <button
-                className="card-quick-register-btn"
-                onClick={() => onEnrollEvent && onEnrollEvent(event)}
-              >
-                <Sparkles size={18} />
-                <span>Register for this Event</span>
-              </button>
-            ) : isReels ? (
-              <button
-                className="card-quick-register-btn"
-                style={{
-                  background: existingSubmission?.reelLink
-                    ? 'linear-gradient(135deg, #10b981, #059669)'
-                    : 'linear-gradient(135deg, #f59e0b, #ef4444)',
-                  borderColor: '#fbbf24'
-                }}
-                onClick={() => setIsSubmissionModalOpen(true)}
-              >
-                <Video size={18} />
-                <span>{existingSubmission?.reelLink ? 'Reel Submitted (Preview)' : 'Submit Reel Link'}</span>
-              </button>
-            ) : isPoster ? (
-              <button
-                className={`card-quick-register-btn ${(existingSubmission?.posterFile || existingSubmission?.posterLink) ? '' : 'poster-upload-btn-blinking'}`}
-                style={{
-                  background: (existingSubmission?.posterFile || existingSubmission?.posterLink)
-                    ? 'linear-gradient(135deg, #10b981, #059669)'
-                    : undefined,
-                  borderColor: (existingSubmission?.posterFile || existingSubmission?.posterLink)
-                    ? '#10b981'
-                    : undefined
-                }}
-                onClick={() => setIsSubmissionModalOpen(true)}
-              >
-                <FileText size={18} />
-                <span>{(existingSubmission?.posterFile || existingSubmission?.posterLink) ? 'Poster Submitted (Preview)' : 'Upload Poster / Paper'}</span>
-              </button>
-            ) : (
-              <div
-                className="card-quick-register-btn"
-                style={{
-                  background: 'rgba(16, 185, 129, 0.2)',
-                  border: '1px solid rgba(16, 185, 129, 0.5)',
-                  color: '#34d399',
-                  justifyContent: 'center',
-                  cursor: 'default'
-                }}
-              >
-                <CheckCircle2 size={18} />
-                <span>Registered for Event</span>
-              </div>
-            )}
+            {(() => {
+              const isEventClosed = isRegistrationClosed(event.registrationDeadline, event.title, event.id);
+
+              if (isEnrolled) {
+                if (isReels) {
+                  return (
+                    <button
+                      className="card-quick-register-btn"
+                      style={{
+                        background: existingSubmission?.reelLink
+                          ? 'linear-gradient(135deg, #10b981, #059669)'
+                          : 'linear-gradient(135deg, #f59e0b, #ef4444)',
+                        borderColor: '#fbbf24'
+                      }}
+                      onClick={() => setIsSubmissionModalOpen(true)}
+                    >
+                      <Video size={18} />
+                      <span>{existingSubmission?.reelLink ? 'Reel Submitted (Preview)' : 'Submit Reel Link'}</span>
+                    </button>
+                  );
+                }
+                if (isPoster) {
+                  return (
+                    <button
+                      className={`card-quick-register-btn ${(existingSubmission?.posterFile || existingSubmission?.posterLink) ? '' : 'poster-upload-btn-blinking'}`}
+                      style={{
+                        background: (existingSubmission?.posterFile || existingSubmission?.posterLink)
+                          ? 'linear-gradient(135deg, #10b981, #059669)'
+                          : undefined,
+                        borderColor: (existingSubmission?.posterFile || existingSubmission?.posterLink)
+                          ? '#10b981'
+                          : undefined
+                      }}
+                      onClick={() => setIsSubmissionModalOpen(true)}
+                    >
+                      <FileText size={18} />
+                      <span>{(existingSubmission?.posterFile || existingSubmission?.posterLink) ? 'Poster Submitted (Preview)' : 'Upload Poster / Paper'}</span>
+                    </button>
+                  );
+                }
+                return (
+                  <div
+                    className="card-quick-register-btn"
+                    style={{
+                      background: 'rgba(16, 185, 129, 0.2)',
+                      border: '1px solid rgba(16, 185, 129, 0.5)',
+                      color: '#34d399',
+                      justifyContent: 'center',
+                      cursor: 'default'
+                    }}
+                  >
+                    <CheckCircle2 size={18} />
+                    <span>Registered for Event</span>
+                  </div>
+                );
+              }
+
+              if (isEventClosed) {
+                return (
+                  <div
+                    className="card-quick-register-btn"
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.15)',
+                      border: '1px solid rgba(239, 68, 68, 0.4)',
+                      color: '#f87171',
+                      justifyContent: 'center',
+                      cursor: 'not-allowed',
+                      fontWeight: '700'
+                    }}
+                    title={`Registrations closed on ${event.registrationDeadline || '26 August 2026'}`}
+                  >
+                    <Lock size={18} />
+                    <span>Registrations Closed</span>
+                  </div>
+                );
+              }
+
+              if (!currentUser) {
+                return (
+                  <button
+                    className="card-quick-register-btn"
+                    onClick={() => onRegister && onRegister(event)}
+                  >
+                    <Sparkles size={18} />
+                    <span>Register For Event</span>
+                  </button>
+                );
+              }
+
+              return (
+                <button
+                  className="card-quick-register-btn"
+                  onClick={() => onEnrollEvent && onEnrollEvent(event)}
+                >
+                  <Sparkles size={18} />
+                  <span>Register for this Event</span>
+                </button>
+              );
+            })()}
 
 
             {/* REGISTRATION DEADLINE BADGE BELOW REGISTER BUTTON */}
@@ -280,6 +318,50 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
                     {(() => {
                       const bootcampEventObj = getEventDetails('bootcamp', '1', 'AI AGENT BOOTCAMP');
                       const isBootcampEnrolled = currentUser?.registeredEvents?.some(e => isSameEvent(bootcampEventObj, e));
+                      const isBootcampClosed = isRegistrationClosed(bootcampEventObj.registrationDeadline, bootcampEventObj.title, bootcampEventObj.id);
+
+                      if (isBootcampEnrolled) {
+                        return (
+                          <div
+                            className="card-quick-register-btn"
+                            style={{
+                              maxWidth: '320px',
+                              margin: '0 auto',
+                              background: 'rgba(16, 185, 129, 0.2)',
+                              border: '1px solid rgba(16, 185, 129, 0.5)',
+                              color: '#34d399',
+                              justifyContent: 'center',
+                              cursor: 'default',
+                              fontWeight: '700'
+                            }}
+                          >
+                            <CheckCircle2 size={18} />
+                            <span>Registered for Bootcamp</span>
+                          </div>
+                        );
+                      }
+
+                      if (isBootcampClosed) {
+                        return (
+                          <div
+                            className="card-quick-register-btn"
+                            style={{
+                              maxWidth: '350px',
+                              margin: '0 auto',
+                              background: 'rgba(239, 68, 68, 0.15)',
+                              border: '1px solid rgba(239, 68, 68, 0.4)',
+                              color: '#f87171',
+                              justifyContent: 'center',
+                              cursor: 'not-allowed',
+                              fontWeight: '700'
+                            }}
+                            title="Bootcamp registration ended on 18th August 2026"
+                          >
+                            <Lock size={18} />
+                            <span>Bootcamp Registrations Closed</span>
+                          </div>
+                        );
+                      }
 
                       if (!currentUser) {
                         return (
@@ -303,45 +385,24 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
                         );
                       }
 
-                      if (!isBootcampEnrolled) {
-                        return (
-                          <button
-                            type="button"
-                            className="card-quick-register-btn"
-                            style={{
-                              maxWidth: '320px',
-                              margin: '0 auto',
-                              background: 'linear-gradient(135deg, #00f0ff, #7000ff)',
-                              color: '#ffffff',
-                              fontWeight: '700',
-                              fontSize: '1rem',
-                              boxShadow: '0 0 20px rgba(0, 240, 255, 0.4)'
-                            }}
-                            onClick={() => onEnrollEvent && onEnrollEvent(bootcampEventObj)}
-                          >
-                            <Sparkles size={18} />
-                            <span>Register for Bootcamp</span>
-                          </button>
-                        );
-                      }
-
                       return (
-                        <div
+                        <button
+                          type="button"
                           className="card-quick-register-btn"
                           style={{
                             maxWidth: '320px',
                             margin: '0 auto',
-                            background: 'rgba(16, 185, 129, 0.2)',
-                            border: '1px solid rgba(16, 185, 129, 0.5)',
-                            color: '#34d399',
-                            justifyContent: 'center',
-                            cursor: 'default',
-                            fontWeight: '700'
+                            background: 'linear-gradient(135deg, #00f0ff, #7000ff)',
+                            color: '#ffffff',
+                            fontWeight: '700',
+                            fontSize: '1rem',
+                            boxShadow: '0 0 20px rgba(0, 240, 255, 0.4)'
                           }}
+                          onClick={() => onEnrollEvent && onEnrollEvent(bootcampEventObj)}
                         >
-                          <CheckCircle2 size={18} />
-                          <span>Registered for Bootcamp</span>
-                        </div>
+                          <Sparkles size={18} />
+                          <span>Register for Bootcamp</span>
+                        </button>
                       );
                     })()}
                   </div>
