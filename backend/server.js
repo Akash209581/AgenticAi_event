@@ -6,7 +6,7 @@ import compression from 'compression';
 import { connectDB } from './config/db.js';
 import registrationRoutes from './routes/registration.js';
 import authRoutes from './routes/auth.js';
-import { mongoSanitizer } from './middleware/sanitizer.js';
+import { mongoSanitizer, sanitizeXSSInputs } from './middleware/sanitizer.js';
 import { authRateLimiter, registrationRateLimiter, publicApiRateLimiter } from './middleware/rateLimiter.js';
 import mongoose from 'mongoose';
 import path from 'path';
@@ -44,8 +44,9 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 
-// 6. NoSQL Query Injection Sanitization
+// 6. NoSQL & XSS Query Injection Sanitization
 app.use(mongoSanitizer);
+app.use(sanitizeXSSInputs);
 
 // Global Direct Image / Media Access Guard:
 // If a user attempts to open an image or upload URL directly in their browser tab address bar,
