@@ -13,15 +13,18 @@ import NavOverlay from './components/NavOverlay';
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
-  const getNormalizedPath = (pathname) => {
-    const p = pathname.toLowerCase();
-    if (p.startsWith('/aiday/')) return p.substring(6);
-    if (p === '/aiday') return '/';
-    return p;
+  const isImagePath = (pathStr) => {
+    const p = (pathStr || '').toLowerCase();
+    return /\.(png|jpg|jpeg|gif|webp|avif|svg|ico)$/i.test(p) || p.includes('/images/') || p.includes('/uploads/');
   };
 
   const [activeTab, setActiveTab] = useState(() => {
-    const path = getNormalizedPath(window.location.pathname);
+    const rawPath = window.location.pathname;
+    if (isImagePath(rawPath)) {
+      window.history.replaceState({}, '', '/');
+      return 'home';
+    }
+    const path = getNormalizedPath(rawPath);
     if (path === '/iamadmin' || path === '/cseadmin') return 'admin';
     if (path.startsWith('/events')) return 'events';
     if (path.startsWith('/register')) return 'register';
@@ -45,22 +48,32 @@ export default function App() {
       localStorage.setItem('vucse_current_user', JSON.stringify(currentUser));
     } else {
       localStorage.removeItem('vucse_current_user');
+      localStorage.removeItem('vucse_auth_token');
     }
   }, [currentUser]);
 
   const [isNewRegistration, setIsNewRegistration] = useState(false);
   const [prefillLoginId, setPrefillLoginId] = useState('');
-  const [totalCount, setTotalCount] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Global Protection: Disable right-click, image dragging, text selection, and DevTools shortcuts (Ctrl+Shift+I, Ctrl+Shift+J)
+  // Global Anti-Inspection & Anti-Theft Protection:
+  // Disables contextmenu (right click), dragging, selection, and DevTools/Source keyboard shortcuts
   useEffect(() => {
-    const handleContextMenu = (e) => e.preventDefault();
-    const handleDragStart = (e) => e.preventDefault();
+    const handleContextMenu = (e) => {
+      e.preventDefault();
+      return false;
+    };
+    
+    const handleDragStart = (e) => {
+      e.preventDefault();
+      return false;
+    };
+    
     const handleSelectStart = (e) => {
       const tag = e.target?.tagName?.toUpperCase();
       if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
         e.preventDefault();
+        return false;
       }
     };
 
@@ -69,28 +82,50 @@ export default function App() {
       const code = e.code ? e.code.toUpperCase() : '';
       const isCtrlOrCmd = e.ctrlKey || e.metaKey;
 
-      // Block Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, F12, Ctrl+U
+      // Block F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+Shift+K, Ctrl+U, Ctrl+S, Ctrl+P
       if (
+        key === 'F12' || code === 'F12' ||
         (isCtrlOrCmd && e.shiftKey && (key === 'I' || code === 'KEYI')) ||
         (isCtrlOrCmd && e.shiftKey && (key === 'J' || code === 'KEYJ')) ||
         (isCtrlOrCmd && e.shiftKey && (key === 'C' || code === 'KEYC')) ||
+        (isCtrlOrCmd && e.shiftKey && (key === 'K' || code === 'KEYK')) ||
         (isCtrlOrCmd && (key === 'U' || code === 'KEYU')) ||
-        key === 'F12' || code === 'F12'
+        (isCtrlOrCmd && (key === 'S' || code === 'KEYS')) ||
+        (isCtrlOrCmd && (key === 'P' || code === 'KEYP'))
       ) {
         e.preventDefault();
         e.stopPropagation();
+        return false;
+      }
+
+      // Block Ctrl+C copying outside text inputs
+      if (isCtrlOrCmd && (key === 'C' || code === 'KEYC')) {
+        const tag = e.target?.tagName?.toUpperCase();
+        if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
       }
     };
 
-    document.addEventListener('contextmenu', handleContextMenu);
-    document.addEventListener('dragstart', handleDragStart);
-    document.addEventListener('selectstart', handleSelectStart);
+    // Print Security Warning in Console
+    try {
+      console.warn(
+        '%cStop! Unauthorized inspection or data/media copying is strictly prohibited.',
+        'color: #f87171; font-size: 20px; font-weight: bold; background: #0f172a; padding: 10px; border-radius: 5px;'
+      );
+    } catch (_) {}
+
+    document.addEventListener('contextmenu', handleContextMenu, true);
+    document.addEventListener('dragstart', handleDragStart, true);
+    document.addEventListener('selectstart', handleSelectStart, true);
     document.addEventListener('keydown', handleKeyDown, true);
 
     return () => {
-      document.removeEventListener('contextmenu', handleContextMenu);
-      document.removeEventListener('dragstart', handleDragStart);
-      document.removeEventListener('selectstart', handleSelectStart);
+      document.removeEventListener('contextmenu', handleContextMenu, true);
+      document.removeEventListener('dragstart', handleDragStart, true);
+      document.removeEventListener('selectstart', handleSelectStart, true);
       document.removeEventListener('keydown', handleKeyDown, true);
     };
   }, []);
@@ -98,7 +133,13 @@ export default function App() {
   // Sync browser back/forward buttons
   useEffect(() => {
     const handlePopState = () => {
-      const path = getNormalizedPath(window.location.pathname);
+      const rawPath = window.location.pathname;
+      if (isImagePath(rawPath)) {
+        window.history.replaceState({}, '', '/');
+        setActiveTab('home');
+        return;
+      }
+      const path = getNormalizedPath(rawPath);
       if (path.startsWith('/events')) setActiveTab('events');
       else if (path.startsWith('/register')) setActiveTab('register');
       else if (path.startsWith('/team-register') || path.startsWith('/teams')) setActiveTab('team-register');
@@ -121,25 +162,6 @@ export default function App() {
     if (target !== window.location.pathname) {
       window.history.pushState({}, '', target);
     }
-  };
-
-  const fetchStats = async () => {
-    try {
-      const { res, data } = await apiFetch('/stats');
-      if (data.success && data.stats) {
-        setTotalCount(data.stats.totalRegistrations);
-      }
-    } catch (e) {
-      console.warn('Stats fetch error:', e.message);
-    }
-  };
-
-  useEffect(() => {
-    fetchStats();
-  }, [currentUser]);
-
-  const handleRegistrationSuccess = (user) => {
-    setTotalCount(prev => prev + 1);
   };
 
   const handleProceedToLogin = (identifier) => {
@@ -353,7 +375,7 @@ export default function App() {
             <TeamRegistrationForm
               currentUser={currentUser}
               onBack={() => changeTab('home', '/')}
-              onSuccess={() => fetchStats()}
+              onSuccess={() => {}}
             />
           ) : (
             <LoginPortal
@@ -384,7 +406,7 @@ export default function App() {
             />
           ) : (
             <RegistrationForm
-              onSuccess={handleRegistrationSuccess}
+              onSuccess={() => {}}
               onProceedToLogin={handleProceedToLogin}
               onBack={() => changeTab('home', '/')}
             />

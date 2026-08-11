@@ -95,6 +95,10 @@ export default function RegistrationForm({ onSuccess, onProceedToLogin, onBack }
         throw new Error(data.message || 'Registration failed.');
       }
 
+      if (data.token) {
+        localStorage.setItem('vucse_auth_token', data.token);
+      }
+
       setRegisteredUser(data.user);
 
       if (onSuccess) {

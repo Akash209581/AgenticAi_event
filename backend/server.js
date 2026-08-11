@@ -34,7 +34,7 @@ app.use(compression());
 const corsOptions = {
   origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-admin-token'],
   credentials: true
 };
 app.use(cors(corsOptions));
@@ -47,8 +47,32 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // 6. NoSQL Query Injection Sanitization
 app.use(mongoSanitizer);
 
-// Serve static uploaded files (posters / papers)
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads'))); 
+// Global Direct Image / Media Access Guard:
+// If a user attempts to open an image or upload URL directly in their browser tab address bar,
+// redirect them automatically to the home page ('/')
+app.use((req, res, next) => {
+  const urlPath = (req.path || '').toLowerCase();
+  const isImageFile = /\.(png|jpg|jpeg|gif|webp|avif|svg|ico)$/i.test(urlPath) || urlPath.startsWith('/uploads') || urlPath.startsWith('/images');
+  const acceptHeader = (req.headers.accept || '').toLowerCase();
+  const fetchDest = (req.headers['sec-fetch-dest'] || '').toLowerCase();
+  
+  const isDirectNavigation = acceptHeader.includes('text/html') || fetchDest === 'document';
+
+  if (isImageFile && isDirectNavigation) {
+    return res.redirect(302, '/');
+  }
+  next();
+});
+
+// Serve static uploaded files (posters / papers) with security protections
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads'), {
+  dotfiles: 'ignore',
+  index: false,
+  setHeaders: (res) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Cache-Control', 'private, no-store, max-age=0, must-revalidate');
+  }
+})); 
 
 // Connect Database
 connectDB(); 
@@ -67,20 +91,12 @@ app.use(BASE_API, publicApiRateLimiter);
 app.use(BASE_API, registrationRoutes);
 app.use(BASE_API, authRoutes);
 
-// Health check endpoint
+// Health check endpoint (Sanitized response)
 app.get('/', (req, res) => {
   res.json({
     status: 'online',
     event: 'Agentic AI Day 2026 Registration API',
-    environment: process.env.NODE_ENV || 'development',
-    baseApi: BASE_API,
-    port: PORT,
-    endpoints: {
-      register: `POST ${BASE_API}/register`,
-      login: `POST ${BASE_API}/login`,
-      registrations: `GET ${BASE_API}/registrations`,
-      stats: `GET ${BASE_API}/stats`
-    }
+    timestamp: new Date().toISOString()
   });
 });
 

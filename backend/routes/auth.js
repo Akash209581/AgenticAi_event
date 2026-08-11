@@ -3,7 +3,7 @@ import { User } from '../models/User.js';
 import { Team } from '../models/Team.js';
 import { memoryUsers } from '../utils/idGenerator.js';
 import { memoryTeams } from './registration.js';
-import { getAdminSecretToken } from '../middleware/adminAuth.js';
+import { getAdminSecretToken, generateAdminJwt, generateUserJwt } from '../middleware/adminAuth.js';
 import mongoose from 'mongoose';
 import fs from 'fs';
 import path from 'path';
@@ -46,7 +46,7 @@ router.post('/admin-login', (req, res) => {
       });
     }
 
-    const token = getAdminSecretToken();
+    const token = generateAdminJwt(cleanUser);
 
     return res.json({
       success: true,
@@ -115,9 +115,12 @@ router.post('/login', async (req, res) => {
       });
     }
 
+    const token = generateUserJwt(user);
+
     return res.json({
       success: true,
       message: 'Login successful!',
+      token,
       user: {
         aiId: user.aiId,
         name: user.name,

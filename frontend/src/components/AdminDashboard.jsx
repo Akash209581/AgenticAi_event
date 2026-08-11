@@ -131,7 +131,7 @@ export default function AdminDashboard({ onBack }) {
 
       const [{ data: regData }, { data: statsData }] = await Promise.all([
         apiFetch(`/registrations?${params.toString()}`, { headers: reqHeaders }),
-        apiFetch('/stats')
+        apiFetch('/stats', { headers: reqHeaders })
       ]);
 
       if (regData.success) {

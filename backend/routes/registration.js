@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 import { User } from '../models/User.js';
 import { Team } from '../models/Team.js';
 import { generateAiId, memoryUsers } from '../utils/idGenerator.js';
-import { requireAdminAuth, getAdminSecretToken } from '../middleware/adminAuth.js';
+import { requireAdminAuth, getAdminSecretToken, generateUserJwt } from '../middleware/adminAuth.js';
 import mongoose from 'mongoose';
 import { BACKUP_DB_DIR, BACKUP_POSTERS_DIR, BACKUP_DIR } from '../config/paths.js';
 
@@ -218,9 +218,12 @@ router.post('/register', async (req, res) => {
       }
     }
 
+    const token = generateUserJwt(newRegistration);
+
     return res.status(201).json({
       success: true,
       message: 'Registration successful! Your AI Day Digital Pass has been generated.',
+      token,
       user: {
         aiId: newRegistration.aiId,
         name: newRegistration.name,
@@ -358,9 +361,9 @@ router.get('/registrations', requireAdminAuth, async (req, res) => {
 
 /**
  * GET /cseAI/stats
- * Event stats & dashboard metrics breakdown
+ * Event stats & dashboard metrics breakdown (Admin protected)
  */
-router.get('/stats', async (req, res) => {
+router.get('/stats', requireAdminAuth, async (req, res) => {
   try {
     let allUsers = [];
 
@@ -530,8 +533,6 @@ router.get('/student/:identifier', async (req, res) => {
         name: user.name,
         regNo: user.regNo,
         year: user.year,
-        email: user.email,
-        phone: user.phone,
         registeredEvents: user.registeredEvents || []
       },
       isEnrolledInEvent,
@@ -856,9 +857,9 @@ router.get('/team-registrations', requireAdminAuth, async (req, res) => {
 
 /**
  * DELETE /cseAI/team/:teamId
- * Removes a team registration from system (Admin action)
+ * Removes a team registration from system (Admin action - Protected)
  */
-router.delete('/team/:teamId', async (req, res) => {
+router.delete('/team/:teamId', requireAdminAuth, async (req, res) => {
   try {
     const { teamId } = req.params;
     if (!teamId || !teamId.trim()) {

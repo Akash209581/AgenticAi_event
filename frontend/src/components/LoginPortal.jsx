@@ -41,6 +41,10 @@ export default function LoginPortal({ onLoginSuccess, onBack, initialIdentifier 
         throw new Error(data.message || 'Login failed.');
       }
 
+      if (data.token) {
+        localStorage.setItem('vucse_auth_token', data.token);
+      }
+
       onLoginSuccess(data.user);
     } catch (err) {
       setError(err.message || 'Error connecting to authentication server.');

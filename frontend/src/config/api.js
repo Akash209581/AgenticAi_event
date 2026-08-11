@@ -39,9 +39,23 @@ export async function apiFetch(endpoint, options = {}) {
     }
   }
 
+  // Automatic JWT Header Injection
+  const headers = { ...(options.headers || {}) };
+  const userToken = localStorage.getItem('vucse_auth_token') || sessionStorage.getItem('vucse_auth_token');
+  const adminToken = sessionStorage.getItem('vucse_admin_token') || localStorage.getItem('vucse_admin_token');
+
+  if (adminToken && !headers['x-admin-token'] && !headers['Authorization']) {
+    headers['x-admin-token'] = adminToken;
+    headers['Authorization'] = `Bearer ${adminToken}`;
+  } else if (userToken && !headers['Authorization']) {
+    headers['Authorization'] = `Bearer ${userToken}`;
+  }
+
+  const fetchOptions = { ...options, headers };
+
   let response;
   try {
-    response = await fetch(url, options);
+    response = await fetch(url, fetchOptions);
   } catch (err) {
     throw new Error(`Unable to connect to backend server (${url}). Please check network or server status.`);
   }
