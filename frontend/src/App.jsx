@@ -53,7 +53,7 @@ export default function App() {
   const [totalCount, setTotalCount] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Global Protection: Disable right-click, image dragging, and text selection
+  // Global Protection: Disable right-click, image dragging, text selection, and DevTools shortcuts (Ctrl+Shift+I, Ctrl+Shift+J)
   useEffect(() => {
     const handleContextMenu = (e) => e.preventDefault();
     const handleDragStart = (e) => e.preventDefault();
@@ -64,14 +64,34 @@ export default function App() {
       }
     };
 
+    const handleKeyDown = (e) => {
+      const key = e.key ? e.key.toUpperCase() : '';
+      const code = e.code ? e.code.toUpperCase() : '';
+      const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+
+      // Block Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, F12, Ctrl+U
+      if (
+        (isCtrlOrCmd && e.shiftKey && (key === 'I' || code === 'KEYI')) ||
+        (isCtrlOrCmd && e.shiftKey && (key === 'J' || code === 'KEYJ')) ||
+        (isCtrlOrCmd && e.shiftKey && (key === 'C' || code === 'KEYC')) ||
+        (isCtrlOrCmd && (key === 'U' || code === 'KEYU')) ||
+        key === 'F12' || code === 'F12'
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
     document.addEventListener('contextmenu', handleContextMenu);
     document.addEventListener('dragstart', handleDragStart);
     document.addEventListener('selectstart', handleSelectStart);
+    document.addEventListener('keydown', handleKeyDown, true);
 
     return () => {
       document.removeEventListener('contextmenu', handleContextMenu);
       document.removeEventListener('dragstart', handleDragStart);
       document.removeEventListener('selectstart', handleSelectStart);
+      document.removeEventListener('keydown', handleKeyDown, true);
     };
   }, []);
 

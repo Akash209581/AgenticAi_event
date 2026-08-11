@@ -26,7 +26,7 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
     <div className="event-detail-page">
       <div className="event-detail-container">
         {/* PROMINENT STANDALONE BACK BUTTON BAR WITH TOP-RIGHT WHATSAPP BUTTON */}
-        <div className="event-details-back-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+        <div className="event-details-back-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'nowrap', gap: '0.5rem' }}>
           <button className="back-to-events-btn" onClick={onBack} type="button">
             <ArrowLeft size={18} />
             <span>Back to Events</span>
