@@ -443,7 +443,7 @@ const isUserRegisteredForEvent = (user, eventId, eventTitle) => {
       return true;
     }
 
-    const keywords = ['hackathon', 'prompt', 'paper', 'poster', 'expo', 'quiz', 'musical'];
+    const keywords = ['hackathon', 'prompt', 'paper', 'poster', 'expo', 'quiz', 'musical', 'bootcamp'];
     for (const kw of keywords) {
       if ((cleanTitle.includes(kw) || cleanId.includes(kw)) && (eTitle.includes(kw) || eId.includes(kw))) {
         return true;
@@ -510,7 +510,7 @@ router.get('/student/:identifier', async (req, res) => {
         if (cleanEventTitle && eTitle === cleanEventTitle) return true;
         if (cleanEventTitle && (eTitle.includes(cleanEventTitle) || cleanEventTitle.includes(eTitle))) return true;
         
-        const keywords = ['hackathon', 'prompt', 'paper', 'poster', 'expo', 'quiz', 'musical'];
+        const keywords = ['hackathon', 'prompt', 'paper', 'poster', 'expo', 'quiz', 'musical', 'bootcamp'];
         for (const kw of keywords) {
           if ((cleanEventTitle.includes(kw) || cleanEventId.includes(kw)) && (eTitle.includes(kw) || eId.includes(kw))) {
             return true;

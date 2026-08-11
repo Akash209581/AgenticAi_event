@@ -218,7 +218,7 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
                   <div className="bootcamp-meta-row">
                     <div className="bootcamp-date-badge">
                       <Calendar size={18} style={{ color: '#00f0ff' }} />
-                      <span><strong>AUGUST 2026</strong></span>
+                      <span><strong>19th & 20th AUGUST 2026</strong></span>
                     </div>
                     <div className="bootcamp-ambassador-badge">
                       <Award size={18} style={{ color: '#fbbf24' }} />
@@ -273,6 +273,77 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
                     <div className="timeline-node cyan">
                       <span className="node-text">SHOWCASE ON 29 AUG</span>
                     </div>
+                  </div>
+
+                  {/* REGISTER FOR BOOTCAMP BUTTON */}
+                  <div style={{ marginTop: '1.25rem', textAlign: 'center' }}>
+                    {(() => {
+                      const bootcampEventObj = getEventDetails('bootcamp', '1', 'AI AGENT BOOTCAMP');
+                      const isBootcampEnrolled = currentUser?.registeredEvents?.some(e => isSameEvent(bootcampEventObj, e));
+
+                      if (!currentUser) {
+                        return (
+                          <button
+                            type="button"
+                            className="card-quick-register-btn"
+                            style={{
+                              maxWidth: '320px',
+                              margin: '0 auto',
+                              background: 'linear-gradient(135deg, #00f0ff, #7000ff)',
+                              color: '#ffffff',
+                              fontWeight: '700',
+                              fontSize: '1rem',
+                              boxShadow: '0 0 20px rgba(0, 240, 255, 0.4)'
+                            }}
+                            onClick={() => onRegister && onRegister(bootcampEventObj)}
+                          >
+                            <Sparkles size={18} />
+                            <span>Register for Bootcamp</span>
+                          </button>
+                        );
+                      }
+
+                      if (!isBootcampEnrolled) {
+                        return (
+                          <button
+                            type="button"
+                            className="card-quick-register-btn"
+                            style={{
+                              maxWidth: '320px',
+                              margin: '0 auto',
+                              background: 'linear-gradient(135deg, #00f0ff, #7000ff)',
+                              color: '#ffffff',
+                              fontWeight: '700',
+                              fontSize: '1rem',
+                              boxShadow: '0 0 20px rgba(0, 240, 255, 0.4)'
+                            }}
+                            onClick={() => onEnrollEvent && onEnrollEvent(bootcampEventObj)}
+                          >
+                            <Sparkles size={18} />
+                            <span>Register for Bootcamp</span>
+                          </button>
+                        );
+                      }
+
+                      return (
+                        <div
+                          className="card-quick-register-btn"
+                          style={{
+                            maxWidth: '320px',
+                            margin: '0 auto',
+                            background: 'rgba(16, 185, 129, 0.2)',
+                            border: '1px solid rgba(16, 185, 129, 0.5)',
+                            color: '#34d399',
+                            justifyContent: 'center',
+                            cursor: 'default',
+                            fontWeight: '700'
+                          }}
+                        >
+                          <CheckCircle2 size={18} />
+                          <span>Registered for Bootcamp</span>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               )}

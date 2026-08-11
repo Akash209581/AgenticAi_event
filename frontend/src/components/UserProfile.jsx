@@ -21,7 +21,10 @@ const registeredEventsList = [
   // Creative Category
   { id: 'cre-1', catId: 'creative', category: 'Creative', title: 'Reels Competition (AI for Society)', icon: Video, color: '#fbbf24', image: '/images/cat_creative_1786083988989.png' },
   { id: 'cre-2', catId: 'creative', category: 'Creative', title: 'AI Musical Competition', icon: Music, color: '#f59e0b' },
-  { id: 'cre-3', catId: 'creative', category: 'Creative', title: 'AI Quiz', icon: HelpCircle, color: '#d97706' }
+  { id: 'cre-3', catId: 'creative', category: 'Creative', title: 'AI Quiz', icon: HelpCircle, color: '#d97706' },
+
+  // Bootcamp Category
+  { id: 'bootcamp-1', catId: 'bootcamp', category: 'Hands-on Bootcamp', title: 'AI Agent Bootcamp', icon: Bot, color: '#00f2fe', image: '/images/event_expo.png' }
 ];
 
 export default function UserProfile({ user, onLogout, onExploreEvents, onUnenrollEvent, onSubmissionUpdate }) {

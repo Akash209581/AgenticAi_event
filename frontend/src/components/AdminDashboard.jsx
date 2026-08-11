@@ -297,7 +297,7 @@ export default function AdminDashboard({ onBack }) {
 
     if (uTitle && cTitle) {
       if (uTitle === cTitle) return true;
-      const keywords = ['hackathon', 'hackthon', 'prompt combat', 'poster', 'paper', 'podcast', 'expo', 'summit', 'reels', 'musical', 'quiz'];
+      const keywords = ['hackathon', 'hackthon', 'prompt combat', 'poster', 'paper', 'podcast', 'expo', 'summit', 'reels', 'musical', 'quiz', 'bootcamp'];
       for (const kw of keywords) {
         if (uTitle.includes(kw) && cTitle.includes(kw)) {
           return true;
@@ -308,7 +308,7 @@ export default function AdminDashboard({ onBack }) {
     return false;
   };
 
-  // Official 9 events with distinct category & id definitions
+  // Official events with distinct category & id definitions
   const officialEventsList = useMemo(() => [
     { id: '1', categoryId: 'technical', categoryName: 'TECHNICAL EVENTS', title: 'AGENTIC AI HACKATHON' },
     { id: '2', categoryId: 'technical', categoryName: 'TECHNICAL EVENTS', title: 'AI PROMPT COMBAT' },
@@ -318,7 +318,8 @@ export default function AdminDashboard({ onBack }) {
     { id: '3', categoryId: 'industry', categoryName: 'INDUSTRY & INNOVATION', title: 'AI SUMMIT - INDUSTRY INTERACTION' },
     { id: '1', categoryId: 'creative', categoryName: 'CREATIVE EVENTS', title: 'REELS COMPETITION (AI FOR SOCIETY)' },
     { id: '2', categoryId: 'creative', categoryName: 'CREATIVE EVENTS', title: 'AI MUSICAL COMPETITION' },
-    { id: '3', categoryId: 'creative', categoryName: 'CREATIVE EVENTS', title: 'AGENTIC DAY QUIZ CHALLENGE 2026' }
+    { id: '3', categoryId: 'creative', categoryName: 'CREATIVE EVENTS', title: 'AGENTIC DAY QUIZ CHALLENGE 2026' },
+    { id: '1', categoryId: 'bootcamp', categoryName: 'HANDS-ON BOOTCAMP', title: 'AI AGENT BOOTCAMP' }
   ], []);
 
   // Compute registered participants per event from overall registrations using flexible matching

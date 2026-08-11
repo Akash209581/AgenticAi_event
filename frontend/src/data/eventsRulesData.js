@@ -190,6 +190,7 @@ export const eventsRulesData = {
     categoryName: 'INDUSTRY & INNOVATION',
     title: 'AI AGENTS EXPO',
     cardTitle: 'AI AGENTS EXPO',
+    registrationDeadline: '28 August 2026',
     image: '/images/event_expo.png',
     whatsappGroupLink: 'https://chat.whatsapp.com/FHIm45h2bt560DT2Mt8nVb',
     eventDate: 'August 2026',
@@ -198,9 +199,9 @@ export const eventsRulesData = {
       'Participants should be aware that there will be a prior evaluation, and only those who are shortlisted will have the opportunity to present at the event.',
     ],
     prizes: [
-      { rank: 'First', amount: 'Rs. 5000/-' },
-      { rank: 'Second', amount: 'Rs. 3000/-' },
-      { rank: 'Third', amount: 'Rs. 2000/-' }
+      { rank: 'Top 3 teams', amount: 'Rs. 5000/-' },
+      { rank: 'Next Top 5 teams', amount: 'Rs. 3000/-' },
+      { rank: 'Next Top 5 teams', amount: 'Rs. 2000/-' }
     ],
     coordinators: [
       { name: 'Dr. Veera Bhadra Chari (Faculty)', phone: '+91 89789 75688' },
@@ -353,6 +354,26 @@ export const eventsRulesData = {
       { name: 'Manukonda Deepak Sai (Student)', phone: '+91 77807 70159' },
       { name: 'Nagineni Venkata Sai Krishna (Student)', phone: '+91 63043 68343' }
     ]
+  },
+  'bootcamp-1': {
+    id: '1',
+    categoryId: 'bootcamp',
+    categoryName: 'HANDS-ON BOOTCAMP',
+    title: 'AI AGENT BOOTCAMP',
+    cardTitle: 'AI AGENT BOOTCAMP',
+    image: '/images/event_expo.png',
+    whatsappGroupLink: 'https://chat.whatsapp.com/FHIm45h2bt560DT2Mt8nVb',
+    eventDate: '19th & 20th August 2026',
+    registrationDeadline: '18th August 2026',
+    rules: [
+      'Bootcamp Dates: 19th & 20th August 2026.',
+      'Hands-on training session conducted with Google Student Ambassador.',
+      'Participants will learn how to build, test, and deploy AI Agents.',
+      'Open to all registered AI Day participants.'
+    ],
+    coordinators: [
+      { name: 'Google Student Ambassador', phone: '+91 93929 60026' }
+    ]
   }
 };
 
@@ -477,6 +498,10 @@ export function isSameEvent(e1, e2) {
   const isQuiz1 = title1.includes('quiz') || id1.includes('creative-3');
   const isQuiz2 = title2.includes('quiz') || id2.includes('creative-3');
   if (isQuiz1 && isQuiz2) return true;
+
+  const isBootcamp1 = title1.includes('bootcamp') || id1.includes('bootcamp');
+  const isBootcamp2 = title2.includes('bootcamp') || id2.includes('bootcamp');
+  if (isBootcamp1 && isBootcamp2) return true;
 
   // 3. Fallback normalized string comparison (handles 'competation' vs 'competition')
   const clean1 = title1.replace(/competation/g, 'competition').replace(/[^a-z0-9]/g, '');
