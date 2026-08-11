@@ -40,7 +40,7 @@ export const eventsRulesData = {
       { name: 'Dr. Veeranjaneyulu (Faculty)', phone: '+91 94922 46551' },
       { name: 'Mrs. J. Dayanika (Faculty)', phone: '+91 70134 47336' },
       { name: 'Ms. Sk. Kareena Yashmin (Faculty)', phone: '+91 78010 17820' },
-      { name: 'Ayinampudi Susmitha Chowdary (student)', phone: '+91 63015 23026' },
+      { name: 'Shaik Subhani (student)', phone: '+91 75693 37729' },
       { name: 'Leeladhar (student)', phone: '+91 99089 11201' }
     ]
   },
@@ -156,7 +156,7 @@ export const eventsRulesData = {
     coordinators: [
       { name: 'Dr. Vijitha Ananthi (Faculty)', phone: '+91 97906 28946' },
       { name: 'Ms. B. Jyothika (Faculty)', phone: '+91 79893 66515' },
-      { name: 'Student Coordinator', phone: 'To be announced' }
+      { name: 'S.Chanikya (student)', phone: '+91 93924 53073' }
     ]
   },
 

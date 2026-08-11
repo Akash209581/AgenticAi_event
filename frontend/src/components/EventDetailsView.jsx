@@ -3,7 +3,7 @@ import { ArrowLeft, Award, Phone, UserPlus, Sparkles, ShieldCheck, Calendar, Vid
 import SubmissionModal from './SubmissionModal';
 import { isSameEvent, getEventDetails, isRegistrationClosed } from '../data/eventsRulesData';
 import { getAssetUrl } from '../config/api';
-
+`   `
 export default function EventDetailsView({ event, onBack, onRegister, currentUser = null, onEnrollEvent, onSubmissionUpdate }) {
   const [isSubmissionModalOpen, setIsSubmissionModalOpen] = useState(false);
   // Track freshly submitted data locally so button updates even before parent re-renders
