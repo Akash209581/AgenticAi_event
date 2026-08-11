@@ -1,7 +1,9 @@
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 
-const JWT_SECRET = process.env.JWT_SECRET || process.env.ADMIN_PASSWORD || 'vucse2026_super_secure_jwt_secret_key_8899';
+const getJwtSecret = () => {
+  return process.env.JWT_SECRET || process.env.ADMIN_PASSWORD || 'vucse2026_default_secret_key_change_in_env';
+};
 
 // Legacy static hash fallback for admin
 export const getAdminSecretToken = () => {
@@ -17,7 +19,7 @@ export const generateAdminJwt = (username) => {
       username,
       iss: 'vucse_api'
     },
-    JWT_SECRET,
+    getJwtSecret(),
     { expiresIn: '12h' }
   );
 };
@@ -33,7 +35,7 @@ export const generateUserJwt = (user) => {
       name: user.name,
       iss: 'vucse_api'
     },
-    JWT_SECRET,
+    getJwtSecret(),
     { expiresIn: '7d' }
   );
 };
@@ -41,7 +43,7 @@ export const generateUserJwt = (user) => {
 // Verify any JWT Token
 export const verifyJwtToken = (token) => {
   try {
-    return jwt.verify(token, JWT_SECRET);
+    return jwt.verify(token, getJwtSecret());
   } catch (err) {
     return null;
   }
