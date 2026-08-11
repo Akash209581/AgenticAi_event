@@ -41,7 +41,7 @@ export default function AdminDashboard({ onBack }) {
   const [activeSubTab, setActiveSubTab] = useState('all'); // 'all' | 'events'
   const [registrations, setRegistrations] = useState([]);
   const [stats, setStats] = useState(null);
-  
+
   // Filters for All Registrations view
   const [yearFilter, setYearFilter] = useState('all');
   const [genderFilter, setGenderFilter] = useState('all');
@@ -92,29 +92,10 @@ export default function AdminDashboard({ onBack }) {
         return;
       }
 
-      // Client-side fallback check if API endpoint is unavailable or returns 404/401
-      const cleanU = loginForm.username.trim().toLowerCase();
-      const cleanP = loginForm.password.trim();
-
-      if ((cleanU === 'admin' || cleanU === 'cseadmin') && (cleanP === 'admin' || cleanP === 'admin123' || cleanP === 'vucse2026')) {
-        setIsAuthenticated(true);
-        setAdminUser({ username: cleanU, role: 'SUPER_ADMIN' });
-        sessionStorage.setItem('vucse_admin_auth', 'true');
-      } else {
-        setLoginError(data?.message || 'Invalid Username or Password. Default: admin / admin');
-      }
+      // Backend returned failure (e.g., 401 Invalid Credentials)
+      setLoginError(data?.message || 'Invalid Username or Password.');
     } catch (err) {
-      // Offline / fallback verification
-      const cleanU = loginForm.username.trim().toLowerCase();
-      const cleanP = loginForm.password.trim();
-
-      if ((cleanU === 'admin' || cleanU === 'cseadmin') && (cleanP === 'admin' || cleanP === 'admin123' || cleanP === 'vucse2026')) {
-        setIsAuthenticated(true);
-        setAdminUser({ username: cleanU, role: 'SUPER_ADMIN' });
-        sessionStorage.setItem('vucse_admin_auth', 'true');
-      } else {
-        setLoginError('Invalid Username or Password. Default login: admin / admin');
-      }
+      setLoginError('Unable to connect to server backend. Please ensure backend is running.');
     } finally {
       setLoginLoading(false);
     }
@@ -156,6 +137,11 @@ export default function AdminDashboard({ onBack }) {
       if (regData.success) {
         setRegistrations(regData.registrations || []);
       } else {
+        if (regData.message && (regData.message.includes('Access Denied') || regData.message.includes('Invalid'))) {
+          handleLogout();
+          setLoginError('Invalid or expired admin credentials. Please login again.');
+          return;
+        }
         throw new Error(regData.message || 'Failed to fetch registrations');
       }
 
@@ -253,7 +239,7 @@ export default function AdminDashboard({ onBack }) {
   const handleDeleteTeam = async (team) => {
     if (!team || !team.teamId) return;
     const confirmMsg = `Are you sure you want to remove Team '${team.teamName}' (${team.teamId}) for '${team.eventTitle}'?\n\nThis will remove the team registration for all ${team.members ? team.members.length : 0} members.`;
-    
+
     if (!window.confirm(confirmMsg)) return;
 
     try {
@@ -287,40 +273,40 @@ export default function AdminDashboard({ onBack }) {
     fetchData();
   };
 
-// Flexible Event Matcher helper
-const isEventMatch = (userEvt, catalogEvt) => {
-  if (!userEvt || !catalogEvt) return false;
+  // Flexible Event Matcher helper
+  const isEventMatch = (userEvt, catalogEvt) => {
+    if (!userEvt || !catalogEvt) return false;
 
-  // 1. Match by unique categoryId + id if present
-  if (userEvt.categoryId && catalogEvt.categoryId &&
+    // 1. Match by unique categoryId + id if present
+    if (userEvt.categoryId && catalogEvt.categoryId &&
       userEvt.categoryId.toLowerCase() === catalogEvt.categoryId.toLowerCase() &&
       String(userEvt.id) === String(catalogEvt.id)) {
-    return true;
-  }
+      return true;
+    }
 
-  // 2. Direct title match
-  if (userEvt.title && catalogEvt.title &&
+    // 2. Direct title match
+    if (userEvt.title && catalogEvt.title &&
       userEvt.title.trim().toLowerCase() === catalogEvt.title.trim().toLowerCase()) {
-    return true;
-  }
+      return true;
+    }
 
-  // 3. Cleaned title keyword comparison (handles "1.) ", "2.) ", etc.)
-  const clean = (str) => String(str || '').replace(/^\d+\.\)\s*/, '').replace(/[^a-zA-Z0-9\s]/g, '').trim().toLowerCase();
-  const uTitle = clean(userEvt.title);
-  const cTitle = clean(catalogEvt.title);
+    // 3. Cleaned title keyword comparison (handles "1.) ", "2.) ", etc.)
+    const clean = (str) => String(str || '').replace(/^\d+\.\)\s*/, '').replace(/[^a-zA-Z0-9\s]/g, '').trim().toLowerCase();
+    const uTitle = clean(userEvt.title);
+    const cTitle = clean(catalogEvt.title);
 
-  if (uTitle && cTitle) {
-    if (uTitle === cTitle) return true;
-    const keywords = ['hackathon', 'hackthon', 'prompt combat', 'poster', 'paper', 'podcast', 'expo', 'summit', 'reels', 'musical', 'quiz'];
-    for (const kw of keywords) {
-      if (uTitle.includes(kw) && cTitle.includes(kw)) {
-        return true;
+    if (uTitle && cTitle) {
+      if (uTitle === cTitle) return true;
+      const keywords = ['hackathon', 'hackthon', 'prompt combat', 'poster', 'paper', 'podcast', 'expo', 'summit', 'reels', 'musical', 'quiz'];
+      for (const kw of keywords) {
+        if (uTitle.includes(kw) && cTitle.includes(kw)) {
+          return true;
+        }
       }
     }
-  }
 
-  return false;
-};
+    return false;
+  };
 
   // Official 9 events with distinct category & id definitions
   const officialEventsList = useMemo(() => [
@@ -625,7 +611,7 @@ const isEventMatch = (userEvt, catalogEvt) => {
               <div className="input-wrapper">
                 <input
                   type="text"
-                  placeholder="Enter admin username (e.g. admin)"
+                  placeholder="Enter admin username"
                   value={loginForm.username}
                   onChange={(e) => setLoginForm(prev => ({ ...prev, username: e.target.value }))}
                   className="cyber-input"
