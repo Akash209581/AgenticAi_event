@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { apiFetch } from '../config/api';
+import { secureStorage } from '../utils/secureStorage';
 import {
   ShieldCheck,
   Lock,
@@ -29,7 +30,7 @@ import { eventsRulesData, isSameEvent } from '../data/eventsRulesData';
 export default function AdminDashboard({ onBack }) {
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return sessionStorage.getItem('vucse_admin_auth') === 'true';
+    return secureStorage.getItem('vucse_admin_auth', true) === 'true';
   });
   const [adminUser, setAdminUser] = useState(null);
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
@@ -85,9 +86,9 @@ export default function AdminDashboard({ onBack }) {
       if (data && data.success) {
         setIsAuthenticated(true);
         setAdminUser(data.admin);
-        sessionStorage.setItem('vucse_admin_auth', 'true');
+        secureStorage.setItem('vucse_admin_auth', 'true', true);
         if (data.token) {
-          sessionStorage.setItem('vucse_admin_token', data.token);
+          secureStorage.setItem('vucse_admin_token', data.token, true);
         }
         return;
       }
@@ -105,8 +106,8 @@ export default function AdminDashboard({ onBack }) {
   const handleLogout = () => {
     setIsAuthenticated(false);
     setAdminUser(null);
-    sessionStorage.removeItem('vucse_admin_auth');
-    sessionStorage.removeItem('vucse_admin_token');
+    secureStorage.removeItem('vucse_admin_auth', true);
+    secureStorage.removeItem('vucse_admin_token', true);
   };
 
   // Auto-fill demo admin credentials
@@ -126,7 +127,7 @@ export default function AdminDashboard({ onBack }) {
       if (yearFilter !== 'all') params.append('year', yearFilter);
       if (genderFilter !== 'all') params.append('gender', genderFilter);
 
-      const adminToken = sessionStorage.getItem('vucse_admin_token') || '';
+      const adminToken = secureStorage.getItem('vucse_admin_token', true) || '';
       const reqHeaders = adminToken ? { 'x-admin-token': adminToken } : {};
 
       const [{ data: regData }, { data: statsData }] = await Promise.all([
@@ -164,7 +165,7 @@ export default function AdminDashboard({ onBack }) {
       if (teamSearch.trim()) params.append('search', teamSearch.trim());
       if (teamEventFilter !== 'all') params.append('event', teamEventFilter);
 
-      const adminToken = sessionStorage.getItem('vucse_admin_token') || '';
+      const adminToken = secureStorage.getItem('vucse_admin_token', true) || '';
       const reqHeaders = adminToken ? { 'x-admin-token': adminToken } : {};
 
       const { res, data } = await apiFetch(`/team-registrations?${params.toString()}`, { headers: reqHeaders });

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { KeyRound, Hash, Calendar, ArrowRight, AlertCircle, ArrowLeft } from 'lucide-react';
 import { apiFetch } from '../config/api';
+import { secureStorage } from '../utils/secureStorage';
 
 export default function LoginPortal({ onLoginSuccess, onBack, initialIdentifier = '' }) {
   const [identifier, setIdentifier] = useState(initialIdentifier);
@@ -42,7 +43,7 @@ export default function LoginPortal({ onLoginSuccess, onBack, initialIdentifier 
       }
 
       if (data.token) {
-        localStorage.setItem('vucse_auth_token', data.token);
+        secureStorage.setItem('vucse_auth_token', data.token);
       }
 
       onLoginSuccess(data.user);

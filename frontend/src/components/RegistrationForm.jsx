@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import confetti from 'canvas-confetti';
 import { User, Calendar, Hash, Phone, Mail, Lock, Sparkles, AlertCircle, ArrowRight, ArrowLeft, GraduationCap, Copy, Check, KeyRound } from 'lucide-react';
 import { apiFetch } from '../config/api';
+import { secureStorage } from '../utils/secureStorage';
 
 export default function RegistrationForm({ onSuccess, onProceedToLogin, onBack }) {
   const [formData, setFormData] = useState({
@@ -96,7 +97,7 @@ export default function RegistrationForm({ onSuccess, onProceedToLogin, onBack }
       }
 
       if (data.token) {
-        localStorage.setItem('vucse_auth_token', data.token);
+        secureStorage.setItem('vucse_auth_token', data.token);
       }
 
       setRegisteredUser(data.user);

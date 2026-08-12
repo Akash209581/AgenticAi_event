@@ -10,6 +10,7 @@ import LoadingScreen from './components/LoadingScreen';
 import EventCountdown from './components/EventCountdown';
 import EventsGrid from './components/EventsGrid';
 import NavOverlay from './components/NavOverlay';
+import { secureStorage } from './utils/secureStorage';
 
 const getNormalizedPath = (pathStr) => {
   return (pathStr || '').toLowerCase().trim();
@@ -39,20 +40,19 @@ export default function App() {
   });
   const [currentUser, setCurrentUser] = useState(() => {
     try {
-      const saved = localStorage.getItem('vucse_current_user');
-      return saved ? JSON.parse(saved) : null;
+      return secureStorage.getJSON('vucse_current_user');
     } catch (e) {
       return null;
     }
   });
 
-  // Sync currentUser changes to localStorage
+  // Sync currentUser changes to encrypted secureStorage
   useEffect(() => {
     if (currentUser) {
-      localStorage.setItem('vucse_current_user', JSON.stringify(currentUser));
+      secureStorage.setItem('vucse_current_user', currentUser);
     } else {
-      localStorage.removeItem('vucse_current_user');
-      localStorage.removeItem('vucse_auth_token');
+      secureStorage.removeItem('vucse_current_user');
+      secureStorage.removeItem('vucse_auth_token');
     }
   }, [currentUser]);
 

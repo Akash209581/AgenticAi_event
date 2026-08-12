@@ -21,6 +21,8 @@ export const BACKEND_ORIGIN = (() => {
   return '';
 })();
 
+import { secureStorage } from '../utils/secureStorage';
+
 /**
  * Universal safe API fetch wrapper
  * Prevents HTML 404 / 500 error pages from breaking JSON parsing,
@@ -41,8 +43,8 @@ export async function apiFetch(endpoint, options = {}) {
 
   // Automatic JWT Header Injection
   const headers = { ...(options.headers || {}) };
-  const userToken = localStorage.getItem('vucse_auth_token') || sessionStorage.getItem('vucse_auth_token');
-  const adminToken = sessionStorage.getItem('vucse_admin_token') || localStorage.getItem('vucse_admin_token');
+  const userToken = secureStorage.getItem('vucse_auth_token') || secureStorage.getItem('vucse_auth_token', true);
+  const adminToken = secureStorage.getItem('vucse_admin_token', true) || secureStorage.getItem('vucse_admin_token');
 
   if (adminToken && !headers['x-admin-token'] && !headers['Authorization']) {
     headers['x-admin-token'] = adminToken;
