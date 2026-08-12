@@ -11,6 +11,10 @@ import EventCountdown from './components/EventCountdown';
 import EventsGrid from './components/EventsGrid';
 import NavOverlay from './components/NavOverlay';
 
+const getNormalizedPath = (pathStr) => {
+  return (pathStr || '').toLowerCase().trim();
+};
+
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const isImagePath = (pathStr) => {
