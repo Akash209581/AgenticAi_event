@@ -300,7 +300,7 @@ export default function LoadingScreen({ onComplete, minDuration = 6000 }) {
         <div className="badge-tag">
           COMPUTER SCIENCE & ENGINEERING
         </div>
-        <h1 className="loading-title">AGENTIC DAY 2026</h1>
+        <h1 className="loading-title">AGENTIC AI DAY 2026</h1>
       </div>
 
       {/* 3D Robot Canvas Stage */}

@@ -294,7 +294,7 @@ export default function App() {
               cursor: 'pointer'
             }}
           />
-          <span className="mobile-brand-title">AGENTIC DAY - 2026</span>
+          <span className="mobile-brand-title">AGENTIC AI DAY - 2026</span>
         </div>
 
         {/* Center: AGENTIC AI DAY - 2026 (Desktop) */}
