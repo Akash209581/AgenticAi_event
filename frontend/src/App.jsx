@@ -10,6 +10,7 @@ import LoadingScreen from './components/LoadingScreen';
 import EventCountdown from './components/EventCountdown';
 import EventsGrid from './components/EventsGrid';
 import NavOverlay from './components/NavOverlay';
+import { ToastContainer, useToast } from './components/Toast';
 import { secureStorage } from './utils/secureStorage';
 
 const getNormalizedPath = (pathStr) => {
@@ -18,6 +19,8 @@ const getNormalizedPath = (pathStr) => {
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
+  const { toasts, toast, removeToast } = useToast();
+
   const isImagePath = (pathStr) => {
     const p = (pathStr || '').toLowerCase();
     return /\.(png|jpg|jpeg|gif|webp|avif|svg|ico)$/i.test(p) || p.includes('/images/') || p.includes('/uploads/');
@@ -179,6 +182,7 @@ export default function App() {
     setCurrentUser(user);
     setIsNewRegistration(false);
     changeTab('pass');
+    toast.success('Welcome back!', `Logged in successfully as ${user.name}.`);
   };
 
   const handleEnrollEvent = async (event) => {
@@ -204,12 +208,16 @@ export default function App() {
           ...prev,
           registeredEvents: data.registeredEvents
         }));
+        toast.success(
+          '🎉 Event Registered!',
+          `You have successfully registered for "${event.title}".`
+        );
       } else if (data.message) {
-        alert(data.message);
+        toast.error('Registration Failed', data.message);
       }
     } catch (err) {
       console.warn('Failed to enroll event:', err);
-      alert(err.message || 'Unable to register for event. Registration deadline may have passed.');
+      toast.error('Registration Error', err.message || 'Unable to register for event. Registration deadline may have passed.');
     }
   };
 
@@ -231,6 +239,7 @@ export default function App() {
           ...prev,
           registeredEvents: data.registeredEvents
         }));
+        toast.info('Event Removed', `You have been unenrolled from "${eventTitle}".`);
       }
     } catch (err) {
       console.warn('Failed to unenroll event:', err);
@@ -242,6 +251,7 @@ export default function App() {
           return true;
         })
       }));
+      toast.info('Event Removed', `Unenrolled from "${eventTitle}" (local update).`);
     }
   };
 
@@ -251,6 +261,7 @@ export default function App() {
       ...prev,
       registeredEvents: updatedEvents
     }));
+    toast.award('📤 Submission Saved!', 'Your work has been submitted successfully.');
   };
 
   const leaveAdmin = () => {
@@ -269,6 +280,9 @@ export default function App() {
 
   return (
     <div>
+      {/* Global Toast Notifications */}
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
+
       {/* Home Main Background */}
       <div className="home-background" />
 
@@ -379,7 +393,12 @@ export default function App() {
             <TeamRegistrationForm
               currentUser={currentUser}
               onBack={() => changeTab('home', '/')}
-              onSuccess={() => {}}
+              onSuccess={(team) => {
+                toast.team(
+                  '👥 Team Registered!',
+                  `Team "${team?.teamName || 'your team'}" registered for ${team?.eventTitle || 'the event'}!`
+                );
+              }}
             />
           ) : (
             <LoginPortal
@@ -388,6 +407,7 @@ export default function App() {
                 setCurrentUser(user);
                 setIsNewRegistration(false);
                 changeTab('team-register', '/team-register');
+                toast.success('Welcome back!', `Logged in successfully as ${user.name}.`);
               }}
               onBack={() => changeTab('home', '/')}
             />
@@ -395,7 +415,6 @@ export default function App() {
         )}
 
 
-        {/* REGISTRATION / SIGNUP FORM VIEW */}
         {activeTab === 'register' && (
           currentUser ? (
             <UserProfile
@@ -403,6 +422,7 @@ export default function App() {
               onLogout={() => {
                 setCurrentUser(null);
                 changeTab('login', '/login');
+                toast.info('Logged Out', 'You have successfully signed out.');
               }}
               onExploreEvents={() => changeTab('events', '/events')}
               onUnenrollEvent={handleUnenrollEvent}
@@ -410,14 +430,15 @@ export default function App() {
             />
           ) : (
             <RegistrationForm
-              onSuccess={() => {}}
+              onSuccess={(user) => {
+                toast.success('🎉 Registration Successful!', `Welcome to Agentic AI Day, ${user.name}!`);
+              }}
               onProceedToLogin={handleProceedToLogin}
               onBack={() => changeTab('home', '/')}
             />
           )
         )}
 
-        {/* USER PROFILE & REGISTERED EVENTS VIEW */}
         {activeTab === 'pass' && (
           <div>
             {currentUser ? (
@@ -426,6 +447,7 @@ export default function App() {
                 onLogout={() => {
                   setCurrentUser(null);
                   changeTab('login', '/login');
+                  toast.info('Logged Out', 'You have successfully signed out.');
                 }}
                 onExploreEvents={() => changeTab('events', '/events')}
                 onUnenrollEvent={handleUnenrollEvent}
