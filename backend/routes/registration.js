@@ -534,6 +534,8 @@ router.get('/student/:identifier', async (req, res) => {
         name: user.name,
         regNo: user.regNo,
         year: user.year,
+        email: user.email || '',
+        phone: user.phone || '',
         registeredEvents: user.registeredEvents || []
       },
       isEnrolledInEvent,

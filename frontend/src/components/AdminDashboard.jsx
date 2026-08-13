@@ -347,6 +347,24 @@ export default function AdminDashboard({ onBack }) {
     return map;
   }, [registrations, officialEventsList]);
 
+  // Build a fast lookup map: aiId → team membership info from all fetched teams
+  const teamStatusMap = useMemo(() => {
+    const map = {};
+    (teams || []).forEach(t => {
+      (t.members || []).forEach(m => {
+        if (m.aiId) {
+          map[m.aiId.toUpperCase()] = {
+            teamId: t.teamId,
+            teamName: t.teamName,
+            eventTitle: t.eventTitle,
+            isLeader: !!m.isLeader
+          };
+        }
+      });
+    });
+    return map;
+  }, [teams]);
+
   // Filtered participants for selected event
   const selectedEventData = useMemo(() => {
     if (!selectedEventId) return null;
@@ -401,18 +419,24 @@ export default function AdminDashboard({ onBack }) {
   // Export CSV for overall registrations
   const exportOverallCSV = () => {
     if (!registrations.length) return;
-    const headers = ['VUCSE ID', 'Name', 'Registration No', 'Year', 'Gender', 'DOB (Password)', 'Phone', 'Email', 'Enrolled Events'];
-    const rows = registrations.map(r => [
-      r.aiId,
-      `"${(r.name || '').replace(/"/g, '""')}"`,
-      r.regNo,
-      r.year || '1',
-      r.gender || 'Unspecified',
-      r.dob,
-      r.phone,
-      r.email,
-      `"${(r.registeredEvents || []).map(e => e.title).join(' | ').replace(/"/g, '""')}"`
-    ]);
+    const headers = ['VUCSE ID', 'Name', 'Registration No', 'Year', 'Gender', 'DOB (Password)', 'Phone', 'Email', 'Enrolled Events', 'Team Status', 'Team Name', 'Team Event'];
+    const rows = registrations.map(r => {
+      const ts = teamStatusMap[(r.aiId || '').toUpperCase()];
+      return [
+        r.aiId,
+        `"${(r.name || '').replace(/"/g, '""')}"`,
+        r.regNo,
+        r.year || '1',
+        r.gender || 'Unspecified',
+        r.dob,
+        r.phone,
+        r.email,
+        `"${(r.registeredEvents || []).map(e => e.title).join(' | ').replace(/"/g, '""')}"`,
+        ts ? (ts.isLeader ? 'Leader' : 'Member') : 'No Team',
+        ts ? `"${(ts.teamName || '').replace(/"/g, '""')}"` : '',
+        ts ? `"${(ts.eventTitle || '').replace(/"/g, '""')}"` : ''
+      ];
+    });
 
     downloadCSV(headers, rows, `Agentic_AI_Day_All_Registrations_${Date.now()}.csv`);
   };
@@ -1154,11 +1178,14 @@ export default function AdminDashboard({ onBack }) {
                       <th>DOB (Password)</th>
                       <th>Phone</th>
                       <th>Email ID</th>
+                      <th>Team Status</th>
                       <th>Enrolled Events</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {registrations.map((user) => (
+                    {registrations.map((user) => {
+                      const ts = teamStatusMap[(user.aiId || '').toUpperCase()];
+                      return (
                       <tr key={user.aiId || user._id}>
                         <td>
                           <span className="id-badge">{user.aiId}</span>
@@ -1191,6 +1218,28 @@ export default function AdminDashboard({ onBack }) {
                         <td style={{ fontFamily: 'monospace' }}>{user.dob}</td>
                         <td>{user.phone}</td>
                         <td style={{ color: '#94a3b8' }}>{user.email}</td>
+                        <td style={{ textAlign: 'center' }}>
+                          {ts ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem' }}>
+                              <span style={{
+                                fontSize: '0.72rem',
+                                fontWeight: 700,
+                                padding: '0.2rem 0.55rem',
+                                borderRadius: '6px',
+                                background: ts.isLeader ? 'rgba(251, 191, 36, 0.15)' : 'rgba(168, 85, 247, 0.15)',
+                                color: ts.isLeader ? '#fbbf24' : '#c084fc',
+                                border: ts.isLeader ? '1px solid rgba(251, 191, 36, 0.4)' : '1px solid rgba(168, 85, 247, 0.4)'
+                              }}>
+                                {ts.isLeader ? '👑 Leader' : '👥 Member'}
+                              </span>
+                              <span style={{ fontSize: '0.68rem', color: '#64748b', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={ts.teamName}>
+                                {ts.teamName}
+                              </span>
+                            </div>
+                          ) : (
+                            <span style={{ fontSize: '0.75rem', color: '#475569' }}>—</span>
+                          )}
+                        </td>
                         <td>
                           {user.registeredEvents && user.registeredEvents.length > 0 ? (
                             <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
@@ -1212,7 +1261,8 @@ export default function AdminDashboard({ onBack }) {
                           )}
                         </td>
                       </tr>
-                    ))}
+                    );
+                    })}
                   </tbody>
                 </table>
               </div>
