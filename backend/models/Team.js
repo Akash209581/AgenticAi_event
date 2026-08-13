@@ -50,4 +50,6 @@ const teamSchema = new mongoose.Schema(
   }
 );
 
+teamSchema.index({ 'members.aiId': 1 });
+
 export const Team = mongoose.models.Team || mongoose.model('Team', teamSchema);

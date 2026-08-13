@@ -318,16 +318,15 @@ router.post('/unenroll-event', async (req, res) => {
 
     let activeTeam = null;
     if (mongoose.connection.readyState === 1) {
-      const searchCond = [];
-      if (cleanEvtId) searchCond.push({ eventId: cleanEvtId });
-      if (cleanEvtTitle) searchCond.push({ eventTitle: { $regex: new RegExp(`^${cleanEvtTitle}$`, 'i') } });
-
-      if (searchCond.length > 0) {
+      if (cleanEvtId) {
         activeTeam = await Team.findOne({
-          $and: [
-            { $or: searchCond },
-            { 'members.aiId': userAiId }
-          ]
+          eventId: cleanEvtId,
+          'members.aiId': userAiId
+        });
+      } else if (cleanEvtTitle) {
+        activeTeam = await Team.findOne({
+          eventTitle: { $regex: new RegExp(`^${cleanEvtTitle}$`, 'i') },
+          'members.aiId': userAiId
         });
       }
     } else {

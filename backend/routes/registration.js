@@ -473,22 +473,23 @@ router.get('/student/:identifier', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Student AI ID, Reg No, or Email is required.' });
     }
 
-    const cleanId = identifier.trim().toLowerCase();
+    const cleanIdLower = identifier.trim().toLowerCase();
+    const cleanIdUpper = identifier.trim().toUpperCase();
     let user = null;
 
     if (mongoose.connection.readyState === 1) {
       user = await User.findOne({
         $or: [
-          { aiId: { $regex: new RegExp(`^${cleanId}$`, 'i') } },
-          { regNo: { $regex: new RegExp(`^${cleanId}$`, 'i') } },
-          { email: cleanId }
+          { aiId: cleanIdUpper },
+          { regNo: cleanIdUpper },
+          { email: cleanIdLower }
         ]
       }).select('-password');
     } else {
       user = memoryUsers.find(
-        u => (u.aiId && u.aiId.toLowerCase() === cleanId) ||
-             (u.regNo && u.regNo.toLowerCase() === cleanId) ||
-             (u.email && u.email.toLowerCase() === cleanId)
+        u => (u.aiId && u.aiId.toUpperCase() === cleanIdUpper) ||
+             (u.regNo && u.regNo.toUpperCase() === cleanIdUpper) ||
+             (u.email && u.email.toLowerCase() === cleanIdLower)
       );
     }
 
@@ -615,7 +616,7 @@ router.post('/team-register', async (req, res) => {
       let userRecord = null;
 
       if (mongoose.connection.readyState === 1) {
-        userRecord = await User.findOne({ aiId: { $regex: new RegExp(`^${targetAiId}$`, 'i') } });
+        userRecord = await User.findOne({ aiId: targetAiId });
       } else {
         userRecord = memoryUsers.find(u => u.aiId && u.aiId.toUpperCase() === targetAiId);
       }
@@ -656,12 +657,7 @@ router.post('/team-register', async (req, res) => {
     // 4. Single Team per Event Constraint: Ensure no student is already in another team for this event
     let existingTeams = [];
     if (mongoose.connection.readyState === 1) {
-      existingTeams = await Team.find({
-        $or: [
-          { eventId: cleanEventId },
-          { eventTitle: { $regex: new RegExp(`^${cleanEventTitle}$`, 'i') } }
-        ]
-      });
+      existingTeams = await Team.find({ eventId: cleanEventId });
     } else {
       existingTeams = memoryTeams.filter(
         t => t.eventId === cleanEventId || (t.eventTitle && t.eventTitle.toLowerCase() === cleanEventTitle.toLowerCase())
