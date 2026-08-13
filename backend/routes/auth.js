@@ -79,24 +79,27 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Password (DOB) is required' });
     }
 
-    const cleanId = identifier.trim().toLowerCase();
+    // Normalize: email is stored lowercase, aiId/regNo are stored uppercase
+    const cleanIdLower = identifier.trim().toLowerCase();
+    const cleanIdUpper = identifier.trim().toUpperCase();
     const cleanPassword = password.trim();
 
     let user = null;
 
     if (mongoose.connection.readyState === 1) {
+      // Use exact-match on indexed fields (no regex → index is used → fast)
       user = await User.findOne({
         $or: [
-          { email: cleanId },
-          { regNo: { $regex: new RegExp(`^${cleanId}$`, 'i') } },
-          { aiId: { $regex: new RegExp(`^${cleanId}$`, 'i') } }
+          { email: cleanIdLower },
+          { regNo: cleanIdUpper },
+          { aiId: cleanIdUpper }
         ]
       });
     } else {
       user = memoryUsers.find(
-        u => u.email.toLowerCase() === cleanId ||
-             u.regNo.toLowerCase() === cleanId ||
-             u.aiId.toLowerCase() === cleanId
+        u => u.email.toLowerCase() === cleanIdLower ||
+             u.regNo.toUpperCase() === cleanIdUpper ||
+             u.aiId.toUpperCase() === cleanIdUpper
       );
     }
 
@@ -152,23 +155,24 @@ router.post('/enroll-event', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Identifier and valid event data are required.' });
     }
 
-    const cleanId = identifier.trim().toLowerCase();
+    const cleanIdLower = identifier.trim().toLowerCase();
+    const cleanIdUpper = identifier.trim().toUpperCase();
 
     let user = null;
 
     if (mongoose.connection.readyState === 1) {
       user = await User.findOne({
         $or: [
-          { email: cleanId },
-          { regNo: { $regex: new RegExp(`^${cleanId}$`, 'i') } },
-          { aiId: { $regex: new RegExp(`^${cleanId}$`, 'i') } }
+          { email: cleanIdLower },
+          { regNo: cleanIdUpper },
+          { aiId: cleanIdUpper }
         ]
       });
     } else {
       user = memoryUsers.find(
-        u => u.email.toLowerCase() === cleanId ||
-             u.regNo.toLowerCase() === cleanId ||
-             u.aiId.toLowerCase() === cleanId
+        u => u.email.toLowerCase() === cleanIdLower ||
+             u.regNo.toUpperCase() === cleanIdUpper ||
+             u.aiId.toUpperCase() === cleanIdUpper
       );
     }
 
@@ -282,23 +286,24 @@ router.post('/unenroll-event', async (req, res) => {
       return res.status(400).json({ success: false, message: 'User identifier is required.' });
     }
 
-    const cleanId = identifier.trim().toLowerCase();
+    const cleanIdLower = identifier.trim().toLowerCase();
+    const cleanIdUpper = identifier.trim().toUpperCase();
 
     let user = null;
 
     if (mongoose.connection.readyState === 1) {
       user = await User.findOne({
         $or: [
-          { email: cleanId },
-          { regNo: { $regex: new RegExp(`^${cleanId}$`, 'i') } },
-          { aiId: { $regex: new RegExp(`^${cleanId}$`, 'i') } }
+          { email: cleanIdLower },
+          { regNo: cleanIdUpper },
+          { aiId: cleanIdUpper }
         ]
       });
     } else {
       user = memoryUsers.find(
-        u => u.email.toLowerCase() === cleanId ||
-             u.regNo.toLowerCase() === cleanId ||
-             u.aiId.toLowerCase() === cleanId
+        u => u.email.toLowerCase() === cleanIdLower ||
+             u.regNo.toUpperCase() === cleanIdUpper ||
+             u.aiId.toUpperCase() === cleanIdUpper
       );
     }
 
@@ -380,7 +385,8 @@ router.post('/submit-event-content', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Submission payload is required.' });
     }
 
-    const cleanId = identifier.trim().toLowerCase();
+    const cleanIdLower = identifier.trim().toLowerCase();
+    const cleanIdUpper = identifier.trim().toUpperCase();
     const cleanEvtId = String(eventId || '').trim().toLowerCase();
     const cleanEvtTitle = String(eventTitle || '').trim().toLowerCase();
 
@@ -389,16 +395,16 @@ router.post('/submit-event-content', async (req, res) => {
     if (mongoose.connection.readyState === 1) {
       user = await User.findOne({
         $or: [
-          { email: cleanId },
-          { regNo: { $regex: new RegExp(`^${cleanId}$`, 'i') } },
-          { aiId: { $regex: new RegExp(`^${cleanId}$`, 'i') } }
+          { email: cleanIdLower },
+          { regNo: cleanIdUpper },
+          { aiId: cleanIdUpper }
         ]
       });
     } else {
       user = memoryUsers.find(
-        u => u.email.toLowerCase() === cleanId ||
-             u.regNo.toLowerCase() === cleanId ||
-             u.aiId.toLowerCase() === cleanId
+        u => u.email.toLowerCase() === cleanIdLower ||
+             u.regNo.toUpperCase() === cleanIdUpper ||
+             u.aiId.toUpperCase() === cleanIdUpper
       );
     }
 

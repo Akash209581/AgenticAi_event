@@ -132,7 +132,8 @@ router.post('/register', async (req, res) => {
 
     const cleanName = name.trim();
     const cleanDob = dob.trim();
-    const cleanRegNo = regNo.trim();
+    // Uppercase so all queries are exact-match on the indexed field (no regex needed)
+    const cleanRegNo = regNo.trim().toUpperCase();
 
     // 4. Duplicate Checks (if DB is connected)
     if (mongoose.connection.readyState === 1) {

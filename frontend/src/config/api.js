@@ -55,11 +55,22 @@ export async function apiFetch(endpoint, options = {}) {
 
   const fetchOptions = { ...options, headers };
 
+  // 15-second timeout: prevents login/register from hanging indefinitely
+  // when the server is slow, overloaded, or unreachable.
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+  fetchOptions.signal = controller.signal;
+
   let response;
   try {
     response = await fetch(url, fetchOptions);
   } catch (err) {
+    if (err.name === 'AbortError') {
+      throw new Error('Request timed out (15s). The server may be busy — please try again.');
+    }
     throw new Error(`Unable to connect to backend server (${url}). Please check network or server status.`);
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   const contentType = response.headers.get('content-type') || '';

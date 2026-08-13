@@ -48,7 +48,7 @@ export default function EventCountdown({ onExploreEvents }) {
 
         {/* Clean Heading */}
         <h2 className="countdown-clean-title">
-          Agentic Day-2026
+          Agentic AI Day-2026
         </h2>
         <p className="countdown-date-sub">29th August 2026</p>
 

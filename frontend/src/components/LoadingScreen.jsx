@@ -320,7 +320,6 @@ export default function LoadingScreen({ onComplete, minDuration = 6000 }) {
             {Math.max(0, progress)}%
           </div>
         </div>
-
       </div>
     </div>
   );

@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
       trim: true,
-      index: true
+      uppercase: true  // Ensure consistent casing for fast exact-match lookups
     },
     name: {
       type: String,
@@ -23,8 +23,8 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Registration Number is mandatory'],
       unique: true,
-      index: true,
-      trim: true
+      trim: true,
+      uppercase: true  // Normalize at schema level for fast exact-match lookups
     },
     year: {
       type: String,
@@ -54,7 +54,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Email Id is mandatory'],
       unique: true,
-      index: true,
       trim: true,
       lowercase: true,
       match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email address']
@@ -72,5 +71,15 @@ const userSchema = new mongoose.Schema(
     timestamps: true
   }
 );
+
+// -------------------------------------------------------------------
+// Compound index for the 3-field $or login/lookup query.
+// These three fields cover all login identifier combinations.
+// Normalizing to uppercase (aiId, regNo) + lowercase (email) at save
+// time means lookups are simple exact-match → index is always used.
+// -------------------------------------------------------------------
+userSchema.index({ email: 1 });
+userSchema.index({ regNo: 1 });
+userSchema.index({ aiId: 1 });
 
 export const User = mongoose.models.User || mongoose.model('User', userSchema);
