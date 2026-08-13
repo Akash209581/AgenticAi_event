@@ -22,7 +22,8 @@ const EVENT_CONSTRAINTS = {
   'technical-3': { min: 1, max: 3, name: 'PAPER / POSTER PRESENTATION' },
   'industry-2': { min: 2, max: 4, name: 'AI AGENTS EXPO' },
   'creative-3': { min: 3, max: 5, name: 'AGENTIC DAY QUIZ CHALLENGE 2026' },
-  'creative-2': { min: 3, max: 3, name: 'AI MUSICAL COMPETITION' }
+  'creative-2': { min: 3, max: 3, name: 'AI MUSICAL COMPETITION' },
+  'creative-1': { min: 1, max: 2, name: 'REELS COMPETITION (AI FOR SOCIETY)' }
 };
 
 
@@ -724,11 +725,18 @@ router.post('/team-register', async (req, res) => {
     // 5. Update each member's registeredEvents profile
     for (const m of formattedMembers) {
       try {
+        const memberIsLeader = !!m.isLeader;
         if (mongoose.connection.readyState === 1) {
+          // Use updateOne with $push instead of $addToSet so we can include isLeader field
+          // First remove any stale entry for the same event, then re-add with full data
+          await User.updateOne(
+            { aiId: m.aiId },
+            { $pull: { registeredEvents: { id: cleanEventId } } }
+          );
           await User.updateOne(
             { aiId: m.aiId },
             {
-              $addToSet: {
+              $push: {
                 registeredEvents: {
                   id: cleanEventId,
                   title: cleanEventTitle,
@@ -737,6 +745,7 @@ router.post('/team-register', async (req, res) => {
                   teamId: teamId,
                   teamName: cleanTeamName,
                   isTeam: true,
+                  isLeader: memberIsLeader,
                   registeredAt: new Date().toISOString()
                 }
               }
@@ -746,19 +755,18 @@ router.post('/team-register', async (req, res) => {
           const userMem = memoryUsers.find(u => u.aiId && u.aiId.toUpperCase() === m.aiId);
           if (userMem) {
             if (!userMem.registeredEvents) userMem.registeredEvents = [];
-            const exists = userMem.registeredEvents.some(e => e.id === cleanEventId || e.title === cleanEventTitle);
-            if (!exists) {
-              userMem.registeredEvents.push({
-                id: cleanEventId,
-                title: cleanEventTitle,
-                categoryName: constraint.name || 'TEAM EVENT',
-                categoryId: 'team',
-                teamId: teamId,
-                teamName: cleanTeamName,
-                isTeam: true,
-                registeredAt: new Date().toISOString()
-              });
-            }
+            userMem.registeredEvents = userMem.registeredEvents.filter(e => e.id !== cleanEventId && e.title !== cleanEventTitle);
+            userMem.registeredEvents.push({
+              id: cleanEventId,
+              title: cleanEventTitle,
+              categoryName: constraint.name || 'TEAM EVENT',
+              categoryId: 'team',
+              teamId: teamId,
+              teamName: cleanTeamName,
+              isTeam: true,
+              isLeader: memberIsLeader,
+              registeredAt: new Date().toISOString()
+            });
           }
         }
       } catch (err) {

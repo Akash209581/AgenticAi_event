@@ -20,6 +20,16 @@ import { isSameEvent } from '../data/eventsRulesData';
 
 const TEAM_EVENTS = [
   {
+    id: 'creative-1',
+    title: 'REELS COMPETITION (AI FOR SOCIETY)',
+    shortName: 'Reels Competition',
+    category: 'CREATIVE',
+    minSize: 1,
+    maxSize: 2,
+    badgeText: '1 to 2 Members',
+    note: 'Solo or duo entry. Only the Team Leader can submit the reel link.'
+  },
+  {
     id: 'technical-1',
     title: 'AGENTIC AI HACKATHON',
     shortName: 'Hackathon',
@@ -537,7 +547,7 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
       {/* STEP 1: EVENT SELECTION GRID */}
       <div style={{ marginBottom: '3rem' }}>
         <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--primary-cyan)', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Award size={20} /> SELECT COMPETITION EVENT (6 EVENTS AVAILABLE)
+          <Award size={20} /> SELECT COMPETITION EVENT (7 EVENTS AVAILABLE)
         </h3>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.85rem' }}>
@@ -624,6 +634,29 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
             </div>
           </div>
         )}
+
+        {/* ⚠️ IMPORTANT: Register Event First Notice */}
+        <div style={{
+          background: 'rgba(251, 191, 36, 0.1)',
+          border: '1.5px solid rgba(251, 191, 36, 0.5)',
+          borderRadius: '14px',
+          padding: '1.1rem 1.4rem',
+          marginBottom: '2rem',
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '0.75rem'
+        }}>
+          <Info size={22} style={{ color: '#fbbf24', flexShrink: 0, marginTop: '0.1rem' }} />
+          <div>
+            <div style={{ fontWeight: '800', color: '#fbbf24', fontSize: '0.95rem', marginBottom: '0.3rem' }}>
+              ⚠️ Prerequisite: Register for the Event First!
+            </div>
+            <div style={{ color: '#e2e8f0', fontSize: '0.875rem', lineHeight: '1.55' }}>
+              <strong>All team members must individually register for <em>{selectedEvent.title}</em> before forming a team.</strong><br />
+              Go to the <strong>Events page → click on the event → Register</strong> to enroll each member. Only registered participants can be added to a team.
+            </div>
+          </div>
+        </div>
 
         {/* Team Name Input */}
         <div className="form-group" style={{ marginBottom: '2.5rem' }}>

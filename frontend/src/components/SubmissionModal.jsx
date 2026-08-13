@@ -19,6 +19,9 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
 
   const matchedEvent = currentUser?.registeredEvents?.find(e => isSameEvent(event, e));
 
+  // Reels team non-leader check: member in a team but NOT the leader → cannot submit
+  const isReelsNonLeader = isReels && matchedEvent?.isTeam === true && matchedEvent?.isLeader === false;
+
   const hasSubmitted = !!(matchedEvent?.submission && (
     matchedEvent.submission.reelLink ||
     matchedEvent.submission.posterFile ||
@@ -341,7 +344,28 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
+        {/* NON-LEADER REELS MEMBER — blocked from submitting */}
+        {isReelsNonLeader && (
+          <div style={{
+            background: 'rgba(251, 191, 36, 0.08)',
+            border: '1.5px solid rgba(251, 191, 36, 0.5)',
+            borderRadius: '14px',
+            padding: '1.5rem',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🔒</div>
+            <div style={{ fontWeight: '800', color: '#fbbf24', fontSize: '1rem', marginBottom: '0.5rem' }}>
+              Submission Restricted to Team Leader Only
+            </div>
+            <div style={{ color: '#cbd5e1', fontSize: '0.875rem', lineHeight: '1.6' }}>
+              Your team is registered for <strong style={{ color: '#fbbf24' }}>{matchedEvent?.teamName || 'the Reels Competition'}</strong>.<br />
+              Only the <strong>Team Leader</strong> can submit the Google Drive reel link on behalf of the team.<br />
+              <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>Please ask your Team Leader to submit.</span>
+            </div>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} style={{ display: isReelsNonLeader ? 'none' : 'block' }}>
           {/* REELS COMPETITION INPUT / PREVIEW */}
           {isReels && (
             <div style={{ marginBottom: '1.5rem' }}>
