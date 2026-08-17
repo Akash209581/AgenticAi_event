@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import {
   Code2, Briefcase, Sparkles, ArrowLeft,
-  Brain, Zap, FileText, Mic, Bot, Users, Video, Music, HelpCircle
+  Brain, Zap, FileText, Mic, Bot, Users, Video, Music, HelpCircle,
+  Lightbulb, Compass, Camera, Gift, Lock
 } from 'lucide-react';
 import EventDetailsView from './EventDetailsView';
 import { getEventDetails } from '../data/eventsRulesData';
@@ -207,8 +208,9 @@ export default function EventsGrid({ onRegister, currentUser = null, onEnrollEve
 
       {/* CATEGORY VIEW: PURE IMAGE CARDS */}
       {!selectedCategory ? (
-        <div className="events-portrait-grid">
-          {categoriesData.map((cat) => {
+        <>
+          <div className="events-portrait-grid">
+            {categoriesData.map((cat) => {
             return (
               <div
                 key={cat.id}
@@ -238,6 +240,67 @@ export default function EventsGrid({ onRegister, currentUser = null, onEnrollEve
             );
           })}
         </div>
+
+        {/* Beyond the 9 / Coming Soon section */}
+        <div className="beyond-section">
+          <div className="beyond-glow-border">
+            <div className="beyond-header">
+              <span className="beyond-badge">
+                <Zap size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> BUT THAT'S NOT ALL...
+              </span>
+              <h2 className="beyond-main-title">BEYOND THE 9</h2>
+              <p className="beyond-subtitle">More experiences are loading...</p>
+              <div className="beyond-title-underline"></div>
+            </div>
+
+            <div className="beyond-cards-grid">
+              <div className="beyond-card card-imagine">
+                <div className="beyond-icon-wrap icon-imagine">
+                  <Lightbulb size={28} />
+                </div>
+                <h4 className="beyond-card-title title-imagine">IMAGINE</h4>
+                <p className="beyond-card-desc">Something that will challenge your creativity.</p>
+              </div>
+
+              <div className="beyond-card card-decode">
+                <div className="beyond-icon-wrap icon-decode">
+                  <Compass size={28} />
+                </div>
+                <h4 className="beyond-card-title title-decode">DECODE</h4>
+                <p className="beyond-card-desc">Something that will test your instincts.</p>
+              </div>
+
+              <div className="beyond-card card-capture">
+                <div className="beyond-icon-wrap icon-capture">
+                  <Camera size={28} />
+                </div>
+                <h4 className="beyond-card-title title-capture">CAPTURE</h4>
+                <p className="beyond-card-desc">Something worth remembering.</p>
+              </div>
+
+              <div className="beyond-card card-discover">
+                <div className="beyond-icon-wrap icon-discover">
+                  <Gift size={28} />
+                </div>
+                <h4 className="beyond-card-title title-discover">DISCOVER</h4>
+                <p className="beyond-card-desc">Something you won't see coming.</p>
+              </div>
+            </div>
+
+            <div className="beyond-footer">
+              <div className="beyond-footer-text">
+                <span className="eyes-emoji" style={{ marginRight: '6px' }}>👀</span>
+                <strong>CAN YOU GUESS WHAT'S COMING?</strong>
+              </div>
+              <div className="beyond-footer-subtext">The countdown has begun.</div>
+              <div className="revealing-soon-btn">
+                <Lock size={16} style={{ marginRight: '6px', display: 'inline-block', verticalAlign: 'middle' }} />
+                REVEALING SOON...
+              </div>
+            </div>
+          </div>
+        </div>
+        </>
       ) : (
         /* SUB-EVENTS VIEW: PURE IMAGE CARDS */
         <div className="events-portrait-grid">

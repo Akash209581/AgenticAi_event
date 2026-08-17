@@ -33,7 +33,7 @@ export default function App() {
       return 'home';
     }
     const path = getNormalizedPath(rawPath);
-    if (path === '/iamadmin' || path === '/cseadmin') return 'admin';
+    if (path === '/iamadmin') return 'admin';
     if (path.startsWith('/events')) return 'events';
     if (path.startsWith('/register')) return 'register';
     if (path.startsWith('/team-register') || path.startsWith('/teams')) return 'team-register';
@@ -152,7 +152,7 @@ export default function App() {
       else if (path.startsWith('/team-register') || path.startsWith('/teams')) setActiveTab('team-register');
       else if (path.startsWith('/login')) setActiveTab('login');
       else if (path.startsWith('/profile')) setActiveTab('pass');
-      else if (path === '/iamadmin' || path === '/cseadmin') setActiveTab('admin');
+      else if (path === '/iamadmin') setActiveTab('admin');
       else setActiveTab('home');
     };
 

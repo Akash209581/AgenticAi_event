@@ -68,7 +68,7 @@ export async function apiFetch(endpoint, options = {}) {
     if (err.name === 'AbortError') {
       throw new Error('Request timed out (15s). The server may be busy — please try again.');
     }
-    throw new Error(`Unable to connect to backend server (${url}). Please check network or server status.`);
+    throw new Error('Unable to connect to backend server. Please check network or server status.');
   } finally {
     clearTimeout(timeoutId);
   }
@@ -86,7 +86,7 @@ export async function apiFetch(endpoint, options = {}) {
     if (text.trim().startsWith('<')) {
       throw new Error(
         `Server configuration error: Received HTML page instead of JSON API response (Status ${response.status}). ` +
-        `Please ensure backend server is running and reverse proxy route '${API_BASE_URL}' is configured.`
+        `Please ensure backend server is running.`
       );
     }
     throw new Error(`Unexpected server response (Status ${response.status}): ${text.slice(0, 150)}`);

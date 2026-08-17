@@ -17,13 +17,13 @@ const router = express.Router();
 export const memoryTeams = [];
 
 const EVENT_CONSTRAINTS = {
-  'technical-1': { min: 4, max: 4, name: 'AGENTIC AI HACKATHON' },
+  'technical-1': { min: 4, max: 5, name: 'AGENTIC AI HACKATHON' },
   'technical-2': { min: 2, max: 3, name: 'AI PROMPT COMBAT' },
   'technical-3': { min: 1, max: 3, name: 'PAPER / POSTER PRESENTATION' },
   'industry-2': { min: 2, max: 4, name: 'AI AGENTS EXPO' },
   'creative-3': { min: 3, max: 5, name: 'AGENTIC DAY QUIZ CHALLENGE 2026' },
   'creative-2': { min: 3, max: 3, name: 'AI MUSICAL COMPETITION' },
-  'creative-1': { min: 1, max: 2, name: 'REELS COMPETITION (AI FOR SOCIETY)' }
+  'creative-1': { min: 1, max: 3, name: 'REELS COMPETITION (AI FOR SOCIETY)' }
 };
 
 

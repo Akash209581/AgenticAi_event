@@ -25,9 +25,9 @@ const TEAM_EVENTS = [
     shortName: 'Reels Competition',
     category: 'CREATIVE',
     minSize: 1,
-    maxSize: 2,
-    badgeText: '1 to 2 Members',
-    note: 'Solo or duo entry. Only the Team Leader can submit the reel link.'
+    maxSize: 3,
+    badgeText: '1 to 3 Members',
+    note: 'Solo, duo or trio entry. Only the Team Leader can submit the reel link.'
   },
   {
     id: 'technical-1',
@@ -35,10 +35,9 @@ const TEAM_EVENTS = [
     shortName: 'Hackathon',
     category: 'TECHNICAL',
     minSize: 4,
-    maxSize: 4,
-    exactSize: 4,
-    badgeText: 'Strictly 4 Members',
-    note: 'Requirement: 1x 4th Year, 2x 3rd Year, 1x 2nd Year'
+    maxSize: 5,
+    badgeText: '4 to 5 Members',
+    note: 'Requirement: 1x 4th Year, 2x 3rd Year, 1x 2nd Year. 5th member is optional.'
   },
   {
     id: 'technical-2',
@@ -267,12 +266,12 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
     const count3 = years.filter(y => y === '3').length;
     const count2 = years.filter(y => y === '2').length;
 
-    const isValid = count4 === 1 && count3 === 2 && count2 === 1;
+    const isValid = count4 >= 1 && count3 >= 2 && count2 >= 1;
     return {
       isValid,
       message: isValid
         ? '✓ Perfect! Meets year rule: 1x 4th Year, 2x 3rd Year, 1x 2nd Year'
-        : `Current composition: ${count4}x 4th Yr, ${count3}x 3rd Yr, ${count2}x 2nd Yr. Recommended: 1x 4th Yr, 2x 3rd Yr, 1x 2nd Yr.`
+        : `Current composition: ${count4}x 4th Yr, ${count3}x 3rd Yr, ${count2}x 2nd Yr. Recommended minimum: 1x 4th Yr, 2x 3rd Yr, 1x 2nd Yr.`
     };
   };
 

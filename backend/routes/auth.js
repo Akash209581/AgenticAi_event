@@ -16,10 +16,7 @@ const __dirname = path.dirname(__filename);
 const router = express.Router();
 
 
-/**
- * POST /cseAI/admin-login
- * Authentication endpoint for Admin Portal (/Iamadmin)
- */
+
 router.post('/admin-login', (req, res) => {
   try {
     const { username, password } = req.body;
@@ -33,9 +30,7 @@ router.post('/admin-login', (req, res) => {
 
     // Valid admin credentials check (Environment configurable)
     const allowedUsers = (process.env.ADMIN_USERNAME || 'admin,cseadmin').toLowerCase().split(',').map(u => u.trim());
-    const allowedPasswords = process.env.ADMIN_PASSWORD
-      ? [process.env.ADMIN_PASSWORD]
-      : ['admin', 'admin123', 'vucse2026'];
+    const allowedPasswords = process.env.ADMIN_PASSWORD;
 
     const isValidAdmin = allowedUsers.includes(cleanUser) && allowedPasswords.includes(cleanPass);
 
@@ -98,8 +93,8 @@ router.post('/login', async (req, res) => {
     } else {
       user = memoryUsers.find(
         u => u.email.toLowerCase() === cleanIdLower ||
-             u.regNo.toUpperCase() === cleanIdUpper ||
-             u.aiId.toUpperCase() === cleanIdUpper
+          u.regNo.toUpperCase() === cleanIdUpper ||
+          u.aiId.toUpperCase() === cleanIdUpper
       );
     }
 
@@ -171,8 +166,8 @@ router.post('/enroll-event', async (req, res) => {
     } else {
       user = memoryUsers.find(
         u => u.email.toLowerCase() === cleanIdLower ||
-             u.regNo.toUpperCase() === cleanIdUpper ||
-             u.aiId.toUpperCase() === cleanIdUpper
+          u.regNo.toUpperCase() === cleanIdUpper ||
+          u.aiId.toUpperCase() === cleanIdUpper
       );
     }
 
@@ -302,8 +297,8 @@ router.post('/unenroll-event', async (req, res) => {
     } else {
       user = memoryUsers.find(
         u => u.email.toLowerCase() === cleanIdLower ||
-             u.regNo.toUpperCase() === cleanIdUpper ||
-             u.aiId.toUpperCase() === cleanIdUpper
+          u.regNo.toUpperCase() === cleanIdUpper ||
+          u.aiId.toUpperCase() === cleanIdUpper
       );
     }
 
@@ -331,7 +326,7 @@ router.post('/unenroll-event', async (req, res) => {
       }
     } else {
       activeTeam = memoryTeams.find(t =>
-        ( (cleanEvtId && t.eventId === cleanEvtId) || (cleanEvtTitle && t.eventTitle && t.eventTitle.toLowerCase() === cleanEvtTitle) ) &&
+        ((cleanEvtId && t.eventId === cleanEvtId) || (cleanEvtTitle && t.eventTitle && t.eventTitle.toLowerCase() === cleanEvtTitle)) &&
         t.members && t.members.some(m => m.aiId && m.aiId.toUpperCase() === userAiId)
       );
     }
@@ -402,8 +397,8 @@ router.post('/submit-event-content', async (req, res) => {
     } else {
       user = memoryUsers.find(
         u => u.email.toLowerCase() === cleanIdLower ||
-             u.regNo.toUpperCase() === cleanIdUpper ||
-             u.aiId.toUpperCase() === cleanIdUpper
+          u.regNo.toUpperCase() === cleanIdUpper ||
+          u.aiId.toUpperCase() === cleanIdUpper
       );
     }
 
@@ -494,7 +489,7 @@ router.post('/submit-event-content', async (req, res) => {
 
     if (activeTeam) {
       const memberAiIds = activeTeam.members.map(m => m.aiId.toUpperCase());
-      
+
       // Double check if anyone in the team already has a submission
       let teamUsers = [];
       if (mongoose.connection.readyState === 1) {
@@ -584,7 +579,7 @@ router.post('/submit-event-content', async (req, res) => {
     if (activeTeam) {
       for (const member of activeTeam.members) {
         if (member.aiId.toUpperCase() === userAiId) continue;
-        
+
         if (mongoose.connection.readyState === 1) {
           const memberUser = await User.findOne({ aiId: member.aiId.toUpperCase() });
           if (memberUser && memberUser.registeredEvents) {

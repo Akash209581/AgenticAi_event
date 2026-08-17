@@ -802,9 +802,6 @@ export default function AdminDashboard({ onBack }) {
             <div style={{ fontWeight: '900', fontSize: '1.1rem', letterSpacing: '1px', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               AGENTIC AI DAY <span style={{ background: 'rgba(0, 242, 254, 0.15)', color: '#00f2fe', fontSize: '0.7rem', padding: '0.1rem 0.5rem', borderRadius: '4px', border: '1px solid rgba(0, 242, 254, 0.3)' }}>ADMIN PORTAL</span>
             </div>
-            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-              Route: <span style={{ color: '#00f2fe', fontFamily: 'monospace' }}>/Iamadmin</span>
-            </div>
           </div>
         </div>
 
