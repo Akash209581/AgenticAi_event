@@ -265,7 +265,7 @@ export const eventsRulesData = {
       { rank: 'Third', amount: 'Rs. 1000/-' }
     ],
     coordinators: [
-      { name: 'Mr. Vamsi Krishna (Faculty)', phone: '+91 94418 18651' },
+      { name: 'Mr. Vamsi Krishna (Faculty)', phone: '+91 63096 63292' },
       { name: 'Student Coordinator', phone: 'To be announced' }
     ]
   },
@@ -382,7 +382,7 @@ export const eventsRulesData = {
 // Helper lookup to get event details by category and event item
 export function isRegistrationClosed(deadlineString, eventTitle = '', eventId = '') {
   const isBootcamp = (eventTitle && eventTitle.toLowerCase().includes('bootcamp')) ||
-                     (eventId && eventId.toLowerCase().includes('bootcamp'));
+    (eventId && eventId.toLowerCase().includes('bootcamp'));
 
   // Bootcamp registration strictly ends on 18th August 2026 23:59:59 IST
   if (isBootcamp) {
