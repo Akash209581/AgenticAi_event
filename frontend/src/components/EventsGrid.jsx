@@ -84,8 +84,8 @@ const categoriesData = [
   {
     id: 'creative',
     title: 'Creative',
-    subtitle: 'Reels competition, AI music synthesis & interactive quiz',
-    badge: '3 Events',
+    subtitle: 'Reels competition, AI music synthesis, interactive quiz & QuestX',
+    badge: '4 Events',
     image: '/images/creative.avif',
     gradient: 'linear-gradient(145deg, rgba(245, 158, 11, 0.2), rgba(15, 23, 42, 0.95))',
     borderColor: '#fbbf24',
@@ -114,12 +114,40 @@ const categoriesData = [
         icon: HelpCircle,
         image: '/images/event_quiz.png',
         gradient: 'linear-gradient(135deg, #f59e0b, #b45309)'
+      },
+      {
+        id: 'creative-4',
+        num: '4',
+        title: 'QuestX',
+        icon: Compass,
+        image: '/images/event_questx.png',
+        gradient: 'linear-gradient(135deg, #f59e0b, #ec4899)'
+      }
+    ]
+  },
+  {
+    id: 'innovative',
+    title: 'Innovative',
+    subtitle: 'Design Thinking, solution design & high-impact AI innovation',
+    badge: '1 Event',
+    image: '/images/innovative.png',
+    gradient: 'linear-gradient(145deg, rgba(236, 72, 153, 0.2), rgba(15, 23, 42, 0.95))',
+    borderColor: '#ec4899',
+    glowColor: 'rgba(236, 72, 153, 0.4)',
+    events: [
+      {
+        id: 'innovative-1',
+        num: '1',
+        title: 'SparkX',
+        icon: Sparkles,
+        image: '/images/event_sparkx.png',
+        gradient: 'linear-gradient(135deg, #ec4899, #8b5cf6)'
       }
     ]
   }
 ];
 
-export default function EventsGrid({ onRegister, currentUser = null, onEnrollEvent, onSubmissionUpdate }) {
+export default function EventsGrid({ onRegister, currentUser = null, onEnrollEvent, onTeamRegister, onSubmissionUpdate }) {
   // Parse initial route from window.location.pathname
   const parseRoute = () => {
     let parts = window.location.pathname.toLowerCase().split('/').filter(Boolean);
@@ -170,6 +198,7 @@ export default function EventsGrid({ onRegister, currentUser = null, onEnrollEve
         onRegister={onRegister}
         currentUser={currentUser}
         onEnrollEvent={onEnrollEvent}
+        onTeamRegister={onTeamRegister}
         onSubmissionUpdate={onSubmissionUpdate}
       />
     );
@@ -184,19 +213,6 @@ export default function EventsGrid({ onRegister, currentUser = null, onEnrollEve
             <h2 className="events-main-heading">EVENTS & COMPETITIONS</h2>
             <div className="events-heading-line"></div>
           </div>
-          <button 
-            className="explore-beyond-action-btn"
-            onClick={() => {
-              const beyondElem = document.querySelector('.beyond-section');
-              if (beyondElem) {
-                beyondElem.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
-          >
-            <Zap size={14} className="pulse-zap-icon" />
-            <span>EXPLORE BEYOND THE 9</span>
-            <ChevronDown size={16} className="bouncing-arrow" />
-          </button>
         </div>
       ) : (
         <div className="events-sub-header">
@@ -223,9 +239,8 @@ export default function EventsGrid({ onRegister, currentUser = null, onEnrollEve
 
       {/* CATEGORY VIEW: PURE IMAGE CARDS */}
       {!selectedCategory ? (
-        <>
-          <div className="events-portrait-grid">
-            {categoriesData.map((cat) => {
+        <div className="events-portrait-grid">
+          {categoriesData.map((cat) => {
             return (
               <div
                 key={cat.id}
@@ -255,70 +270,17 @@ export default function EventsGrid({ onRegister, currentUser = null, onEnrollEve
             );
           })}
         </div>
-
-        {/* Beyond the 9 / Coming Soon section */}
-        <div className="beyond-section">
-          <div className="beyond-glow-border">
-            <div className="beyond-header">
-              <span className="beyond-badge">
-                <Zap size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> BUT THAT'S NOT ALL...
-              </span>
-              <h2 className="beyond-main-title">BEYOND THE 9</h2>
-              <p className="beyond-subtitle">More experiences are loading...</p>
-              <div className="beyond-title-underline"></div>
-            </div>
-
-            <div className="beyond-cards-grid">
-              <div className="beyond-card card-imagine">
-                <div className="beyond-icon-wrap icon-imagine">
-                  <Lightbulb size={28} />
-                </div>
-                <h4 className="beyond-card-title title-imagine">IMAGINE</h4>
-                <p className="beyond-card-desc">Something that will challenge your creativity.</p>
-              </div>
-
-              <div className="beyond-card card-decode">
-                <div className="beyond-icon-wrap icon-decode">
-                  <Compass size={28} />
-                </div>
-                <h4 className="beyond-card-title title-decode">DECODE</h4>
-                <p className="beyond-card-desc">Something that will test your instincts.</p>
-              </div>
-
-              <div className="beyond-card card-capture">
-                <div className="beyond-icon-wrap icon-capture">
-                  <Camera size={28} />
-                </div>
-                <h4 className="beyond-card-title title-capture">CAPTURE</h4>
-                <p className="beyond-card-desc">Something worth remembering.</p>
-              </div>
-
-              <div className="beyond-card card-discover">
-                <div className="beyond-icon-wrap icon-discover">
-                  <Gift size={28} />
-                </div>
-                <h4 className="beyond-card-title title-discover">DISCOVER</h4>
-                <p className="beyond-card-desc">Something you won't see coming.</p>
-              </div>
-            </div>
-
-            <div className="beyond-footer">
-              <div className="beyond-footer-text">
-                <span className="eyes-emoji" style={{ marginRight: '6px' }}>👀</span>
-                <strong>CAN YOU GUESS WHAT'S COMING?</strong>
-              </div>
-              <div className="beyond-footer-subtext">The countdown has begun.</div>
-              <div className="revealing-soon-btn">
-                <Lock size={16} style={{ marginRight: '6px', display: 'inline-block', verticalAlign: 'middle' }} />
-                REVEALING SOON...
-              </div>
-            </div>
-          </div>
-        </div>
-        </>
       ) : (
         /* SUB-EVENTS VIEW: PURE IMAGE CARDS */
-        <div className="events-portrait-grid">
+        <div
+          className="events-portrait-grid"
+          style={{
+            gridTemplateColumns: selectedCategory.events.length < 4
+              ? `repeat(${selectedCategory.events.length}, minmax(0, 320px))`
+              : undefined,
+            justifyContent: 'center'
+          }}
+        >
           {selectedCategory.events.map((ev) => {
             const IconComp = ev.icon;
             const slug = (ev.title || ev.cardTitle).toLowerCase().replace(/[^a-z0-9]+/g, '-');

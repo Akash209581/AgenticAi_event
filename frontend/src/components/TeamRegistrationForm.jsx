@@ -37,7 +37,7 @@ const TEAM_EVENTS = [
     minSize: 4,
     maxSize: 5,
     badgeText: '4 to 5 Members',
-    note: 'Requirement: 1x 4th Year, 2x 3rd Year, 1x 2nd Year. 5th member is optional.'
+    note: 'Strictly 4 members required, 5th member optional. 2nd & 3rd year allowed; max 1 4th-year student (optional).'
   },
   {
     id: 'technical-2',
@@ -89,13 +89,73 @@ const TEAM_EVENTS = [
     exactSize: 3,
     badgeText: 'Strictly 3 Members',
     note: 'Real-time AI song creation (audio, lyrics & prompts).'
+  },
+  {
+    id: 'creative-4',
+    title: 'QUESTX',
+    shortName: 'QuestX',
+    category: 'CREATIVE',
+    minSize: 5,
+    maxSize: 5,
+    exactSize: 5,
+    badgeText: 'Strictly 5 Members',
+    note: '6-Round Interactive AI Creative Quest (CSE 2nd, 3rd & 4th years).'
+  },
+  {
+    id: 'innovative-1',
+    title: 'SPARKX',
+    shortName: 'SparkX',
+    category: 'INNOVATIVE',
+    minSize: 2,
+    maxSize: 3,
+    badgeText: '2 to 3 Members',
+    note: '3-Round Design Thinking & AI Innovation Challenge.'
   }
 ];
 
 
-export default function TeamRegistrationForm({ onBack, onSuccess, currentUser }) {
-  const [selectedEventId, setSelectedEventId] = useState(TEAM_EVENTS[0].id);
+export default function TeamRegistrationForm({ onBack, onSuccess, currentUser, initialEventId }) {
+  const findMatchingEventId = (evId) => {
+    if (!evId) return TEAM_EVENTS[0].id;
+    const cleanId = String(evId).toLowerCase().trim();
+    const match = TEAM_EVENTS.find(e => 
+      e.id === evId ||
+      e.id.toLowerCase() === cleanId ||
+      (cleanId.includes('-') && e.id === cleanId) ||
+      (e.title && e.title.toLowerCase().includes(cleanId)) ||
+      (e.shortName && e.shortName.toLowerCase().includes(cleanId))
+    );
+    return match ? match.id : TEAM_EVENTS[0].id;
+  };
+
+  const [selectedEventId, setSelectedEventId] = useState(() => findMatchingEventId(initialEventId));
   const [teamName, setTeamName] = useState('');
+
+  useEffect(() => {
+    if (initialEventId) {
+      const matchedId = findMatchingEventId(initialEventId);
+      if (matchedId) {
+        setSelectedEventId(matchedId);
+      }
+      const scrollTimer = setTimeout(() => {
+        if (teamFormRef.current) {
+          teamFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 120);
+      return () => clearTimeout(scrollTimer);
+    }
+  }, [initialEventId]);
+
+  useEffect(() => {
+    if (initialEventId) {
+      const scrollTimer = setTimeout(() => {
+        if (teamFormRef.current) {
+          teamFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 180);
+      return () => clearTimeout(scrollTimer);
+    }
+  }, []);
   
   // Slots state: array of { id, aiId, student: null, loading: false, error: '' }
   const [slots, setSlots] = useState([]);
@@ -260,18 +320,16 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
     if (selectedEvent.id !== 'technical-1') return null;
     
     const years = slots.map(s => s.student?.year).filter(Boolean);
-    if (years.length < 4) return null;
+    if (years.length === 0) return null;
 
-    const count4 = years.filter(y => y === '4').length;
-    const count3 = years.filter(y => y === '3').length;
-    const count2 = years.filter(y => y === '2').length;
+    const count4 = years.filter(y => String(y) === '4' || String(y).includes('4')).length;
+    const isValid = count4 <= 1;
 
-    const isValid = count4 >= 1 && count3 >= 2 && count2 >= 1;
     return {
       isValid,
       message: isValid
-        ? '✓ Perfect! Meets year rule: 1x 4th Year, 2x 3rd Year, 1x 2nd Year'
-        : `Current composition: ${count4}x 4th Yr, ${count3}x 3rd Yr, ${count2}x 2nd Yr. Recommended minimum: 1x 4th Yr, 2x 3rd Yr, 1x 2nd Yr.`
+        ? '✓ Valid team composition: 2nd & 3rd year allowed, max 1 4th-year student (optional).'
+        : `⚠️ Composition warning: ${count4} 4th-year students selected. Maximum 1 4th-year student is allowed per team.`
     };
   };
 
@@ -522,21 +580,22 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
             <ArrowLeft size={18} /> Back to Dashboard
           </button>
         )}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+           <div className="team-portal-header-group" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
           <div style={{
             background: 'linear-gradient(135deg, #00f2fe, #4facfe)',
-            padding: '0.6rem',
-            borderRadius: '12px',
+            padding: '0.5rem',
+            borderRadius: '10px',
             color: '#0b1120',
-            display: 'flex'
+            display: 'flex',
+            flexShrink: 0
           }}>
-            <Users size={28} />
+            <Users size={24} />
           </div>
-          <div>
-            <h1 style={{ fontSize: '2rem', fontWeight: '800', margin: 0, background: 'linear-gradient(135deg, #ffffff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          <div style={{ flex: '1 1 auto', minWidth: 0 }}>
+            <h1 className="team-portal-heading" style={{ fontWeight: '800', margin: 0, background: 'linear-gradient(135deg, #ffffff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: '1.2' }}>
               TEAM REGISTRATION PORTAL
             </h1>
-            <p style={{ color: 'var(--text-dim)', margin: 0, fontSize: '0.95rem' }}>
+            <p style={{ color: 'var(--text-dim)', margin: '0.2rem 0 0 0', fontSize: '0.88rem' }}>
               Register your team for Agentic AI Day competitions using registered AI IDs.
             </p>
           </div>
@@ -550,45 +609,46 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
         </h3>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.85rem' }}>
-          {TEAM_EVENTS.map(event => {
-            const isSelected = event.id === selectedEventId;
+          {TEAM_EVENTS.map((ev) => {
+            const isSelected = selectedEventId === ev.id;
             return (
               <div
-                key={event.id}
-                onClick={() => handleSelectEvent(event.id)}
+                key={ev.id}
+                onClick={() => handleSelectEvent(ev.id)}
+                className={`event-card ${isSelected ? 'active' : ''}`}
                 style={{
-                  background: isSelected ? 'rgba(0, 242, 254, 0.12)' : 'rgba(15, 23, 42, 0.6)',
-                  border: isSelected ? '2px solid var(--primary-cyan)' : '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '14px',
-                  padding: '1.5rem',
+                  background: isSelected ? 'rgba(0, 242, 254, 0.08)' : 'rgba(15, 23, 42, 0.6)',
+                  border: isSelected ? '2px solid var(--primary-cyan)' : '1px solid rgba(255, 255, 255, 0.08)',
+                  borderRadius: '16px',
+                  padding: '1.75rem',
                   cursor: 'pointer',
-                  transition: 'all 0.2s ease-in-out',
-                  position: 'relative',
-                  boxShadow: isSelected ? '0 0 25px rgba(0, 242, 254, 0.25)' : 'none'
+                  transition: 'all 0.25s ease',
+                  position: 'relative'
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                   <span style={{
                     fontSize: '0.75rem',
-                    fontWeight: '700',
-                    padding: '0.3rem 0.7rem',
-                    borderRadius: '20px',
-                    background: isSelected ? 'var(--primary-cyan)' : 'rgba(255, 255, 255, 0.1)',
-                    color: isSelected ? '#0b1120' : 'var(--text-dim)'
+                    fontWeight: '800',
+                    color: 'var(--primary-cyan)',
+                    background: 'rgba(0, 242, 254, 0.12)',
+                    padding: '0.25rem 0.6rem',
+                    borderRadius: '50px',
+                    border: '1px solid rgba(0, 242, 254, 0.3)'
                   }}>
-                    {event.badgeText}
+                    {ev.badgeText}
                   </span>
                 </div>
 
-                <h4 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#ffffff', marginBottom: '0.5rem' }}>
-                  {event.shortName}
+                <h4 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#ffffff', marginBottom: '0.5rem' }}>
+                  {ev.title}
                 </h4>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)', margin: 0, lineHeight: 1.5 }}>
-                  {event.note}
+                <p style={{ color: 'var(--text-dim)', fontSize: '0.88rem', lineHeight: '1.5', marginBottom: '1.25rem' }}>
+                  {ev.note}
                 </p>
 
-                <div style={{ marginTop: '1rem', fontSize: '0.8rem', fontWeight: '700', color: isSelected ? 'var(--primary-cyan)' : '#64748b', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                  <span>{isSelected ? '✓ Selected — Form Team Below' : 'Click to Select & Form Team ➔'}</span>
+                <div style={{ fontSize: '0.82rem', fontWeight: '700', color: isSelected ? 'var(--primary-cyan)' : 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  {isSelected ? '✓ Selected — Form Team Below' : 'Click to Select & Form Team →'}
                 </div>
               </div>
             );
@@ -600,17 +660,16 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
       <form
         ref={teamFormRef}
         onSubmit={handleSubmit}
-        className="form-card"
+        className="form-card team-form-card"
         style={{
           background: 'rgba(15, 23, 42, 0.8)',
           border: '1px solid rgba(255, 255, 255, 0.1)',
           borderRadius: '16px',
-          padding: '2.5rem',
-          scrollMarginTop: '100px'
+          scrollMarginTop: '110px'
         }}
       >
-        <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#ffffff', marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Zap size={20} style={{ color: 'var(--primary-cyan)' }} />
+        <h3 className="team-formation-heading" style={{ fontSize: '1.25rem', fontWeight: '700', color: '#ffffff', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <Zap size={20} style={{ color: 'var(--primary-cyan)', flexShrink: 0 }} />
           TEAM FORMATION FOR <span style={{ color: 'var(--primary-cyan)' }}>{selectedEvent.title}</span>
         </h3>
 
@@ -621,7 +680,7 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
             color: '#f87171',
             padding: '1.25rem',
             borderRadius: '12px',
-            marginBottom: '2rem',
+            marginBottom: '1.5rem',
             display: 'flex',
             alignItems: 'center',
             gap: '0.75rem',
@@ -635,12 +694,12 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
         )}
 
         {/* ⚠️ IMPORTANT: Register Event First Notice */}
-        <div style={{
+        <div className="team-prereq-notice" style={{
           background: 'rgba(251, 191, 36, 0.1)',
           border: '1.5px solid rgba(251, 191, 36, 0.5)',
           borderRadius: '14px',
           padding: '1.1rem 1.4rem',
-          marginBottom: '2rem',
+          marginBottom: '1.75rem',
           display: 'flex',
           alignItems: 'flex-start',
           gap: '0.75rem'
@@ -658,7 +717,7 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
         </div>
 
         {/* Team Name Input */}
-        <div className="form-group" style={{ marginBottom: '2.5rem' }}>
+        <div className="form-group" style={{ marginBottom: '2rem' }}>
           <label style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--text-dim)', marginBottom: '0.75rem', display: 'block' }}>
             ENTER TEAM NAME *
           </label>
@@ -670,7 +729,17 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
             onChange={(e) => setTeamName(e.target.value)}
             required
             disabled={currentUserHasSubmittedSelectedEvent}
-            style={{ width: '100%', fontSize: '1.1rem', padding: '0.95rem 1.25rem', cursor: currentUserHasSubmittedSelectedEvent ? 'not-allowed' : 'text' }}
+            style={{
+              width: '100%',
+              fontSize: '1rem',
+              padding: '0.85rem 1.1rem',
+              color: '#ffffff',
+              WebkitTextFillColor: '#ffffff',
+              background: 'rgba(15, 23, 42, 0.85)',
+              border: '1.5px solid rgba(0, 242, 254, 0.4)',
+              borderRadius: '12px',
+              cursor: currentUserHasSubmittedSelectedEvent ? 'not-allowed' : 'text'
+            }}
           />
         </div>
 
@@ -680,25 +749,24 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
             background: hackathonCheck.isValid ? 'rgba(34, 197, 94, 0.12)' : 'rgba(234, 179, 8, 0.12)',
             border: hackathonCheck.isValid ? '1px solid #22c55e' : '1px solid #eab308',
             color: hackathonCheck.isValid ? '#4ade80' : '#fde047',
-            padding: '1.25rem',
+            padding: '1.1rem 1.25rem',
             borderRadius: '12px',
-            marginBottom: '2.5rem',
+            marginBottom: '2rem',
             fontSize: '0.9rem',
             display: 'flex',
             alignItems: 'center',
             gap: '0.75rem'
           }}>
-            <Info size={20} />
+            <Info size={20} style={{ flexShrink: 0 }} />
             <div>
               <strong>Hackathon Year Composition Rule:</strong> {hackathonCheck.message}
             </div>
           </div>
         )}
-
-        {/* Dynamic Member Slots */}
-        <div style={{ marginBottom: '2.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <label style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--primary-cyan)' }}>
+           {/* Dynamic Member Slots */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <div className="team-member-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <label style={{ fontSize: '0.92rem', fontWeight: '700', color: 'var(--primary-cyan)' }}>
               TEAM MEMBERS ({slots.length} of max {selectedEvent.maxSize})
             </label>
 
@@ -709,20 +777,22 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
                   type="button"
                   onClick={addSlot}
                   className="btn btn-secondary"
-                  style={{ fontSize: '0.85rem', padding: '0.5rem 1rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+                  style={{ fontSize: '0.8rem', padding: '0.4rem 0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
                 >
-                  <Plus size={15} /> Add Member
+                  <Plus size={14} /> Add Member
                 </button>
               )}
             </div>
           </div>
 
-          <div style={{ display: 'grid', gap: '2rem' }}>
+          <div style={{ display: 'grid', gap: '0.85rem' }}>
             {slots.map((slot, index) => {
               const isLeader = index === 0;
+              const isVerified = (isLeader && !!currentUser?.aiId && !!slot.student) || (!!slot.student);
               return (
                 <div
                   key={slot.id}
+                  className="team-member-slot-card"
                   style={{
                     background: isLeader ? 'rgba(0, 242, 254, 0.04)' : 'rgba(255, 255, 255, 0.02)',
                     border: slot.error
@@ -730,24 +800,24 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
                       : slot.student
                       ? '1px solid #22c55e'
                       : '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '14px',
-                    padding: '1.75rem',
+                    borderRadius: '12px',
+                    padding: '1rem 1rem',
                     transition: 'all 0.2s ease',
-                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)'
+                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.15)'
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem', flexWrap: 'wrap', gap: '0.35rem' }}>
+                    <div className="team-member-title-group" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem 0.5rem', flexWrap: 'wrap' }}>
                       {isLeader ? (
-                        <Crown size={20} style={{ color: '#ffd700' }} />
+                        <Crown size={18} style={{ color: '#ffd700', flexShrink: 0 }} />
                       ) : (
-                        <Users size={18} style={{ color: 'var(--text-dim)' }} />
+                        <Users size={16} style={{ color: 'var(--text-dim)', flexShrink: 0 }} />
                       )}
-                      <span style={{ fontWeight: '700', fontSize: '1rem', color: isLeader ? '#ffd700' : '#ffffff' }}>
+                      <span className="team-member-badge-leader" style={{ fontWeight: '700', fontSize: '0.9rem', color: isLeader ? '#ffd700' : '#ffffff' }}>
                         {isLeader ? 'MEMBER #1 — TEAM LEADER' : `MEMBER #${index + 1}`}
                       </span>
                       {isLeader && currentUser?.aiId && (
-                        <span style={{ fontSize: '0.75rem', background: 'rgba(0, 242, 254, 0.12)', color: '#00f2fe', padding: '0.2rem 0.6rem', borderRadius: '6px', fontWeight: '800', border: '1px solid rgba(0, 242, 254, 0.3)' }}>
+                        <span style={{ fontSize: '0.7rem', background: 'rgba(0, 242, 254, 0.12)', color: '#00f2fe', padding: '0.12rem 0.45rem', borderRadius: '5px', fontWeight: '800', border: '1px solid rgba(0, 242, 254, 0.3)', whiteSpace: 'nowrap' }}>
                           YOUR ACCOUNT
                         </span>
                       )}
@@ -762,28 +832,28 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
                           border: '1px solid rgba(239, 68, 68, 0.3)',
                           color: '#ef4444',
                           cursor: 'pointer',
-                          padding: '0.4rem 0.75rem',
-                          borderRadius: '8px',
+                          padding: '0.3rem 0.55rem',
+                          borderRadius: '6px',
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: '0.3rem',
-                          fontSize: '0.8rem',
+                          gap: '0.25rem',
+                          fontSize: '0.78rem',
                           fontWeight: '600'
                         }}
                         title="Remove member"
                       >
-                        <Trash2 size={15} /> Remove
+                        <Trash2 size={14} /> Remove
                       </button>
                     )}
                   </div>
 
-                  {/* AI ID Input */}
-                  <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-                    <div style={{ position: 'relative', flex: 1, minWidth: '240px' }}>
+                  {/* AI ID Input Group (Unified Cyber Input Bar) */}
+                  <div className="team-ai-id-input-group" style={{ display: 'flex', width: '100%', marginBottom: '0.4rem', borderRadius: '10px', overflow: 'hidden', border: '1.5px solid rgba(0, 242, 254, 0.4)', background: 'rgba(15, 23, 42, 0.85)' }}>
+                    <div style={{ position: 'relative', flex: '1 1 auto', minWidth: 0, display: 'flex', alignItems: 'center' }}>
                       <input
                         type="text"
                         className="form-control"
-                        placeholder="ENTER STUDENT AI ID (E.G. VUCSE00001)"
+                        placeholder="ENTER AI ID (E.G. VUCSE00001)"
                         value={slot.aiId}
                         readOnly={(isLeader && !!currentUser?.aiId) || currentUserHasSubmittedSelectedEvent}
                         onChange={(e) => handleAiIdChange(index, e.target.value)}
@@ -793,15 +863,18 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
                           textTransform: 'uppercase',
                           fontFamily: 'monospace',
                           fontWeight: '700',
-                          padding: '0.85rem 1.25rem',
-                          fontSize: '1rem',
-                          background: ((isLeader && !!currentUser?.aiId) || currentUserHasSubmittedSelectedEvent) ? 'rgba(0, 242, 254, 0.05)' : undefined,
-                          borderColor: ((isLeader && !!currentUser?.aiId) || currentUserHasSubmittedSelectedEvent) ? 'rgba(0, 242, 254, 0.3)' : undefined,
+                          padding: '0.75rem 0.85rem',
+                          fontSize: '0.88rem',
+                          color: '#ffffff',
+                          WebkitTextFillColor: '#ffffff',
+                          background: 'transparent',
+                          border: 'none',
+                          outline: 'none',
                           cursor: ((isLeader && !!currentUser?.aiId) || currentUserHasSubmittedSelectedEvent) ? 'not-allowed' : undefined
                         }}
                       />
                       {slot.loading && (
-                        <div style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.85rem', color: 'var(--primary-cyan)', fontWeight: '600' }}>
+                        <div style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.78rem', color: 'var(--primary-cyan)', fontWeight: '600' }}>
                           Verifying...
                         </div>
                       )}
@@ -810,57 +883,66 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser })
                     <button
                       type="button"
                       onClick={() => lookupStudent(slot.aiId, index)}
-                      className="btn btn-secondary"
                       disabled={(isLeader && !!currentUser?.aiId && !!slot.student) || currentUserHasSubmittedSelectedEvent}
                       style={{
-                        padding: '0.85rem 1.5rem',
-                        fontSize: '0.9rem',
-                        fontWeight: '700',
+                        flex: '0 0 auto',
+                        padding: '0 0.9rem',
+                        fontSize: '0.8rem',
+                        fontWeight: '800',
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: '0.4rem',
-                        opacity: ((isLeader && !!currentUser?.aiId && !!slot.student) || currentUserHasSubmittedSelectedEvent) ? 0.6 : 1,
-                        cursor: ((isLeader && !!currentUser?.aiId && !!slot.student) || currentUserHasSubmittedSelectedEvent) ? 'not-allowed' : 'pointer'
+                        justifyContent: 'center',
+                        gap: '0.35rem',
+                        border: 'none',
+                        borderLeft: '1px solid rgba(0, 242, 254, 0.3)',
+                        background: (isLeader && !!currentUser?.aiId && !!slot.student)
+                          ? 'rgba(34, 197, 94, 0.25)'
+                          : 'linear-gradient(135deg, #00f2fe, #4facfe)',
+                        color: (isLeader && !!currentUser?.aiId && !!slot.student) ? '#34d399' : '#0b1120',
+                        opacity: currentUserHasSubmittedSelectedEvent ? 0.6 : 1,
+                        cursor: ((isLeader && !!currentUser?.aiId && !!slot.student) || currentUserHasSubmittedSelectedEvent) ? 'not-allowed' : 'pointer',
+                        whiteSpace: 'nowrap'
                       }}
                     >
-                      <Search size={16} /> {isLeader && !!currentUser?.aiId && !!slot.student ? 'Auto Verified' : 'Verify'}
+                      <Search size={14} />
+                      <span>{isLeader && !!currentUser?.aiId && !!slot.student ? 'Auto Verified' : 'Verify'}</span>
                     </button>
                   </div>
 
 
                   {/* Error display */}
                   {slot.error && (
-                    <div style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', padding: '0.6rem 0.8rem', borderRadius: '8px' }}>
-                      <AlertCircle size={16} /> {slot.error}
+                    <div style={{ color: '#ef4444', fontSize: '0.82rem', marginTop: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(239, 68, 68, 0.1)', padding: '0.45rem 0.65rem', borderRadius: '7px' }}>
+                      <AlertCircle size={15} style={{ flexShrink: 0 }} /> {slot.error}
                     </div>
                   )}
 
                   {/* Auto-filled Student Details Card */}
                   {slot.student && (
-                    <div style={{
-                      marginTop: '1rem',
+                    <div className="team-student-details-card" style={{
+                      marginTop: '0.5rem',
                       background: 'rgba(34, 197, 94, 0.08)',
                       border: '1px solid rgba(34, 197, 94, 0.3)',
-                      padding: '1rem 1.25rem',
-                      borderRadius: '10px',
+                      padding: '0.65rem 0.85rem',
+                      borderRadius: '8px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       flexWrap: 'wrap',
-                      gap: '0.75rem'
+                      gap: '0.5rem'
                     }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <UserCheck size={22} style={{ color: '#22c55e' }} />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <UserCheck size={18} style={{ color: '#22c55e', flexShrink: 0 }} />
                         <div>
-                          <div style={{ fontWeight: '700', color: '#ffffff', fontSize: '0.95rem' }}>
+                          <div style={{ fontWeight: '700', color: '#ffffff', fontSize: '0.88rem' }}>
                             {slot.student.name}
                           </div>
-                          <div style={{ fontSize: '0.85rem', color: 'var(--text-dim)', marginTop: '0.2rem' }}>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: '0.1rem' }}>
                             Reg No: {slot.student.regNo} • Year {slot.student.year} • Email: {slot.student.email}
                           </div>
                         </div>
                       </div>
-                      <span style={{ fontSize: '0.75rem', background: '#22c55e', color: '#0b1120', padding: '0.25rem 0.6rem', borderRadius: '6px', fontWeight: '800', letterSpacing: '0.5px' }}>
+                      <span style={{ fontSize: '0.7rem', background: '#22c55e', color: '#0b1120', padding: '0.15rem 0.45rem', borderRadius: '5px', fontWeight: '800', letterSpacing: '0.5px' }}>
                         VERIFIED
                       </span>
                     </div>

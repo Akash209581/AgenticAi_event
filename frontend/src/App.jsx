@@ -61,7 +61,18 @@ export default function App() {
 
   const [isNewRegistration, setIsNewRegistration] = useState(false);
   const [prefillLoginId, setPrefillLoginId] = useState('');
+  const [prefillTeamEventId, setPrefillTeamEventId] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const handleOpenTeamRegister = (event) => {
+    if (event) {
+      const targetId = (event.categoryId && event.id && !String(event.id).includes('-'))
+        ? `${event.categoryId}-${event.id}`
+        : event.id;
+      setPrefillTeamEventId(targetId);
+    }
+    changeTab('team-register', '/team-register');
+  };
 
   // Global Anti-Inspection & Anti-Theft Protection:
   // Disables contextmenu (right click), dragging, selection, and DevTools/Source keyboard shortcuts
@@ -383,6 +394,7 @@ export default function App() {
             onRegister={() => changeTab('register', '/register')}
             currentUser={currentUser}
             onEnrollEvent={handleEnrollEvent}
+            onTeamRegister={handleOpenTeamRegister}
             onSubmissionUpdate={handleSubmissionUpdate}
           />
         )}
@@ -392,6 +404,7 @@ export default function App() {
           currentUser ? (
             <TeamRegistrationForm
               currentUser={currentUser}
+              initialEventId={prefillTeamEventId}
               onBack={() => changeTab('home', '/')}
               onSuccess={(team) => {
                 toast.team(

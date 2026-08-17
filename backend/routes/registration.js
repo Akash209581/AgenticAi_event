@@ -23,7 +23,9 @@ const EVENT_CONSTRAINTS = {
   'industry-2': { min: 2, max: 4, name: 'AI AGENTS EXPO' },
   'creative-3': { min: 3, max: 5, name: 'AGENTIC DAY QUIZ CHALLENGE 2026' },
   'creative-2': { min: 3, max: 3, name: 'AI MUSICAL COMPETITION' },
-  'creative-1': { min: 1, max: 3, name: 'REELS COMPETITION (AI FOR SOCIETY)' }
+  'creative-1': { min: 1, max: 3, name: 'REELS COMPETITION (AI FOR SOCIETY)' },
+  'creative-4': { min: 5, max: 5, name: 'QUESTX' },
+  'innovative-1': { min: 2, max: 3, name: 'SPARKX' }
 };
 
 

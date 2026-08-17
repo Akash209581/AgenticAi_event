@@ -10,12 +10,12 @@ export const eventsRulesData = {
     whatsappGroupLink: 'https://chat.whatsapp.com/DY7Ok514zSmCLiueVk2lq2',
     eventDate: '21st & 22nd August 2026',
     registrationDeadline: '20th August 2026',
-    teamSize: '4 to 5 members (1x 4th Year, 2x 3rd Year, 1x 2nd Year, 5th member optional)',
+    teamSize: '4 to 5 members per team (strictly 4 members required, 5th member optional)',
     rules: [
       'Hackathon Dates: 21st & 22nd August 2026.',
       'All participants must complete registration through the official registration form before the specified deadline.',
       'Theme Selection: During registration, only the Team Leader is required to select one theme from the list of given themes. The selected theme will apply to the entire team. The theme must be finalized on or before 26th August 2026. No changes to the selected theme will be permitted after the deadline.',
-      'Team Composition: Each team must consist of 4 to 5 members — 1 Student from 4th Year, 2 Students from 3rd Year, and 1 Student from 2nd Year. A 5th member is optional.',
+      'Team Composition: 4 to 5 members per team (strictly 4 members required, 5th member optional). 2nd-year and 3rd-year students are allowed. Up to one 4th-year student is allowed (optional). There are no other restrictions on team formation.',
       'Track Selection & Venue: Each team must select one AI innovation track or problem statement at the start of the hackathon. Once the hackathon begins, the selected track or problem statement cannot be changed. All participants must report to the venue on time and carry a valid university identification card.',
       'Approved Tools & Resources: Participants are permitted to use the internet, AI tools, APIs, open-source libraries, coding assistants, datasets, and documentation for development purposes.',
       'Resource Disclosure: Teams must disclose all AI tools, frameworks, APIs, datasets, libraries, and external resources used during project development.',
@@ -355,6 +355,80 @@ export const eventsRulesData = {
       { name: 'Nagineni Venkata Sai Krishna (Student)', phone: '+91 63043 68343' }
     ]
   },
+  'creative-4': {
+    id: '4',
+    categoryId: 'creative',
+    categoryName: 'CREATIVE EVENTS',
+    title: 'QUESTX',
+    cardTitle: 'QUESTX',
+    image: '/images/event_quiz.png',
+    whatsappGroupLink: 'https://chat.whatsapp.com/YOUR_WHATSAPP_GROUP_LINK',
+    registrationDeadline: '28 August 2026',
+    eventDate: '29 August 2026',
+    teamSize: 'Strictly 5 members per team',
+    rules: [
+      'Each team must consist of exactly 5 members.',
+      'Only CSE Department students from 2nd, 3rd, and 4th years are eligible to participate.',
+      'Students from different eligible years may form a single team.',
+      'Each student can be a member of only one team. Duplicate entries are not permitted.',
+      'All team members must report at the venue by the specified reporting time.',
+      'Teams must follow all instructions and guidelines provided by the organizers throughout all rounds.',
+      'AI tools are permitted in each respective round.',
+      'Teams must not share clues, answers, passwords, or solutions with other participating teams.',
+      'In case of a tie, a tie-breaker round will be conducted to determine the winner.',
+      'The decision of the organizing committee will be final and binding in all matters related to the competition.',
+      'Participants must complete the registration process before participating in the event.',
+      'External assistance from non-team members is strictly prohibited.',
+      'Teams must maintain fair play and professional conduct throughout all six rounds.'
+    ],
+    prizes: [
+      { rank: 'First', amount: 'Rs. 3000/-' },
+      { rank: 'Second', amount: 'Rs. 2000/-' },
+      { rank: 'Third', amount: 'Rs. 1000/-' }
+    ],
+    coordinators: [
+      { name: 'MR. ONGOLE GANDHI (Faculty)', phone: '+91 97014 63728' },
+      { name: 'MRS. GUGGILAM NAVYA (Faculty)', phone: '+91 77949 93678' }
+    ]
+  },
+
+  // INNOVATIVE CATEGORY EVENTS
+  'innovative-1': {
+    id: '1',
+    categoryId: 'innovative',
+    categoryName: 'INNOVATIVE EVENTS',
+    title: 'SPARKX',
+    cardTitle: 'SPARKX',
+    image: '/images/event_expo.png',
+    whatsappGroupLink: 'https://chat.whatsapp.com/YOUR_WHATSAPP_GROUP_LINK',
+    registrationDeadline: '28 August 2026',
+    eventDate: '29 August 2026',
+    teamSize: 'Maximum 2-3 members per team',
+    rules: [
+      'Maximum 2-3 members per team.',
+      'The event consists of three rounds:',
+      '• Round 1 - 10 Minutes : Solve the puzzle and identify the problem statement.',
+      '• Round 2 - 45 Minutes : Solve the problem using Creativity + Design Thinking + AI Solutions.',
+      '• Round 3 - Presentation & Q&A : Present your solution and answer questions from the judges.',
+      'AI Usage: Participants can use any AI tools and applications.',
+      'Judgement: Evaluation will be based on overall performance.',
+      'Join the WhatsApp group after registration for updates (link in website).'
+    ],
+    CompetitionRounds: [
+      'Round 1 - 10 Minutes : Solve the puzzle and identify the problem statement.',
+      'Round 2 - 45 Minutes : Solve the problem using Creativity + Design Thinking + AI Solutions.',
+      'Round 3 - Presentation & Q&A : Present your solution and answer questions from the judges.'
+    ],
+    prizes: [
+      { rank: '1st Place — AI SparkX Champion', amount: 'Rs. 3000/-' },
+      { rank: '2nd Place — AI SparkX Innovator', amount: 'Rs. 2000/-' },
+      { rank: '3rd Place — AI SparkX Rising Innovator', amount: 'Rs. 1000/-' }
+    ],
+    coordinators: [
+      { name: 'Shaik Nazeema (Faculty)', phone: '+91 96188 96300' },
+      { name: 'G. Tejaswi (Faculty)', phone: '+91 93980 46056' }
+    ]
+  },
   'bootcamp-1': {
     id: '1',
     categoryId: 'bootcamp',
@@ -481,7 +555,15 @@ export function isSameEvent(e1, e2) {
     }
   }
 
-  // 2. Domain-based keyword matching for all 9 events
+  // 2. Domain-based keyword matching
+  const isSpark1 = title1.includes('spark') || id1.includes('innovative-1') || id1.includes('sparkx');
+  const isSpark2 = title2.includes('spark') || id2.includes('innovative-1') || id2.includes('sparkx');
+  if (isSpark1 && isSpark2) return true;
+
+  const isQuest1 = title1.includes('quest') || id1.includes('creative-4') || id1.includes('questx');
+  const isQuest2 = title2.includes('quest') || id2.includes('creative-4') || id2.includes('questx');
+  if (isQuest1 && isQuest2) return true;
+
   const isReels1 = title1.includes('reel') || id1.includes('creative-1');
   const isReels2 = title2.includes('reel') || id2.includes('creative-1');
   if (isReels1 && isReels2) return true;

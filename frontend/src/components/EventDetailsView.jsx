@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Award, Phone, UserPlus, Sparkles, ShieldCheck, Calendar, Video, FileText, CheckCircle2, Bot, Zap, MessageCircle, ExternalLink, Lock } from 'lucide-react';
+import { ArrowLeft, Award, Phone, UserPlus, Sparkles, ShieldCheck, Calendar, Video, FileText, CheckCircle2, Bot, Zap, MessageCircle, ExternalLink, Lock, Users } from 'lucide-react';
 import SubmissionModal from './SubmissionModal';
 import { isSameEvent, getEventDetails, isRegistrationClosed } from '../data/eventsRulesData';
 import { getAssetUrl } from '../config/api';
-`   `
-export default function EventDetailsView({ event, onBack, onRegister, currentUser = null, onEnrollEvent, onSubmissionUpdate }) {
+
+export default function EventDetailsView({ event, onBack, onRegister, currentUser = null, onEnrollEvent, onTeamRegister, onSubmissionUpdate }) {
   const [isSubmissionModalOpen, setIsSubmissionModalOpen] = useState(false);
   // Track freshly submitted data locally so button updates even before parent re-renders
   const [localSubmission, setLocalSubmission] = useState(null);
@@ -15,6 +15,14 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
 
   const isReels = event.id === 'creative-1' || (event.id === '1' && (event.categoryId === 'creative' || String(event.categoryId).toLowerCase() === 'creative')) || (event.title && event.title.toLowerCase().includes('reel'));
   const isPoster = event.id === 'technical-3' || (event.id === '3' && (event.categoryId === 'technical' || String(event.categoryId).toLowerCase() === 'technical')) || (event.title && (event.title.toLowerCase().includes('poster') || event.title.toLowerCase().includes('paper')));
+
+  const isTeamEvent = Boolean(
+    (event.teamSize && (event.teamSize.toLowerCase().includes('member') || event.teamSize.toLowerCase().includes('team'))) ||
+    ['technical-1', 'technical-2', 'technical-3', 'industry-2', 'creative-1', 'creative-2', 'creative-3', 'creative-4', 'innovative-1'].some(id => 
+      event.id === id || 
+      (event.categoryId && (event.categoryId + '-' + event.id) === id)
+    )
+  );
 
   const matchedRegisteredEvent = currentUser?.registeredEvents?.find(e => isSameEvent(event, e));
 
@@ -89,60 +97,85 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
                 className="event-poster-image"
               />
             </div>
-            {/* Quick Register / Submission Button Place */}
+            {/* Quick Register / Submission & Team Formation Button Place */}
             {(() => {
               const isEventClosed = isRegistrationClosed(event.registrationDeadline, event.title, event.id);
 
+              const renderTeamBtn = () => (
+                <button
+                  type="button"
+                  className="card-quick-register-btn"
+                  style={{
+                    marginTop: '0.65rem',
+                    background: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
+                    borderColor: '#f472b6',
+                    color: '#ffffff',
+                    justifyContent: 'center',
+                    fontWeight: '700',
+                    boxShadow: '0 4px 15px rgba(236, 72, 153, 0.3)'
+                  }}
+                  onClick={() => {
+                    if (onTeamRegister) {
+                      onTeamRegister(event);
+                    } else {
+                      window.location.href = '/team-register';
+                    }
+                  }}
+                >
+                  <Users size={18} />
+                  <span>Form / Register Team</span>
+                </button>
+              );
+
               if (isEnrolled) {
-                if (isReels) {
-                  return (
-                    <button
-                      className="card-quick-register-btn"
-                      style={{
-                        background: existingSubmission?.reelLink
-                          ? 'linear-gradient(135deg, #10b981, #059669)'
-                          : 'linear-gradient(135deg, #f59e0b, #ef4444)',
-                        borderColor: '#fbbf24'
-                      }}
-                      onClick={() => setIsSubmissionModalOpen(true)}
-                    >
-                      <Video size={18} />
-                      <span>{existingSubmission?.reelLink ? 'Reel Submitted (Preview)' : 'Submit Reel Link'}</span>
-                    </button>
-                  );
-                }
-                if (isPoster) {
-                  return (
-                    <button
-                      className={`card-quick-register-btn ${(existingSubmission?.posterFile || existingSubmission?.posterLink) ? '' : 'poster-upload-btn-blinking'}`}
-                      style={{
-                        background: (existingSubmission?.posterFile || existingSubmission?.posterLink)
-                          ? 'linear-gradient(135deg, #10b981, #059669)'
-                          : undefined,
-                        borderColor: (existingSubmission?.posterFile || existingSubmission?.posterLink)
-                          ? '#10b981'
-                          : undefined
-                      }}
-                      onClick={() => setIsSubmissionModalOpen(true)}
-                    >
-                      <FileText size={18} />
-                      <span>{(existingSubmission?.posterFile || existingSubmission?.posterLink) ? 'Poster Submitted (Preview)' : 'Upload Poster / Paper'}</span>
-                    </button>
-                  );
-                }
                 return (
-                  <div
-                    className="card-quick-register-btn"
-                    style={{
-                      background: 'rgba(16, 185, 129, 0.2)',
-                      border: '1px solid rgba(16, 185, 129, 0.5)',
-                      color: '#34d399',
-                      justifyContent: 'center',
-                      cursor: 'default'
-                    }}
-                  >
-                    <CheckCircle2 size={18} />
-                    <span>Registered for Event</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                    {isReels ? (
+                      <button
+                        className="card-quick-register-btn"
+                        style={{
+                          background: existingSubmission?.reelLink
+                            ? 'linear-gradient(135deg, #10b981, #059669)'
+                            : 'linear-gradient(135deg, #f59e0b, #ef4444)',
+                          borderColor: '#fbbf24'
+                        }}
+                        onClick={() => setIsSubmissionModalOpen(true)}
+                      >
+                        <Video size={18} />
+                        <span>{existingSubmission?.reelLink ? 'Reel Submitted (Preview)' : 'Submit Reel Link'}</span>
+                      </button>
+                    ) : isPoster ? (
+                      <button
+                        className={`card-quick-register-btn ${(existingSubmission?.posterFile || existingSubmission?.posterLink) ? '' : 'poster-upload-btn-blinking'}`}
+                        style={{
+                          background: (existingSubmission?.posterFile || existingSubmission?.posterLink)
+                            ? 'linear-gradient(135deg, #10b981, #059669)'
+                            : undefined,
+                          borderColor: (existingSubmission?.posterFile || existingSubmission?.posterLink)
+                            ? '#10b981'
+                            : undefined
+                        }}
+                        onClick={() => setIsSubmissionModalOpen(true)}
+                      >
+                        <FileText size={18} />
+                        <span>{(existingSubmission?.posterFile || existingSubmission?.posterLink) ? 'Poster Submitted (Preview)' : 'Upload Poster / Paper'}</span>
+                      </button>
+                    ) : (
+                      <div
+                        className="card-quick-register-btn"
+                        style={{
+                          background: 'rgba(16, 185, 129, 0.2)',
+                          border: '1px solid rgba(16, 185, 129, 0.5)',
+                          color: '#34d399',
+                          justifyContent: 'center',
+                          cursor: 'default'
+                        }}
+                      >
+                        <CheckCircle2 size={18} />
+                        <span>Registered for Event</span>
+                      </div>
+                    )}
+                    {isTeamEvent && renderTeamBtn()}
                   </div>
                 );
               }

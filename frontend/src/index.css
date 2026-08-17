@@ -36,6 +36,21 @@ textarea,
   user-select: text !important;
 }
 
+.team-registration-container .form-control,
+.team-registration-form .form-control {
+  width: 100%;
+  background: rgba(15, 23, 42, 0.85) !important;
+  border: 1.5px solid rgba(0, 242, 254, 0.4) !important;
+  border-radius: 12px;
+  padding: 0.85rem 1.25rem;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.25s ease;
+}
+
 img {
   -webkit-user-drag: none !important;
   user-drag: none !important;
@@ -805,7 +820,8 @@ label {
   /* #f5f5e6 border */
   border-radius: 14px;
   padding: 0.85rem 1rem 0.85rem 2.6rem;
-  color: #ffffff !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
   font-family: var(--font-body);
   font-size: clamp(0.95rem, 2.6vw, 1.05rem);
   font-weight: 600;
@@ -828,8 +844,14 @@ label {
   background: rgba(186, 230, 253, 0.35) !important;
 }
 
-.cyber-input::placeholder {
-  color: #94a3b8;
+.cyber-input::placeholder,
+input::placeholder,
+textarea::placeholder,
+select::placeholder {
+  color: rgba(71, 85, 105, 0.65) !important;
+  -webkit-text-fill-color: rgba(71, 85, 105, 0.65) !important;
+  font-weight: 400 !important;
+  opacity: 1 !important;
 }
 
 .cyber-input.input-error {
@@ -1677,17 +1699,14 @@ label {
 
 .events-portrait-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2rem 2.25rem;
+  grid-template-columns: repeat(4, 1fr);
+  justify-content: center;
+  gap: 1.5rem 1.75rem;
   width: 100%;
-  max-width: 1100px;
+  max-width: 1380px;
   margin: 1.5rem auto 3rem;
-  padding: 0 1.25rem;
+  padding: 0 1rem;
 }
-
-
-
-
 
 .portrait-event-card {
   background: transparent;
@@ -1709,7 +1728,7 @@ label {
 
 .portrait-image-stage {
   width: 100%;
-  height: 412px;
+  height: 380px;
   border-radius: 20px;
   overflow: hidden;
   position: relative;
@@ -1722,10 +1741,10 @@ label {
   justify-content: center;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1120px) {
   .events-portrait-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 2.5rem;
+    gap: 2rem;
     max-width: 780px;
   }
 
@@ -1748,6 +1767,7 @@ label {
     border-radius: 16px;
   }
 }
+
 
 .portrait-event-card:hover .portrait-image-stage {
   box-shadow: 0 18px 40px rgba(0, 240, 255, 0.3);
@@ -4055,4 +4075,75 @@ label {
   transform: translateY(-2px);
   box-shadow: 0 0 30px rgba(236, 72, 153, 0.45);
   background: rgba(236, 72, 153, 0.15);
+}
+
+/* ==========================================
+   MOBILE RESPONSIVE STYLES FOR TEAM REGISTRATION
+   ========================================== */
+
+.team-portal-heading {
+  font-size: 1.85rem;
+}
+
+@media (max-width: 768px) {
+  .team-portal-heading {
+    font-size: 1.25rem !important;
+  }
+
+  .team-form-card {
+    padding: 1rem 0.75rem !important;
+    border-radius: 12px !important;
+  }
+
+  .team-member-header-row {
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+  }
+
+  .team-member-slot-card {
+    padding: 0.85rem 0.75rem !important;
+    border-radius: 10px !important;
+  }
+
+  .team-member-title-group {
+    flex-wrap: wrap !important;
+    gap: 0.25rem 0.4rem !important;
+  }
+
+  .team-ai-id-input-group {
+    flex-direction: row !important;
+    width: 100% !important;
+    border-radius: 10px !important;
+  }
+
+  .team-student-details-card {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.4rem !important;
+    padding: 0.6rem 0.75rem !important;
+  }
+
+  .team-prereq-notice {
+    padding: 0.75rem 0.85rem !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    gap: 0.5rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .team-portal-heading {
+    font-size: 1.15rem !important;
+  }
+
+  .team-formation-heading {
+    font-size: 0.98rem !important;
+    flex-wrap: wrap !important;
+  }
+
+  .team-member-badge-leader {
+    font-size: 0.85rem !important;
+  }
 }
