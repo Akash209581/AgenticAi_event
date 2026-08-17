@@ -46,7 +46,8 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
                   title="Join official WhatsApp group for event updates & announcements"
                 >
                   <MessageCircle size={18} />
-                  <span>Join WhatsApp Group</span>
+                  <span className="whatsapp-text-full">Join WhatsApp Group</span>
+                  <span className="whatsapp-text-mobile">WhatsApp</span>
                   <ExternalLink size={14} style={{ opacity: 0.85 }} />
                 </a>
               );
@@ -62,7 +63,8 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
                 title="Register for this event to unlock the WhatsApp group link"
               >
                 <Lock size={16} />
-                <span>Join WhatsApp Group</span>
+                <span className="whatsapp-text-full">Join WhatsApp Group</span>
+                <span className="whatsapp-text-mobile">WhatsApp</span>
               </button>
             );
           })()}

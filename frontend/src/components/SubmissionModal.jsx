@@ -249,7 +249,7 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
           </div>
           <div>
             <span style={{ fontSize: '0.75rem', fontWeight: '700', letterSpacing: '1px', textTransform: 'uppercase', color: isReels ? '#fbbf24' : '#00f0ff' }}>
-              {isReels ? 'REELS COMPETITION SUBMISSION' : 'POSTER / PAPER PRESENTATION SUBMISSION'}
+              {isReels ? 'REELS SUBMISSION PORTAL' : 'PAPER / POSTER SUBMISSION PORTAL'}
             </span>
             <h2 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#ffffff', margin: 0 }}>
               {event.title}

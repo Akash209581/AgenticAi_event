@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   Code2, Briefcase, Sparkles, ArrowLeft,
   Brain, Zap, FileText, Mic, Bot, Users, Video, Music, HelpCircle,
-  Lightbulb, Compass, Camera, Gift, Lock
+  Lightbulb, Compass, Camera, Gift, Lock, ChevronDown
 } from 'lucide-react';
 import EventDetailsView from './EventDetailsView';
 import { getEventDetails } from '../data/eventsRulesData';
@@ -180,8 +180,23 @@ export default function EventsGrid({ onRegister, currentUser = null, onEnrollEve
       {/* Category Header or Back Nav Header */}
       {!selectedCategory ? (
         <div className="events-section-header">
-          <h2 className="events-main-heading">EVENTS & COMPETITIONS</h2>
-          <div className="events-heading-line"></div>
+          <div className="events-header-main">
+            <h2 className="events-main-heading">EVENTS & COMPETITIONS</h2>
+            <div className="events-heading-line"></div>
+          </div>
+          <button 
+            className="explore-beyond-action-btn"
+            onClick={() => {
+              const beyondElem = document.querySelector('.beyond-section');
+              if (beyondElem) {
+                beyondElem.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+          >
+            <Zap size={14} className="pulse-zap-icon" />
+            <span>EXPLORE BEYOND THE 9</span>
+            <ChevronDown size={16} className="bouncing-arrow" />
+          </button>
         </div>
       ) : (
         <div className="events-sub-header">
