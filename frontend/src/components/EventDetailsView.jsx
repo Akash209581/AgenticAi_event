@@ -439,18 +439,20 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
                           <button
                             type="button"
                             className="card-quick-register-btn"
+                            disabled
                             style={{
                               maxWidth: '320px',
                               margin: '0 auto',
-                              background: 'linear-gradient(135deg, #00f0ff, #7000ff)',
-                              color: '#ffffff',
+                              background: 'rgba(148, 163, 184, 0.15)',
+                              border: '1px solid rgba(148, 163, 184, 0.3)',
+                              color: '#94a3b8',
                               fontWeight: '700',
                               fontSize: '1rem',
-                              boxShadow: '0 0 20px rgba(0, 240, 255, 0.4)'
+                              cursor: 'not-allowed',
+                              boxShadow: 'none'
                             }}
-                            onClick={() => onRegister && onRegister(bootcampEventObj)}
                           >
-                            <Sparkles size={18} />
+                            <Lock size={18} />
                             <span>Register for Bootcamp</span>
                           </button>
                         );
@@ -460,18 +462,20 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
                         <button
                           type="button"
                           className="card-quick-register-btn"
+                          disabled
                           style={{
                             maxWidth: '320px',
                             margin: '0 auto',
-                            background: 'linear-gradient(135deg, #00f0ff, #7000ff)',
-                            color: '#ffffff',
+                            background: 'rgba(148, 163, 184, 0.15)',
+                            border: '1px solid rgba(148, 163, 184, 0.3)',
+                            color: '#94a3b8',
                             fontWeight: '700',
                             fontSize: '1rem',
-                            boxShadow: '0 0 20px rgba(0, 240, 255, 0.4)'
+                            cursor: 'not-allowed',
+                            boxShadow: 'none'
                           }}
-                          onClick={() => onEnrollEvent && onEnrollEvent(bootcampEventObj)}
                         >
-                          <Sparkles size={18} />
+                          <Lock size={18} />
                           <span>Register for Bootcamp</span>
                         </button>
                       );
