@@ -738,6 +738,50 @@ router.get('/user-submission-status', async (req, res) => {
   }
 });
 
+/**
+ * GET /cseAI/team-details?teamId=TEAM-TECH-3-1234
+ * Returns basic team details including members list.
+ */
+router.get('/team-details', async (req, res) => {
+  try {
+    const { teamId } = req.query;
+    if (!teamId) {
+      return res.status(400).json({ success: false, message: 'teamId is required' });
+    }
+
+    let team = null;
+    if (mongoose.connection.readyState === 1) {
+      team = await Team.findOne({ teamId }).lean();
+    } else {
+      team = memoryTeams.find(t => t.teamId === teamId);
+    }
+
+    if (!team) {
+      return res.status(404).json({ success: false, message: 'Team not found' });
+    }
+
+    return res.json({
+      success: true,
+      team: {
+        teamId: team.teamId,
+        teamName: team.teamName,
+        eventId: team.eventId,
+        eventTitle: team.eventTitle,
+        leaderAiId: team.leaderAiId,
+        members: team.members.map(m => ({
+          aiId: m.aiId,
+          name: m.name,
+          regNo: m.regNo,
+          year: m.year,
+          isLeader: m.isLeader
+        }))
+      }
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 router.get('/reviewer-submissions', async (req, res) => {
   try {
     const { mode, type } = req.query;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   User, Calendar, Hash, Phone, Mail, GraduationCap, Copy, Check, 
   Sparkles, LogOut, ShieldCheck, Trophy, Brain, Zap, FileText, 
@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import SubmissionModal from './SubmissionModal';
 import { getEventDetails } from '../data/eventsRulesData';
+import { apiFetch } from '../config/api';
 
 const registeredEventsList = [
   // Technical Category
@@ -34,7 +35,35 @@ const registeredEventsList = [
 export default function UserProfile({ user, onLogout, onExploreEvents, onUnenrollEvent, onSubmissionUpdate }) {
   const [copied, setCopied] = useState(false);
   const [activeSubmissionModalEvent, setActiveSubmissionModalEvent] = useState(null);
+  const [teamsData, setTeamsData] = useState({});
 
+  useEffect(() => {
+    if (!user?.registeredEvents) return;
+    
+    // Find all unique teamIds in user's registered events
+    const teamIds = [...new Set(
+      user.registeredEvents
+        .filter(e => e.teamId || e.isTeam)
+        .map(e => e.teamId)
+        .filter(Boolean)
+    )];
+
+    teamIds.forEach(teamId => {
+      // If we don't have this team loaded yet, fetch its details
+      if (!teamsData[teamId]) {
+        apiFetch(`/team-details?teamId=${encodeURIComponent(teamId)}`)
+          .then(({ data }) => {
+            if (data && data.success && data.team) {
+              setTeamsData(prev => ({
+                ...prev,
+                [teamId]: data.team
+              }));
+            }
+          })
+          .catch(err => console.warn('Error fetching team details:', err));
+      }
+    });
+  }, [user?.registeredEvents, teamsData]);
 
   if (!user) return null;
 
@@ -383,6 +412,36 @@ export default function UserProfile({ user, onLogout, onExploreEvents, onUnenrol
                         {item.title}
                       </h3>
                     </div>
+
+                    {/* Team Details (Name and Members list) */}
+                    {(item.teamId || item.isTeam) && (
+                      <div style={{
+                        marginTop: '0.2rem',
+                        marginBottom: '0.85rem',
+                        padding: '0.65rem 0.85rem',
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        border: '1px solid rgba(0, 242, 254, 0.15)',
+                        borderRadius: '10px'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#00f2fe', fontSize: '0.78rem', fontWeight: '700', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
+                          <Users size={13} /> Team: {item.teamName || 'CyberNexus'}
+                        </div>
+                        {item.teamId && teamsData[item.teamId] ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                            {teamsData[item.teamId].members.map((m, mIdx) => (
+                              <div key={mIdx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem' }}>
+                                <span style={{ color: m.aiId === user.aiId ? '#ffffff' : '#94a3b8', fontWeight: m.aiId === user.aiId ? '700' : '400' }}>
+                                  {m.name} {m.isLeader && <span style={{ color: '#fbbf24', fontSize: '0.7rem' }}>(Leader)</span>}
+                                </span>
+                                <span style={{ color: '#64748b', fontSize: '0.72rem', fontFamily: 'monospace' }}>{m.aiId}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: '0.72rem', color: '#64748b', fontStyle: 'italic' }}>Loading team members...</div>
+                        )}
+                      </div>
+                    )}
 
                     {/* Submission Button for Reels & Poster */}
                     {(() => {
