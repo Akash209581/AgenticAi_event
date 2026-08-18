@@ -890,8 +890,62 @@ router.post('/review-submission', async (req, res) => {
       }
     }
 
+    let targetUsers = [];
+    let activeTeam = null;
+    let logMessages = [];
+
+    logMessages.push(`[${new Date().toISOString()}] Review request for student: ${cleanAiId}, eventId: ${cleanEvtId}, status: ${status}`);
+
+    if (mongoose.connection.readyState === 1) {
+      activeTeam = await Team.findOne({
+        eventId: cleanEvtId,
+        'members.aiId': cleanAiId
+      });
+      if (activeTeam) {
+        logMessages.push(`Found team in DB: ${activeTeam.teamName} with ID: ${activeTeam.teamId}`);
+        const teamAiIds = activeTeam.members.map(m => m.aiId.toUpperCase());
+        targetUsers = await User.find({ aiId: { $in: teamAiIds } });
+        logMessages.push(`Found ${targetUsers.length} team members in DB`);
+      } else {
+        logMessages.push(`No team found in DB for student ${cleanAiId} and event ${cleanEvtId}. Querying single user.`);
+        const singleUser = await User.findOne({ aiId: cleanAiId });
+        if (singleUser) {
+          targetUsers = [singleUser];
+          logMessages.push(`Found single user in DB: ${singleUser.name}`);
+        } else {
+          logMessages.push(`Single user not found in DB for AI ID: ${cleanAiId}`);
+        }
+      }
+    } else {
+      activeTeam = memoryTeams.find(t =>
+        t.eventId === cleanEvtId &&
+        t.members &&
+        t.members.some(m => m.aiId && m.aiId.toUpperCase() === cleanAiId)
+      );
+      if (activeTeam) {
+        logMessages.push(`Found team in memory: ${activeTeam.teamName}`);
+        const teamAiIds = activeTeam.members.map(m => m.aiId.toUpperCase());
+        targetUsers = memoryUsers.filter(u => u.aiId && teamAiIds.includes(u.aiId.toUpperCase()));
+        logMessages.push(`Found ${targetUsers.length} team members in memory`);
+      } else {
+        logMessages.push(`No team found in memory for student ${cleanAiId} and event ${cleanEvtId}. Querying single user.`);
+        const singleUser = memoryUsers.find(u => u.aiId && u.aiId.toUpperCase() === cleanAiId);
+        if (singleUser) {
+          targetUsers = [singleUser];
+          logMessages.push(`Found single user in memory: ${singleUser.name}`);
+        } else {
+          logMessages.push(`Single user not found in memory for AI ID: ${cleanAiId}`);
+        }
+      }
+    }
+
     if (targetUsers.length === 0) {
-      return res.status(404).json({ success: false, message: 'Student submission record not found.' });
+      const errMsg = 'Student submission record not found (targetUsers is empty).';
+      logMessages.push(`Error: ${errMsg}`);
+      try {
+        fs.appendFileSync(path.join(process.cwd(), 'review_debug.log'), logMessages.join('\n') + '\n\n');
+      } catch (err) {}
+      return res.status(404).json({ success: false, message: errMsg });
     }
 
     const reviewUpdate = {
@@ -902,6 +956,14 @@ router.post('/review-submission', async (req, res) => {
       reviewedBy: reviewerName || 'Poster & Paper Reviewer'
     };
 
+    // If allowed to resubmit, delete the previous submission files/links so the user starts fresh
+    if (status === 'RESUBMIT_ALLOWED') {
+      reviewUpdate.posterFile = null;
+      reviewUpdate.posterLink = '';
+      reviewUpdate.reelLink = '';
+    }
+
+    let updatedCount = 0;
     for (const u of targetUsers) {
       if (u.registeredEvents && Array.isArray(u.registeredEvents)) {
         const idx = u.registeredEvents.findIndex(e => isMatchEvent(e));
@@ -910,22 +972,40 @@ router.post('/review-submission', async (req, res) => {
             ...u.registeredEvents[idx].submission,
             ...reviewUpdate
           };
+          updatedCount++;
+          logMessages.push(`Updated user ${u.name} (${u.aiId}) submission at registeredEvents index ${idx}. New status: ${status}`);
 
           if (mongoose.connection.readyState === 1) {
             u.markModified('registeredEvents');
             await u.save();
+            logMessages.push(`Saved user ${u.name} (${u.aiId}) to MongoDB`);
+          } else {
+            logMessages.push(`Updated user ${u.name} (${u.aiId}) in memory`);
           }
+        } else {
+          logMessages.push(`User ${u.name} (${u.aiId}) event match status: index=${idx}, hasSubmission=${!!(idx !== -1 && u.registeredEvents[idx].submission)}`);
         }
+      } else {
+        logMessages.push(`User ${u.name} (${u.aiId}) has no registeredEvents array`);
       }
     }
 
+    logMessages.push(`Finished processing. Updated ${updatedCount} users.`);
+    try {
+      fs.appendFileSync(path.join(process.cwd(), 'review_debug.log'), logMessages.join('\n') + '\n\n');
+    } catch (err) {}
+
     return res.json({
       success: true,
-      message: `Submission marked as ${status} successfully!`,
-      reviewUpdate
+      message: `Submission marked as ${status} successfully! Updated ${updatedCount} profiles.`,
+      reviewUpdate,
+      updatedCount
     });
   } catch (err) {
     console.error('[Review Submission Error]', err);
+    try {
+      fs.appendFileSync(path.join(process.cwd(), 'review_debug.log'), `[ERROR] ${new Date().toISOString()} - ${err.stack}\n\n`);
+    } catch (logErr) {}
     return res.status(500).json({ success: false, message: err.message });
   }
 });

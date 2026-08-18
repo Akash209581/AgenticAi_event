@@ -242,21 +242,41 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
       }
     }
 
-    // Update local state
-    setSubmissions(prev =>
-      prev.map(s => {
-        if (s.submissionId === item.submissionId || (s.studentAiId === item.studentAiId && s.eventId === item.eventId)) {
-          return {
-            ...s,
-            reviewStatus: newStatus,
-            rejectionReason: (newStatus === 'REJECTED' || newStatus === 'RESUBMIT_ALLOWED') ? reason : '',
-            allowResubmit: newStatus === 'RESUBMIT_ALLOWED' || newStatus === 'REJECTED',
-            reviewedAt: new Date().toISOString()
-          };
-        }
-        return s;
-      })
-    );
+    // Update local state ONLY on success
+    if (success) {
+      setSubmissions(prev =>
+        prev.map(s => {
+          if (s.submissionId === item.submissionId || (s.studentAiId === item.studentAiId && s.eventId === item.eventId)) {
+            return {
+              ...s,
+              reviewStatus: newStatus,
+              rejectionReason: (newStatus === 'REJECTED' || newStatus === 'RESUBMIT_ALLOWED') ? reason : '',
+              allowResubmit: newStatus === 'RESUBMIT_ALLOWED' || newStatus === 'REJECTED',
+              reviewedAt: new Date().toISOString(),
+              submission: newStatus === 'RESUBMIT_ALLOWED' ? null : {
+                ...s.submission,
+                reviewStatus: newStatus,
+                rejectionReason: (newStatus === 'REJECTED' || newStatus === 'RESUBMIT_ALLOWED') ? reason : '',
+                allowResubmit: newStatus === 'RESUBMIT_ALLOWED' || newStatus === 'REJECTED',
+                posterFile: null,
+                posterLink: '',
+                reelLink: ''
+              }
+            };
+          }
+          return s;
+        }).filter(s => {
+          // Once resubmission is allowed, the old file is deleted so the student can submit a new one.
+          // Therefore, it should not show up on the reviewer's list of pending/approved/rejected submissions.
+          if (newStatus === 'RESUBMIT_ALLOWED' && (s.submissionId === item.submissionId || (s.studentAiId === item.studentAiId && s.eventId === item.eventId))) {
+            return false;
+          }
+          return true;
+        })
+      );
+    } else {
+      alert('Error: Failed to save review status on the server. Please verify database connection and try again.');
+    }
     setRejectingItem(null);
     setRejectionReason('');
     setActionLoading(false);
