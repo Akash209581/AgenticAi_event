@@ -44,7 +44,12 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
       if (match && match.submission) {
         if (match.submission.reelLink) setReelLink(match.submission.reelLink);
         if (match.submission.posterLink) setPosterLink(match.submission.posterLink);
-        if (match.submission.posterFile) setFileObj(match.submission.posterFile);
+        const isResubmitReq = match.submission.reviewStatus === 'RESUBMIT_ALLOWED' || match.submission.reviewStatus === 'REJECTED' || match.submission.allowResubmit;
+        if (match.submission.posterFile && !isResubmitReq) {
+          setFileObj(match.submission.posterFile);
+        } else {
+          setFileObj(null);
+        }
       }
     }
     // Reset errors when reopening
@@ -526,6 +531,12 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
                       Supports PDF files only (Max 10MB)
                     </p>
                   </div>
+
+                  {isResubmitAllowed && matchedEvent?.submission?.posterFile?.fileName && !fileObj && (
+                    <p style={{ color: '#38bdf8', fontSize: '0.78rem', marginTop: '0.5rem', marginBottom: '0.5rem' }}>
+                      ℹ️ <strong>Previously uploaded file:</strong> <em>{matchedEvent.submission.posterFile.fileName}</em>. Selecting a new PDF file above will replace it.
+                    </p>
+                  )}
 
                   {fileObj && (
                     <div style={{

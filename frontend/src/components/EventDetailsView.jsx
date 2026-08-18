@@ -152,15 +152,15 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
                             width: '100%',
                             background: existingSubmission?.reviewStatus === 'APPROVED'
                               ? 'linear-gradient(135deg, #10b981, #059669)'
-                              : existingSubmission?.reviewStatus === 'REJECTED'
-                              ? 'linear-gradient(135deg, #ef4444, #dc2626)'
+                              : (existingSubmission?.reviewStatus === 'REJECTED' || existingSubmission?.reviewStatus === 'RESUBMIT_ALLOWED' || existingSubmission?.allowResubmit)
+                              ? 'linear-gradient(135deg, #0284c7, #0369a1)'
                               : (existingSubmission?.posterFile || existingSubmission?.posterLink)
                               ? 'linear-gradient(135deg, #f59e0b, #d97706)'
                               : undefined,
                             borderColor: existingSubmission?.reviewStatus === 'APPROVED'
                               ? '#10b981'
-                              : existingSubmission?.reviewStatus === 'REJECTED'
-                              ? '#f87171'
+                              : (existingSubmission?.reviewStatus === 'REJECTED' || existingSubmission?.reviewStatus === 'RESUBMIT_ALLOWED' || existingSubmission?.allowResubmit)
+                              ? '#38bdf8'
                               : (existingSubmission?.posterFile || existingSubmission?.posterLink)
                               ? '#fbbf24'
                               : undefined
@@ -171,6 +171,8 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
                           <span>
                             {existingSubmission?.reviewStatus === 'APPROVED'
                               ? '✅ Poster Approved (Preview)'
+                              : (existingSubmission?.reviewStatus === 'RESUBMIT_ALLOWED' || existingSubmission?.allowResubmit)
+                              ? '🔄 Resubmission Allowed (Click to Upload)'
                               : existingSubmission?.reviewStatus === 'REJECTED'
                               ? '❌ Poster Rejected (Fix & Resubmit)'
                               : (existingSubmission?.posterFile || existingSubmission?.posterLink)
@@ -179,20 +181,20 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
                           </span>
                         </button>
 
-                        {existingSubmission?.reviewStatus === 'REJECTED' && existingSubmission?.rejectionReason && (
+                        {(existingSubmission?.reviewStatus === 'REJECTED' || existingSubmission?.reviewStatus === 'RESUBMIT_ALLOWED' || existingSubmission?.allowResubmit) && existingSubmission?.rejectionReason && (
                           <div style={{
                             marginTop: '0.65rem',
-                            background: 'rgba(239, 68, 68, 0.15)',
-                            border: '1px solid rgba(239, 68, 68, 0.4)',
-                            color: '#f87171',
+                            background: (existingSubmission?.reviewStatus === 'RESUBMIT_ALLOWED' || existingSubmission?.allowResubmit) ? 'rgba(56, 189, 248, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                            border: (existingSubmission?.reviewStatus === 'RESUBMIT_ALLOWED' || existingSubmission?.allowResubmit) ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid rgba(239, 68, 68, 0.4)',
+                            color: (existingSubmission?.reviewStatus === 'RESUBMIT_ALLOWED' || existingSubmission?.allowResubmit) ? '#38bdf8' : '#f87171',
                             padding: '0.75rem 0.9rem',
                             borderRadius: '10px',
                             fontSize: '0.82rem',
                             lineHeight: '1.4'
                           }}>
-                            <strong>❌ Rejection Explanation:</strong><br />
+                            <strong>{(existingSubmission?.reviewStatus === 'RESUBMIT_ALLOWED' || existingSubmission?.allowResubmit) ? '🔄 Resubmission Feedback from Reviewer:' : '❌ Rejection Explanation:'}</strong><br />
                             "{existingSubmission.rejectionReason}"<br />
-                            <span style={{ fontSize: '0.78rem', color: '#fca5a5' }}>Click the button above to upload a corrected poster.</span>
+                            <span style={{ fontSize: '0.78rem', color: (existingSubmission?.reviewStatus === 'RESUBMIT_ALLOWED' || existingSubmission?.allowResubmit) ? '#7dd3fc' : '#fca5a5' }}>Click the button above to upload a corrected poster.</span>
                           </div>
                         )}
                       </div>
