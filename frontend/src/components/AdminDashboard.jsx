@@ -273,7 +273,7 @@ export default function AdminDashboard({ onBack }) {
     if (!window.confirm(confirmMsg)) return;
 
     try {
-      const adminToken = localStorage.getItem('vucse_admin_token') || 'ADMIN_SECRET_KEY_VUCSE_2026';
+      const adminToken = secureStorage.getItem('vucse_admin_token', true) || '';
       const { res, data } = await apiFetch(`/team/${encodeURIComponent(team.teamId)}/remove-member`, {
         method: 'POST',
         headers: {
@@ -302,7 +302,7 @@ export default function AdminDashboard({ onBack }) {
 
     setAddMemberLoading(true);
     try {
-      const adminToken = localStorage.getItem('vucse_admin_token') || 'ADMIN_SECRET_KEY_VUCSE_2026';
+      const adminToken = secureStorage.getItem('vucse_admin_token', true) || '';
       const { res, data } = await apiFetch(`/team/${encodeURIComponent(selectedTeamForAddMember.teamId)}/add-member`, {
         method: 'POST',
         headers: {
