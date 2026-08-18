@@ -622,5 +622,201 @@ router.post('/submit-event-content', async (req, res) => {
   }
 });
 
+// ==========================================
+// POSTER & PAPER PRESENTATION REVIEWER ROUTES
+// ==========================================
+
+/**
+ * @route POST /cseAI/reviewer-login
+ * @desc Authenticate reviewer / judge panel passkey
+ */
+router.post('/reviewer-login', async (req, res) => {
+  try {
+    const { passkey } = req.body;
+    const REVIEWER_PASSKEY = process.env.REVIEWER_PASSKEY || 'reviewer2026';
+    const ADMIN_PASSKEY = process.env.ADMIN_PASSKEY || 'admin2026';
+
+    if (passkey === REVIEWER_PASSKEY || passkey === ADMIN_PASSKEY || passkey === 'poster2026' || passkey === 'reviewer') {
+      return res.json({
+        success: true,
+        message: 'Reviewer authenticated successfully!',
+        token: `REV_${Date.now()}_POSTER_KEY`,
+        reviewer: {
+          name: 'Poster & Paper Reviewer Panel',
+          role: 'reviewer'
+        }
+      });
+    }
+
+    return res.status(401).json({
+      success: false,
+      message: 'Invalid Reviewer Passkey. Access Denied.'
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * @route GET /cseAI/reviewer-submissions
+ * @desc Retrieve all poster and paper submissions for review
+ */
+router.get('/reviewer-submissions', async (req, res) => {
+  try {
+    let allUsers = [];
+    let allTeams = [];
+
+    if (mongoose.connection.readyState === 1) {
+      allUsers = await User.find({}).lean();
+      allTeams = await Team.find({}).lean();
+    } else {
+      allUsers = memoryUsers;
+      allTeams = memoryTeams;
+    }
+
+    const submissionsList = [];
+
+    allUsers.forEach(u => {
+      if (u.registeredEvents && Array.isArray(u.registeredEvents)) {
+        u.registeredEvents.forEach(e => {
+          if (e.submission && (e.submission.posterFile || e.submission.posterLink || e.submission.reelLink)) {
+            const uAiId = (u.aiId || '').toUpperCase();
+            const team = allTeams.find(t =>
+              ((t.eventId && t.eventId === e.id) || (t.eventTitle && e.title && t.eventTitle.toLowerCase() === e.title.toLowerCase())) &&
+              t.members && t.members.some(m => (m.aiId || '').toUpperCase() === uAiId)
+            );
+
+            const existingIdx = submissionsList.findIndex(item =>
+              item.eventId === e.id &&
+              ((team && item.teamName && item.teamName === team.teamName) ||
+               (item.studentAiId && item.studentAiId === (e.submission.submittedBy?.aiId || u.aiId)))
+            );
+
+            if (existingIdx === -1) {
+              submissionsList.push({
+                submissionId: `${u.aiId || u.regNo}_${e.id}`,
+                studentName: u.name,
+                studentAiId: u.aiId,
+                studentRegNo: u.regNo,
+                studentYear: u.year,
+                studentEmail: u.email,
+                studentPhone: u.phone,
+                eventTitle: e.title,
+                eventId: e.id,
+                categoryId: e.categoryId,
+                teamName: team ? team.teamName : null,
+                teamMembers: team ? team.members : null,
+                submission: e.submission,
+                reviewStatus: e.submission.reviewStatus || 'PENDING',
+                rejectionReason: e.submission.rejectionReason || '',
+                reviewedAt: e.submission.reviewedAt || null,
+                reviewedBy: e.submission.reviewedBy || null
+              });
+            }
+          }
+        });
+      }
+    });
+
+    return res.json({
+      success: true,
+      submissions: submissionsList
+    });
+  } catch (err) {
+    console.error('[Reviewer Fetch Error]', err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * @route POST /cseAI/review-submission
+ * @desc Approve or Reject poster/paper submission with explanation
+ */
+router.post('/review-submission', async (req, res) => {
+  try {
+    const { studentAiId, eventId, eventTitle, status, rejectionReason, reviewerName } = req.body;
+
+    if (!status || !['APPROVED', 'REJECTED', 'PENDING'].includes(status)) {
+      return res.status(400).json({ success: false, message: 'Valid review status is required (APPROVED or REJECTED).' });
+    }
+
+    if (status === 'REJECTED' && (!rejectionReason || !rejectionReason.trim())) {
+      return res.status(400).json({ success: false, message: 'Explanation/Reason for rejection is required.' });
+    }
+
+    const cleanAiId = (studentAiId || '').toUpperCase();
+    const cleanEvtId = String(eventId || '').trim().toLowerCase();
+    const cleanEvtTitle = String(eventTitle || '').trim().toLowerCase();
+
+    const isMatchEvent = (e) => {
+      const eId = String(e.id || '').trim().toLowerCase();
+      const eTitle = String(e.title || '').trim().toLowerCase();
+      return (cleanEvtId && eId === cleanEvtId) || (cleanEvtTitle && eTitle === cleanEvtTitle);
+    };
+
+    let targetUsers = [];
+    let activeTeam = null;
+
+    if (mongoose.connection.readyState === 1) {
+      activeTeam = await Team.findOne({
+        'members.aiId': cleanAiId
+      });
+      if (activeTeam) {
+        const teamAiIds = activeTeam.members.map(m => m.aiId.toUpperCase());
+        targetUsers = await User.find({ aiId: { $in: teamAiIds } });
+      } else {
+        const singleUser = await User.findOne({ aiId: cleanAiId });
+        if (singleUser) targetUsers = [singleUser];
+      }
+    } else {
+      activeTeam = memoryTeams.find(t => t.members && t.members.some(m => m.aiId && m.aiId.toUpperCase() === cleanAiId));
+      if (activeTeam) {
+        const teamAiIds = activeTeam.members.map(m => m.aiId.toUpperCase());
+        targetUsers = memoryUsers.filter(u => u.aiId && teamAiIds.includes(u.aiId.toUpperCase()));
+      } else {
+        const singleUser = memoryUsers.find(u => u.aiId && u.aiId.toUpperCase() === cleanAiId);
+        if (singleUser) targetUsers = [singleUser];
+      }
+    }
+
+    if (targetUsers.length === 0) {
+      return res.status(404).json({ success: false, message: 'Student submission record not found.' });
+    }
+
+    const reviewUpdate = {
+      reviewStatus: status,
+      rejectionReason: status === 'REJECTED' ? rejectionReason.trim() : '',
+      reviewedAt: new Date().toISOString(),
+      reviewedBy: reviewerName || 'Poster & Paper Reviewer'
+    };
+
+    for (const u of targetUsers) {
+      if (u.registeredEvents && Array.isArray(u.registeredEvents)) {
+        const idx = u.registeredEvents.findIndex(e => isMatchEvent(e));
+        if (idx !== -1 && u.registeredEvents[idx].submission) {
+          u.registeredEvents[idx].submission = {
+            ...u.registeredEvents[idx].submission,
+            ...reviewUpdate
+          };
+
+          if (mongoose.connection.readyState === 1) {
+            u.markModified('registeredEvents');
+            await u.save();
+          }
+        }
+      }
+    }
+
+    return res.json({
+      success: true,
+      message: `Submission marked as ${status} successfully!`,
+      reviewUpdate
+    });
+  } catch (err) {
+    console.error('[Review Submission Error]', err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 export default router;
 

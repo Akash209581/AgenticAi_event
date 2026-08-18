@@ -258,9 +258,21 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
         </div>
         {hasSubmitted && (
           <div style={{
-            background: 'rgba(16, 185, 129, 0.12)',
-            border: '1px solid rgba(52, 211, 153, 0.4)',
-            color: '#34d399',
+            background: matchedEvent?.submission?.reviewStatus === 'APPROVED'
+              ? 'rgba(34, 197, 94, 0.15)'
+              : matchedEvent?.submission?.reviewStatus === 'REJECTED'
+              ? 'rgba(239, 68, 68, 0.15)'
+              : 'rgba(251, 191, 36, 0.15)',
+            border: matchedEvent?.submission?.reviewStatus === 'APPROVED'
+              ? '1.5px solid #22c55e'
+              : matchedEvent?.submission?.reviewStatus === 'REJECTED'
+              ? '1.5px solid #ef4444'
+              : '1.5px solid #f59e0b',
+            color: matchedEvent?.submission?.reviewStatus === 'APPROVED'
+              ? '#4ade80'
+              : matchedEvent?.submission?.reviewStatus === 'REJECTED'
+              ? '#f87171'
+              : '#fbbf24',
             padding: '1rem 1.15rem',
             borderRadius: '12px',
             fontSize: '0.88rem',
@@ -272,10 +284,28 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
             gap: '0.6rem',
             flexWrap: 'wrap'
           }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
-              <ShieldCheck size={22} style={{ flexShrink: 0, marginTop: '0.1rem' }} />
-              <div>
-                <strong>Submission Locked:</strong> Your work has been successfully submitted.
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', width: '100%' }}>
+              {matchedEvent?.submission?.reviewStatus === 'APPROVED' ? (
+                <CheckCircle2 size={22} style={{ flexShrink: 0, marginTop: '0.1rem' }} />
+              ) : matchedEvent?.submission?.reviewStatus === 'REJECTED' ? (
+                <AlertCircle size={22} style={{ flexShrink: 0, marginTop: '0.1rem' }} />
+              ) : (
+                <ShieldCheck size={22} style={{ flexShrink: 0, marginTop: '0.1rem' }} />
+              )}
+              <div style={{ flex: '1 1 auto' }}>
+                <div style={{ fontWeight: '800', fontSize: '0.95rem', marginBottom: '0.2rem' }}>
+                  {matchedEvent?.submission?.reviewStatus === 'APPROVED'
+                    ? '✅ POSTER / PAPER APPROVED BY REVIEW PANEL'
+                    : matchedEvent?.submission?.reviewStatus === 'REJECTED'
+                    ? '❌ SUBMISSION REJECTED BY REVIEW PANEL'
+                    : '⏳ PENDING REVIEW BY JUDGES'}
+                </div>
+                {matchedEvent?.submission?.reviewStatus === 'REJECTED' && matchedEvent.submission.rejectionReason && (
+                  <div style={{ background: 'rgba(0, 0, 0, 0.25)', padding: '0.6rem 0.75rem', borderRadius: '8px', marginTop: '0.4rem', color: '#ffffff', fontSize: '0.85rem', border: '1px solid rgba(239, 68, 68, 0.4)' }}>
+                    <strong>Rejection Reason:</strong> "{matchedEvent.submission.rejectionReason}"<br />
+                    <span style={{ fontSize: '0.78rem', color: '#fca5a5' }}>Please fix the issue mentioned above and upload/submit your updated poster file below.</span>
+                  </div>
+                )}
                 {matchedEvent?.submission?.submittedBy && (
                   <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)', marginTop: '0.25rem' }}>
                     Submitted by: {matchedEvent.submission.submittedBy.name} ({matchedEvent.submission.submittedBy.aiId}) 

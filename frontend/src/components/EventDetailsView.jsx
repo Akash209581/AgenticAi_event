@@ -145,21 +145,57 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
                         <span>{existingSubmission?.reelLink ? 'Reel Submitted (Preview)' : 'Submit Reel Link'}</span>
                       </button>
                     ) : isPoster ? (
-                      <button
-                        className={`card-quick-register-btn ${(existingSubmission?.posterFile || existingSubmission?.posterLink) ? '' : 'poster-upload-btn-blinking'}`}
-                        style={{
-                          background: (existingSubmission?.posterFile || existingSubmission?.posterLink)
-                            ? 'linear-gradient(135deg, #10b981, #059669)'
-                            : undefined,
-                          borderColor: (existingSubmission?.posterFile || existingSubmission?.posterLink)
-                            ? '#10b981'
-                            : undefined
-                        }}
-                        onClick={() => setIsSubmissionModalOpen(true)}
-                      >
-                        <FileText size={18} />
-                        <span>{(existingSubmission?.posterFile || existingSubmission?.posterLink) ? 'Poster Submitted (Preview)' : 'Upload Poster / Paper'}</span>
-                      </button>
+                      <div>
+                        <button
+                          className={`card-quick-register-btn ${(existingSubmission?.posterFile || existingSubmission?.posterLink) ? '' : 'poster-upload-btn-blinking'}`}
+                          style={{
+                            width: '100%',
+                            background: existingSubmission?.reviewStatus === 'APPROVED'
+                              ? 'linear-gradient(135deg, #10b981, #059669)'
+                              : existingSubmission?.reviewStatus === 'REJECTED'
+                              ? 'linear-gradient(135deg, #ef4444, #dc2626)'
+                              : (existingSubmission?.posterFile || existingSubmission?.posterLink)
+                              ? 'linear-gradient(135deg, #f59e0b, #d97706)'
+                              : undefined,
+                            borderColor: existingSubmission?.reviewStatus === 'APPROVED'
+                              ? '#10b981'
+                              : existingSubmission?.reviewStatus === 'REJECTED'
+                              ? '#f87171'
+                              : (existingSubmission?.posterFile || existingSubmission?.posterLink)
+                              ? '#fbbf24'
+                              : undefined
+                          }}
+                          onClick={() => setIsSubmissionModalOpen(true)}
+                        >
+                          <FileText size={18} />
+                          <span>
+                            {existingSubmission?.reviewStatus === 'APPROVED'
+                              ? '✅ Poster Approved (Preview)'
+                              : existingSubmission?.reviewStatus === 'REJECTED'
+                              ? '❌ Poster Rejected (Fix & Resubmit)'
+                              : (existingSubmission?.posterFile || existingSubmission?.posterLink)
+                              ? '⏳ Pending Review (Preview / Update)'
+                              : 'Upload Poster / Paper'}
+                          </span>
+                        </button>
+
+                        {existingSubmission?.reviewStatus === 'REJECTED' && existingSubmission?.rejectionReason && (
+                          <div style={{
+                            marginTop: '0.65rem',
+                            background: 'rgba(239, 68, 68, 0.15)',
+                            border: '1px solid rgba(239, 68, 68, 0.4)',
+                            color: '#f87171',
+                            padding: '0.75rem 0.9rem',
+                            borderRadius: '10px',
+                            fontSize: '0.82rem',
+                            lineHeight: '1.4'
+                          }}>
+                            <strong>❌ Rejection Explanation:</strong><br />
+                            "{existingSubmission.rejectionReason}"<br />
+                            <span style={{ fontSize: '0.78rem', color: '#fca5a5' }}>Click the button above to upload a corrected poster.</span>
+                          </div>
+                        )}
+                      </div>
                     ) : (
                       <div
                         className="card-quick-register-btn"

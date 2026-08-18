@@ -6,6 +6,7 @@ import TeamRegistrationForm from './components/TeamRegistrationForm';
 import UserProfile from './components/UserProfile';
 import LoginPortal from './components/LoginPortal';
 import AdminDashboard from './components/AdminDashboard';
+import PosterReviewerDashboard from './components/PosterReviewerDashboard';
 import LoadingScreen from './components/LoadingScreen';
 import EventCountdown from './components/EventCountdown';
 import EventsGrid from './components/EventsGrid';
@@ -34,6 +35,7 @@ export default function App() {
     }
     const path = getNormalizedPath(rawPath);
     if (path === '/iamadmin') return 'admin';
+    if (path.startsWith('/poster-reviewer') || path.startsWith('/reviewer')) return 'poster-reviewer';
     if (path.startsWith('/events')) return 'events';
     if (path.startsWith('/register')) return 'register';
     if (path.startsWith('/team-register') || path.startsWith('/teams')) return 'team-register';
@@ -88,42 +90,18 @@ export default function App() {
     };
     
     const handleSelectStart = (e) => {
-      const tag = e.target?.tagName?.toUpperCase();
-      if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
-        e.preventDefault();
-        return false;
-      }
+      e.preventDefault();
+      return false;
     };
 
     const handleKeyDown = (e) => {
-      const key = e.key ? e.key.toUpperCase() : '';
-      const code = e.code ? e.code.toUpperCase() : '';
-      const isCtrlOrCmd = e.ctrlKey || e.metaKey;
-
-      // Block F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+Shift+K, Ctrl+U, Ctrl+S, Ctrl+P
       if (
-        key === 'F12' || code === 'F12' ||
-        (isCtrlOrCmd && e.shiftKey && (key === 'I' || code === 'KEYI')) ||
-        (isCtrlOrCmd && e.shiftKey && (key === 'J' || code === 'KEYJ')) ||
-        (isCtrlOrCmd && e.shiftKey && (key === 'C' || code === 'KEYC')) ||
-        (isCtrlOrCmd && e.shiftKey && (key === 'K' || code === 'KEYK')) ||
-        (isCtrlOrCmd && (key === 'U' || code === 'KEYU')) ||
-        (isCtrlOrCmd && (key === 'S' || code === 'KEYS')) ||
-        (isCtrlOrCmd && (key === 'P' || code === 'KEYP'))
+        e.keyCode === 123 || // F12
+        (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || // Ctrl+Shift+I, J, C
+        (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83)) // Ctrl+U, Ctrl+S
       ) {
         e.preventDefault();
-        e.stopPropagation();
         return false;
-      }
-
-      // Block Ctrl+C copying outside text inputs
-      if (isCtrlOrCmd && (key === 'C' || code === 'KEYC')) {
-        const tag = e.target?.tagName?.toUpperCase();
-        if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
-          e.preventDefault();
-          e.stopPropagation();
-          return false;
-        }
       }
     };
 
@@ -158,7 +136,8 @@ export default function App() {
         return;
       }
       const path = getNormalizedPath(rawPath);
-      if (path.startsWith('/events')) setActiveTab('events');
+      if (path.startsWith('/poster-reviewer') || path.startsWith('/reviewer')) setActiveTab('poster-reviewer');
+      else if (path.startsWith('/events')) setActiveTab('events');
       else if (path.startsWith('/register')) setActiveTab('register');
       else if (path.startsWith('/team-register') || path.startsWith('/teams')) setActiveTab('team-register');
       else if (path.startsWith('/login')) setActiveTab('login');
@@ -482,6 +461,13 @@ export default function App() {
             initialIdentifier={prefillLoginId}
             onLoginSuccess={handleLoginSuccess}
             onBack={() => changeTab('home', '/')}
+          />
+        )}
+
+        {/* POSTER & PAPER REVIEWER PORTAL */}
+        {activeTab === 'poster-reviewer' && (
+          <PosterReviewerDashboard
+            onBack={() => changeTab('events', '/events')}
           />
         )}
       </main>

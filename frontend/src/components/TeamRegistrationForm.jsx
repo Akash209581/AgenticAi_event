@@ -37,7 +37,7 @@ const TEAM_EVENTS = [
     minSize: 4,
     maxSize: 5,
     badgeText: '4 to 5 Members',
-    note: 'Strictly 4 members required, 5th member optional. 2nd & 3rd year allowed; max 1 4th-year student (optional).'
+    note: 'Strictly 4 members required, 5th member optional. Open to students of any academic year.'
   },
   {
     id: 'technical-2',
@@ -315,21 +315,16 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser, i
     });
   }, [currentUser, selectedEvent]);
 
-  // Hackathon Year Distribution Check helper
+  // Hackathon Year Distribution Check helper (Open to all years)
   const checkHackathonYearComposition = () => {
     if (selectedEvent.id !== 'technical-1') return null;
     
     const years = slots.map(s => s.student?.year).filter(Boolean);
     if (years.length === 0) return null;
 
-    const count4 = years.filter(y => String(y) === '4' || String(y).includes('4')).length;
-    const isValid = count4 <= 1;
-
     return {
-      isValid,
-      message: isValid
-        ? '✓ Valid team composition: 2nd & 3rd year allowed, max 1 4th-year student (optional).'
-        : `⚠️ Composition warning: ${count4} 4th-year students selected. Maximum 1 4th-year student is allowed per team.`
+      isValid: true,
+      message: '✓ Open team composition: Students from any academic year are eligible to form a team.'
     };
   };
 

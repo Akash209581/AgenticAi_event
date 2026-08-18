@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   User, Calendar, Hash, Phone, Mail, GraduationCap, Copy, Check, 
   Sparkles, LogOut, ShieldCheck, Trophy, Brain, Zap, FileText, 
-  Mic, Bot, Users, Video, Music, HelpCircle, ArrowRight, Trash2, Lock, Upload, ExternalLink, MessageCircle
+  Mic, Bot, Users, Video, Music, HelpCircle, ArrowRight, Trash2, Lock, Upload, ExternalLink, MessageCircle, Compass
 } from 'lucide-react';
 import SubmissionModal from './SubmissionModal';
 import { getEventDetails } from '../data/eventsRulesData';
@@ -11,17 +11,21 @@ const registeredEventsList = [
   // Technical Category
   { id: 'tech-1', catId: 'technical', category: 'Technical', title: 'Agentic AI Hackathon', icon: Brain, color: '#00f2fe', image: '/images/event_hackathon_1786084020517.png' },
   { id: 'tech-2', catId: 'technical', category: 'Technical', title: 'AI Prompt Combat', icon: Zap, color: '#38bdf8', image: '/images/event_prompt_1786084056457.png' },
-  { id: 'tech-3', catId: 'technical', category: 'Technical', title: 'Paper / Poster Presentation', icon: FileText, color: '#0284c7' },
+  { id: 'tech-3', catId: 'technical', category: 'Technical', title: 'Paper / Poster Presentation', icon: FileText, color: '#0284c7', image: '/images/event_paper_poster.png' },
   
   // Industry Category
-  { id: 'ind-1', catId: 'industry', category: 'Industry & Innovation', title: 'Podcast with Industry Professionals', icon: Mic, color: '#c084fc' },
-  { id: 'ind-2', catId: 'industry', category: 'Industry & Innovation', title: 'AI Agents Expo', icon: Bot, color: '#a855f7' },
-  { id: 'ind-3', catId: 'industry', category: 'Industry & Innovation', title: 'AI Summit - Industry Interaction', icon: Users, color: '#e879f9' },
+  { id: 'ind-1', catId: 'industry', category: 'Industry & Innovation', title: 'Podcast with Industry Professionals', icon: Mic, color: '#c084fc', image: '/images/event_podcast.png' },
+  { id: 'ind-2', catId: 'industry', category: 'Industry & Innovation', title: 'AI Agents Expo', icon: Bot, color: '#a855f7', image: '/images/event_expo.png' },
+  { id: 'ind-3', catId: 'industry', category: 'Industry & Innovation', title: 'AI Summit - Industry Interaction', icon: Users, color: '#e879f9', image: '/images/event_summit.png' },
 
   // Creative Category
-  { id: 'cre-1', catId: 'creative', category: 'Creative', title: 'Reels Competition (AI for Society)', icon: Video, color: '#fbbf24', image: '/images/cat_creative_1786083988989.png' },
-  { id: 'cre-2', catId: 'creative', category: 'Creative', title: 'AI Musical Competition', icon: Music, color: '#f59e0b' },
-  { id: 'cre-3', catId: 'creative', category: 'Creative', title: 'AI Quiz', icon: HelpCircle, color: '#d97706' },
+  { id: 'cre-1', catId: 'creative', category: 'Creative', title: 'Reels Competition (AI for Society)', icon: Video, color: '#fbbf24', image: '/images/event_reels.png' },
+  { id: 'cre-2', catId: 'creative', category: 'Creative', title: 'AI Musical Competition', icon: Music, color: '#f59e0b', image: '/images/event_musical.png' },
+  { id: 'cre-3', catId: 'creative', category: 'Creative', title: 'AI Quiz', icon: HelpCircle, color: '#d97706', image: '/images/event_quiz.png' },
+  { id: 'creative-4', catId: 'creative', category: 'Creative', title: 'QUESTX', icon: Compass, color: '#f59e0b', image: '/images/event_questx.png' },
+
+  // Innovative Category
+  { id: 'innovative-1', catId: 'innovative', category: 'Innovative', title: 'SPARKX', icon: Sparkles, color: '#ec4899', image: '/images/event_sparkx.png' },
 
   // Bootcamp Category
   { id: 'bootcamp-1', catId: 'bootcamp', category: 'Hands-on Bootcamp', title: 'AI Agent Bootcamp', icon: Bot, color: '#00f2fe', image: '/images/event_expo.png' }
@@ -304,7 +308,10 @@ export default function UserProfile({ user, onLogout, onExploreEvents, onUnenrol
             gap: '1.25rem'
           }}>
             {user.registeredEvents.map((item, idx) => {
-              const matchedData = registeredEventsList.find(r => r.id === item.id || r.title.toLowerCase() === item.title.toLowerCase());
+              const matchedData = registeredEventsList.find(r => 
+                r.id === item.id || 
+                (item.title && r.title && (r.title.toLowerCase() === item.title.toLowerCase() || r.title.toLowerCase().includes(item.title.toLowerCase()) || item.title.toLowerCase().includes(r.title.toLowerCase())))
+              );
               const IconComp = matchedData?.icon || Trophy;
               const itemColor = matchedData?.color || '#00f2fe';
               const categoryName = item.categoryName || matchedData?.category || 'Technical';

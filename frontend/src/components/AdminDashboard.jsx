@@ -298,7 +298,7 @@ export default function AdminDashboard({ onBack }) {
 
     if (uTitle && cTitle) {
       if (uTitle === cTitle) return true;
-      const keywords = ['hackathon', 'hackthon', 'prompt combat', 'poster', 'paper', 'podcast', 'expo', 'summit', 'reels', 'musical', 'quiz', 'bootcamp'];
+      const keywords = ['hackathon', 'hackthon', 'prompt combat', 'poster', 'paper', 'podcast', 'expo', 'summit', 'reels', 'musical', 'quiz', 'quest', 'questx', 'spark', 'sparkx', 'bootcamp'];
       for (const kw of keywords) {
         if (uTitle.includes(kw) && cTitle.includes(kw)) {
           return true;
@@ -320,6 +320,8 @@ export default function AdminDashboard({ onBack }) {
     { id: '1', categoryId: 'creative', categoryName: 'CREATIVE EVENTS', title: 'REELS COMPETITION (AI FOR SOCIETY)' },
     { id: '2', categoryId: 'creative', categoryName: 'CREATIVE EVENTS', title: 'AI MUSICAL COMPETITION' },
     { id: '3', categoryId: 'creative', categoryName: 'CREATIVE EVENTS', title: 'AGENTIC DAY QUIZ CHALLENGE 2026' },
+    { id: '4', categoryId: 'creative', categoryName: 'CREATIVE EVENTS', title: 'QUESTX' },
+    { id: '1', categoryId: 'innovative', categoryName: 'INNOVATIVE EVENTS', title: 'SPARKX' },
     { id: '1', categoryId: 'bootcamp', categoryName: 'HANDS-ON BOOTCAMP', title: 'AI AGENT BOOTCAMP' }
   ], []);
 
@@ -1654,7 +1656,7 @@ export default function AdminDashboard({ onBack }) {
                   <Users style={{ color: '#c084fc' }} size={22} /> REGISTERED COMPETITION TEAMS ({teams.length})
                 </h3>
                 <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: '0.2rem 0 0 0' }}>
-                  Teams registered across the 6 official Agentic AI Day event competitions.
+                  Teams registered across the 9 official Agentic AI Day team event competitions.
                 </p>
               </div>
 
@@ -1692,13 +1694,16 @@ export default function AdminDashboard({ onBack }) {
                   className="cyber-select"
                   style={{ width: '100%' }}
                 >
-                  <option value="all">All 6 Team Events</option>
+                  <option value="all">All 9 Team Events</option>
                   <option value="technical-1">AGENTIC AI HACKATHON</option>
                   <option value="technical-2">AI PROMPT COMBAT</option>
                   <option value="technical-3">PAPER / POSTER PRESENTATION</option>
                   <option value="industry-2">AI AGENTS EXPO</option>
-                  <option value="creative-3">AGENTIC DAY QUIZ CHALLENGE 2026</option>
+                  <option value="creative-1">REELS COMPETITION (AI FOR SOCIETY)</option>
                   <option value="creative-2">AI MUSICAL COMPETITION</option>
+                  <option value="creative-3">AGENTIC DAY QUIZ CHALLENGE 2026</option>
+                  <option value="creative-4">QUESTX</option>
+                  <option value="innovative-1">SPARKX</option>
                 </select>
               </div>
 
