@@ -105,7 +105,7 @@ export const eventsRulesData = {
     coordinators: [
       { name: 'Mr. Veerendra (Faculty)', phone: '+91 95736 32919' },
       { name: 'Mr. Latesh Babu (Faculty)', phone: '+91 95508 18722' },
-      { name: 'Student Coordinator', phone: 'To be announced' }
+      { name: 'Vikranth (Student)', phone: '+91 96520 15459' }
     ]
   },
   'technical-3': {
@@ -266,7 +266,7 @@ export const eventsRulesData = {
     ],
     coordinators: [
       { name: 'Mr. Vamsi Krishna (Faculty)', phone: '+91 63096 63292' },
-      { name: 'Student Coordinator', phone: 'To be announced' }
+      { name: 'Miriyala Daniel Krupa Ratna Babu (Student)', phone: '+91 63050 27445' }
     ]
   },
   'creative-2': {
@@ -388,7 +388,8 @@ export const eventsRulesData = {
     ],
     coordinators: [
       { name: 'MR. ONGOLE GANDHI (Faculty)', phone: '+91 97014 63728' },
-      { name: 'MRS. GUGGILAM NAVYA (Faculty)', phone: '+91 77949 93678' }
+      { name: 'MRS. GUGGILAM NAVYA (Faculty)', phone: '+91 77949 93678' },
+      { name: 'Karthik (student)', phone: '+91 80192 23611' }
     ]
   },
 
@@ -420,13 +421,15 @@ export const eventsRulesData = {
       'Round 3 - Presentation & Q&A : Present your solution and answer questions from the judges.'
     ],
     prizes: [
-      { rank: '1st Place — AI SparkX Champion', amount: 'Rs. 3000/-' },
-      { rank: '2nd Place — AI SparkX Innovator', amount: 'Rs. 2000/-' },
-      { rank: '3rd Place — AI SparkX Rising Innovator', amount: 'Rs. 1000/-' }
+      { rank: '1st Place', amount: 'Rs. 3000/-' },
+      { rank: '2nd Place', amount: 'Rs. 2000/-' },
+      { rank: '3rd Place', amount: 'Rs. 1000/-' }
     ],
     coordinators: [
       { name: 'Shaik Nazeema (Faculty)', phone: '+91 96188 96300' },
-      { name: 'G. Tejaswi (Faculty)', phone: '+91 93980 46056' }
+      { name: 'G. Tejaswi (Faculty)', phone: '+91 93980 46056' },
+      { name: 'Aparna (student)', phone: '+91 85238 13227' },
+      { name: 'Shanmukha Pavan (student)', phone: '+91 98499 80887' }
     ]
   },
   'bootcamp-1': {
