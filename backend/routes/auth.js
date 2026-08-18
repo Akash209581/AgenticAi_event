@@ -867,31 +867,6 @@ router.post('/review-submission', async (req, res) => {
 
     let targetUsers = [];
     let activeTeam = null;
-
-    if (mongoose.connection.readyState === 1) {
-      activeTeam = await Team.findOne({
-        'members.aiId': cleanAiId
-      });
-      if (activeTeam) {
-        const teamAiIds = activeTeam.members.map(m => m.aiId.toUpperCase());
-        targetUsers = await User.find({ aiId: { $in: teamAiIds } });
-      } else {
-        const singleUser = await User.findOne({ aiId: cleanAiId });
-        if (singleUser) targetUsers = [singleUser];
-      }
-    } else {
-      activeTeam = memoryTeams.find(t => t.members && t.members.some(m => m.aiId && m.aiId.toUpperCase() === cleanAiId));
-      if (activeTeam) {
-        const teamAiIds = activeTeam.members.map(m => m.aiId.toUpperCase());
-        targetUsers = memoryUsers.filter(u => u.aiId && teamAiIds.includes(u.aiId.toUpperCase()));
-      } else {
-        const singleUser = memoryUsers.find(u => u.aiId && u.aiId.toUpperCase() === cleanAiId);
-        if (singleUser) targetUsers = [singleUser];
-      }
-    }
-
-    let targetUsers = [];
-    let activeTeam = null;
     let logMessages = [];
 
     logMessages.push(`[${new Date().toISOString()}] Review request for student: ${cleanAiId}, eventId: ${cleanEvtId}, status: ${status}`);
