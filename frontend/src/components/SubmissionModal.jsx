@@ -209,16 +209,19 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
         backgroundColor: 'rgba(5, 10, 20, 0.85)',
         backdropFilter: 'blur(8px)',
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         justifyContent: 'center',
         zIndex: 999999,
-        padding: '0.75rem 0.5rem',
+        paddingTop: '80px',
+        paddingBottom: '1rem',
+        paddingLeft: '0.5rem',
+        paddingRight: '0.5rem',
         boxSizing: 'border-box',
         overflowY: 'auto'
       }}
     >
       <div style={{
-              background: 'linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.95))',
+        background: 'linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.95))',
         border: isReels ? '1.5px solid rgba(251, 191, 36, 0.5)' : '1.5px solid rgba(0, 240, 255, 0.5)',
         borderRadius: '20px',
         padding: '1.25rem 1.5rem',

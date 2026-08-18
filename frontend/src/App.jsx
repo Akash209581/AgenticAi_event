@@ -62,6 +62,27 @@ export default function App() {
     }
   }, [currentUser]);
 
+  // On page load: fetch fresh user data from server so review statuses are always current
+  useEffect(() => {
+    if (!currentUser) return;
+    const identifier = currentUser.aiId || currentUser.regNo || currentUser.email;
+    if (!identifier) return;
+    apiFetch(`/user-submission-status?identifier=${encodeURIComponent(identifier)}`, { method: 'GET' })
+      .then(({ data }) => {
+        if (data && data.success && Array.isArray(data.registeredEvents)) {
+          setCurrentUser(prev => ({
+            ...prev,
+            registeredEvents: data.registeredEvents
+          }));
+        }
+      })
+      .catch(() => {
+        // Silently fail — keep using cached data
+      });
+  // Only run once on mount (when user is first loaded from secureStorage)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [isNewRegistration, setIsNewRegistration] = useState(false);
   const [prefillLoginId, setPrefillLoginId] = useState('');
   const [prefillTeamEventId, setPrefillTeamEventId] = useState(null);
