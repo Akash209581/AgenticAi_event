@@ -997,20 +997,59 @@ router.post('/admin/create-backup', requireAdminAuth, async (req, res) => {
 
 router.post('/reviewer-login', async (req, res) => {
   try {
-    const { passkey } = req.body;
-    const REVIEWER_PASSKEY = process.env.REVIEWER_PASSKEY || 'reviewer2026';
-    const ADMIN_PASSKEY = process.env.ADMIN_PASSKEY || 'admin2026';
+    const { passkey, mode } = req.body;
+    const cleanPasskey = String(passkey || '').trim();
 
-    if (passkey === REVIEWER_PASSKEY || passkey === ADMIN_PASSKEY || passkey === 'poster2026' || passkey === 'reviewer') {
-      return res.json({
-        success: true,
-        message: 'Reviewer authenticated successfully!',
-        token: `REV_${Date.now()}_POSTER_KEY`,
-        reviewer: {
-          name: 'Poster & Paper Reviewer Panel',
-          role: 'reviewer'
-        }
-      });
+    const POSTER_PASSKEY = 'vijitha202602';
+    const REELS_PASSKEY = 'Honeyjoe@777';
+
+    if (mode === 'reels' || mode === 'reels-reviewer') {
+      if (cleanPasskey === REELS_PASSKEY) {
+        return res.json({
+          success: true,
+          message: 'Reels Reviewer authenticated successfully!',
+          token: `REV_${Date.now()}_REELS_KEY`,
+          reviewer: {
+            name: 'Reels Competition Review Panel',
+            role: 'reels-reviewer'
+          }
+        });
+      }
+    } else if (mode === 'poster' || mode === 'poster-reviewer') {
+      if (cleanPasskey === POSTER_PASSKEY) {
+        return res.json({
+          success: true,
+          message: 'Poster Reviewer authenticated successfully!',
+          token: `REV_${Date.now()}_POSTER_KEY`,
+          reviewer: {
+            name: 'Poster & Paper Review Panel',
+            role: 'poster-reviewer'
+          }
+        });
+      }
+    } else {
+      if (cleanPasskey === POSTER_PASSKEY) {
+        return res.json({
+          success: true,
+          message: 'Poster Reviewer authenticated successfully!',
+          token: `REV_${Date.now()}_POSTER_KEY`,
+          reviewer: {
+            name: 'Poster & Paper Review Panel',
+            role: 'poster-reviewer'
+          }
+        });
+      }
+      if (cleanPasskey === REELS_PASSKEY) {
+        return res.json({
+          success: true,
+          message: 'Reels Reviewer authenticated successfully!',
+          token: `REV_${Date.now()}_REELS_KEY`,
+          reviewer: {
+            name: 'Reels Competition Review Panel',
+            role: 'reels-reviewer'
+          }
+        });
+      }
     }
 
     return res.status(401).json({
@@ -1024,6 +1063,9 @@ router.post('/reviewer-login', async (req, res) => {
 
 router.get('/reviewer-submissions', async (req, res) => {
   try {
+    const { mode, type } = req.query;
+    const filterMode = String(mode || type || '').toLowerCase();
+
     let allUsers = [];
     let allTeams = [];
 
@@ -1041,6 +1083,16 @@ router.get('/reviewer-submissions', async (req, res) => {
       if (u.registeredEvents && Array.isArray(u.registeredEvents)) {
         u.registeredEvents.forEach(e => {
           if (e.submission && (e.submission.posterFile || e.submission.posterLink || e.submission.reelLink)) {
+            const title = String(e.title || '').toLowerCase();
+            const eId = String(e.id || '').toLowerCase();
+            const sub = e.submission || {};
+
+            const isReel = eId === 'creative-1' || title.includes('reel') || Boolean(sub.reelLink);
+            const isPoster = eId === 'technical-3' || title.includes('poster') || title.includes('paper') || Boolean(sub.posterFile || sub.posterLink);
+
+            if (filterMode === 'reels' && !isReel) return;
+            if (filterMode === 'poster' && (!isPoster || title.includes('reel'))) return;
+
             const uAiId = (u.aiId || '').toUpperCase();
             const team = allTeams.find(t =>
               ((t.eventId && t.eventId === e.id) || (t.eventTitle && e.title && t.eventTitle.toLowerCase() === e.title.toLowerCase())) &&

@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Lock, FileText, CheckCircle2, XCircle, Clock, Search, RefreshCw, Filter, ExternalLink, MessageSquare, AlertTriangle, User, Users, Sparkles, ArrowLeft, LogOut, Download } from 'lucide-react';
+import { Shield, Lock, FileText, CheckCircle2, XCircle, Clock, Search, RefreshCw, Filter, ExternalLink, MessageSquare, AlertTriangle, User, Users, Sparkles, ArrowLeft, LogOut, Download, Video } from 'lucide-react';
 import { apiFetch, getAssetUrl } from '../config/api';
 
-export default function PosterReviewerDashboard({ onBack }) {
+export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
+  const isReelsMode = mode === 'reels' || mode === 'reels-reviewer' || (typeof window !== 'undefined' && window.location.pathname.includes('/reels'));
+  
+  const expectedPasskey = isReelsMode ? 'Honeyjoe@777' : 'vijitha202602';
+  const tokenStorageKey = isReelsMode ? 'vucse_reels_reviewer_token' : 'vucse_poster_reviewer_token';
+  const reviewerPanelName = isReelsMode ? 'Reels Competition Review Panel' : 'Poster & Paper Review Panel';
+
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return !!localStorage.getItem('vucse_reviewer_token');
+    return !!localStorage.getItem(tokenStorageKey);
   });
   const [passkey, setPasskey] = useState('');
   const [authError, setAuthError] = useState('');
@@ -25,11 +31,23 @@ export default function PosterReviewerDashboard({ onBack }) {
     setLoading(true);
     setError('');
 
+    const targetMode = isReelsMode ? 'reels' : 'poster';
+
     // 1. Try dedicated endpoint first
     try {
-      const { data } = await apiFetch('/reviewer-submissions');
+      const { data } = await apiFetch(`/reviewer-submissions?mode=${targetMode}`);
       if (data && data.success && Array.isArray(data.submissions)) {
-        setSubmissions(data.submissions);
+        const filtered = data.submissions.filter(s => {
+          const title = String(s.eventTitle || '').toLowerCase();
+          const eId = String(s.eventId || '').toLowerCase();
+          const sub = s.submission || {};
+          if (isReelsMode) {
+            return eId === 'creative-1' || title.includes('reel') || Boolean(sub.reelLink);
+          } else {
+            return (eId === 'technical-3' || title.includes('poster') || title.includes('paper') || Boolean(sub.posterFile || sub.posterLink)) && !title.includes('reel');
+          }
+        });
+        setSubmissions(filtered);
         setLoading(false);
         return;
       }
@@ -58,6 +76,16 @@ export default function PosterReviewerDashboard({ onBack }) {
           if (u.registeredEvents && Array.isArray(u.registeredEvents)) {
             u.registeredEvents.forEach(e => {
               if (e.submission && (e.submission.posterFile || e.submission.posterLink || e.submission.reelLink)) {
+                const title = String(e.title || '').toLowerCase();
+                const eId = String(e.id || '').toLowerCase();
+                const sub = e.submission || {};
+
+                const isReel = eId === 'creative-1' || title.includes('reel') || Boolean(sub.reelLink);
+                const isPoster = eId === 'technical-3' || title.includes('poster') || title.includes('paper') || Boolean(sub.posterFile || sub.posterLink);
+
+                if (isReelsMode && !isReel) return;
+                if (!isReelsMode && (!isPoster || title.includes('reel'))) return;
+
                 const uAiId = (u.aiId || '').toUpperCase();
                 const team = teamList.find(t =>
                   ((t.eventId && t.eventId === e.id) || (t.eventTitle && e.title && t.eventTitle.toLowerCase() === e.title.toLowerCase())) &&
@@ -98,7 +126,7 @@ export default function PosterReviewerDashboard({ onBack }) {
         setSubmissions(list);
       }
     } catch (fallbackErr) {
-      setError('Could not load poster submissions. Please ensure backend is online.');
+      setError(`Could not load ${isReelsMode ? 'reels' : 'poster'} submissions. Please ensure backend is online.`);
     } finally {
       setLoading(false);
     }
@@ -116,18 +144,23 @@ export default function PosterReviewerDashboard({ onBack }) {
     setAuthLoading(true);
 
     const cleanPasskey = passkey.trim();
-    const validPasskeys = ['reviewer2026', 'poster2026', 'admin2026', 'reviewer', 'admin'];
 
-    // Try backend auth first
+    // STRICT PASSKEY CHECK against expected passkey for the current mode
+    if (cleanPasskey !== expectedPasskey) {
+      setAuthLoading(false);
+      setAuthError('Invalid Reviewer Passkey. Access Denied.');
+      return;
+    }
+
     try {
       const { data } = await apiFetch('/reviewer-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ passkey: cleanPasskey })
+        body: JSON.stringify({ passkey: cleanPasskey, mode: isReelsMode ? 'reels' : 'poster' })
       });
 
       if (data && data.success) {
-        localStorage.setItem('vucse_reviewer_token', data.token || 'REV_TOKEN');
+        localStorage.setItem(tokenStorageKey, data.token || `REV_${Date.now()}_KEY`);
         setIsAuthenticated(true);
         setAuthLoading(false);
         return;
@@ -138,9 +171,8 @@ export default function PosterReviewerDashboard({ onBack }) {
       setAuthLoading(false);
     }
 
-    // Direct Passkey Fallback (prevents HTML 404 error from interrupting reviewer login)
-    if (validPasskeys.includes(cleanPasskey.toLowerCase()) || cleanPasskey.length >= 6) {
-      localStorage.setItem('vucse_reviewer_token', `REV_${Date.now()}_KEY`);
+    if (cleanPasskey === expectedPasskey) {
+      localStorage.setItem(tokenStorageKey, `REV_${Date.now()}_KEY`);
       setIsAuthenticated(true);
     } else {
       setAuthError('Invalid Reviewer Passkey. Access Denied.');
@@ -148,7 +180,7 @@ export default function PosterReviewerDashboard({ onBack }) {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('vucse_reviewer_token');
+    localStorage.removeItem(tokenStorageKey);
     setIsAuthenticated(false);
   };
 
@@ -161,7 +193,7 @@ export default function PosterReviewerDashboard({ onBack }) {
       reviewStatus: newStatus,
       rejectionReason: newStatus === 'REJECTED' ? reason.trim() : '',
       reviewedAt: new Date().toISOString(),
-      reviewedBy: 'Poster & Paper Review Panel'
+      reviewedBy: reviewerPanelName
     };
 
     // 1. Try dedicated endpoint first
@@ -175,7 +207,7 @@ export default function PosterReviewerDashboard({ onBack }) {
           eventTitle: item.eventTitle,
           status: newStatus,
           rejectionReason: reason,
-          reviewerName: 'Poster & Paper Review Panel'
+          reviewerName: reviewerPanelName
         })
       });
 
@@ -186,7 +218,7 @@ export default function PosterReviewerDashboard({ onBack }) {
       console.warn('Fallback to /submit-event-content for review update:', err.message);
     }
 
-    // 2. Fallback: call /submit-event-content which already exists on running server
+    // 2. Fallback: call /submit-event-content
     if (!success) {
       try {
         const { data: submitData } = await apiFetch('/submit-event-content', {
@@ -207,7 +239,7 @@ export default function PosterReviewerDashboard({ onBack }) {
       }
     }
 
-    // Update local state smoothly
+    // Update local state
     setSubmissions(prev =>
       prev.map(s => {
         if (s.submissionId === item.submissionId || (s.studentAiId === item.studentAiId && s.eventId === item.eventId)) {
@@ -252,6 +284,19 @@ export default function PosterReviewerDashboard({ onBack }) {
     rejected: submissions.filter(s => s.reviewStatus === 'REJECTED').length
   };
 
+  const presets = isReelsMode ? [
+    'Google Drive video link permission is private. Please set access to "Anyone with the link".',
+    'Video length is not within the required 30-60 seconds duration.',
+    'Video content does not align with the theme "AI for Society".',
+    'Video file is corrupted, unplayable, or incomplete.',
+    'Reel contains copyright violations or inappropriate content.'
+  ] : [
+    'Missing required methodology diagram or architecture overview.',
+    'Poster resolution is low or text size is unreadable.',
+    'Poster formatting does not adhere to A1 size guidelines.',
+    'Google Drive link permission is private. Please set access to "Anyone with the link".'
+  ];
+
   // 1. REVIEWER LOGIN PORTAL
   if (!isAuthenticated) {
     return (
@@ -261,21 +306,23 @@ export default function PosterReviewerDashboard({ onBack }) {
             display: 'inline-flex',
             padding: '1rem',
             borderRadius: '16px',
-            background: 'linear-gradient(135deg, #00f2fe, #4facfe)',
+            background: isReelsMode ? 'linear-gradient(135deg, #f59e0b, #ef4444)' : 'linear-gradient(135deg, #00f2fe, #4facfe)',
             color: '#0b1120',
             marginBottom: '1rem'
           }}>
-            <Shield size={36} />
+            {isReelsMode ? <Video size={36} /> : <Shield size={36} />}
           </div>
           <h2 style={{ fontSize: '1.75rem', fontWeight: '800', color: '#ffffff', margin: '0 0 0.5rem 0' }}>
-            POSTER & PAPER REVIEWER LOGIN
+            {isReelsMode ? 'REELS COMPETITION REVIEWER LOGIN' : 'POSTER & PAPER REVIEWER LOGIN'}
           </h2>
           <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', margin: 0 }}>
-            Authorized portal for judges to inspect, approve, or reject student paper/poster submissions.
+            {isReelsMode
+              ? 'Authorized portal for judges to inspect, evaluate, and approve or reject student reel submissions.'
+              : 'Authorized portal for judges to inspect, evaluate, and approve or reject student paper/poster submissions.'}
           </p>
         </div>
 
-        <form onSubmit={handleLogin} className="form-card" style={{ background: 'rgba(15, 23, 42, 0.85)', padding: '2rem', borderRadius: '16px', border: '1px solid rgba(0, 242, 254, 0.3)' }}>
+        <form onSubmit={handleLogin} className="form-card" style={{ background: 'rgba(15, 23, 42, 0.85)', padding: '2rem', borderRadius: '16px', border: `1px solid ${isReelsMode ? 'rgba(245, 158, 11, 0.4)' : 'rgba(0, 242, 254, 0.3)'}` }}>
           {authError && (
             <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444', color: '#f87171', padding: '0.85rem', borderRadius: '10px', marginBottom: '1.25rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <AlertTriangle size={18} /> {authError}
@@ -284,7 +331,7 @@ export default function PosterReviewerDashboard({ onBack }) {
 
           <div className="form-group" style={{ marginBottom: '1.5rem' }}>
             <label style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-dim)', marginBottom: '0.5rem', display: 'block' }}>
-              ENTER REVIEWER PASSKEY *
+              {isReelsMode ? 'ENTER REELS REVIEWER PASSKEY *' : 'ENTER POSTER REVIEWER PASSKEY *'}
             </label>
             <div style={{ position: 'relative' }}>
               <input
@@ -294,9 +341,9 @@ export default function PosterReviewerDashboard({ onBack }) {
                 value={passkey}
                 onChange={(e) => setPasskey(e.target.value)}
                 required
-                style={{ width: '100%', padding: '0.85rem 1rem 0.85rem 2.5rem', borderRadius: '10px', fontSize: '1rem', color: '#ffffff', WebkitTextFillColor: '#ffffff', background: 'rgba(15, 23, 42, 0.9)', border: '1px solid rgba(0, 242, 254, 0.4)' }}
+                style={{ width: '100%', padding: '0.85rem 1rem 0.85rem 2.5rem', borderRadius: '10px', fontSize: '1rem', color: '#ffffff', WebkitTextFillColor: '#ffffff', background: 'rgba(15, 23, 42, 0.9)', border: `1px solid ${isReelsMode ? 'rgba(245, 158, 11, 0.5)' : 'rgba(0, 242, 254, 0.4)'}` }}
               />
-              <Lock size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--primary-cyan)' }} />
+              <Lock size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: isReelsMode ? '#f59e0b' : 'var(--primary-cyan)' }} />
             </div>
           </div>
 
@@ -304,7 +351,7 @@ export default function PosterReviewerDashboard({ onBack }) {
             type="submit"
             className="btn btn-primary"
             disabled={authLoading}
-            style={{ width: '100%', padding: '0.95rem', fontWeight: '800', fontSize: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}
+            style={{ width: '100%', padding: '0.95rem', fontWeight: '800', fontSize: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', background: isReelsMode ? 'linear-gradient(135deg, #f59e0b, #ef4444)' : undefined }}
           >
             {authLoading ? 'AUTHENTICATING...' : <>ACCESS REVIEWER PANEL <Sparkles size={18} /></>}
           </button>
@@ -329,11 +376,14 @@ export default function PosterReviewerDashboard({ onBack }) {
       {/* Top Action Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.85rem', fontWeight: '800', margin: 0, background: 'linear-gradient(135deg, #ffffff, #00f2fe)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <FileText size={28} style={{ color: '#00f2fe' }} /> POSTER & PAPER REVIEW PANEL
+          <h1 style={{ fontSize: '1.85rem', fontWeight: '800', margin: 0, background: isReelsMode ? 'linear-gradient(135deg, #ffffff, #f59e0b)' : 'linear-gradient(135deg, #ffffff, #00f2fe)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            {isReelsMode ? <Video size={28} style={{ color: '#f59e0b' }} /> : <FileText size={28} style={{ color: '#00f2fe' }} />}
+            {isReelsMode ? 'REELS COMPETITION REVIEW PANEL' : 'POSTER & PAPER REVIEW PANEL'}
           </h1>
           <p style={{ color: 'var(--text-dim)', margin: '0.25rem 0 0 0', fontSize: '0.92rem' }}>
-            Evaluate received submissions, approve accepted posters, or provide explanations for rejections.
+            {isReelsMode
+              ? 'Evaluate received video reel submissions, approve accepted entries, or provide rejections with explanations.'
+              : 'Evaluate received poster & paper submissions, approve accepted entries, or provide rejections with explanations.'}
           </p>
         </div>
 
@@ -411,7 +461,7 @@ export default function PosterReviewerDashboard({ onBack }) {
                 fontWeight: '700',
                 fontSize: '0.82rem',
                 cursor: 'pointer',
-                background: statusFilter === f ? 'var(--primary-cyan)' : 'rgba(255, 255, 255, 0.05)',
+                background: statusFilter === f ? (isReelsMode ? '#f59e0b' : 'var(--primary-cyan)') : 'rgba(255, 255, 255, 0.05)',
                 color: statusFilter === f ? '#0b1120' : '#ffffff',
                 transition: 'all 0.2s ease'
               }}
@@ -429,7 +479,7 @@ export default function PosterReviewerDashboard({ onBack }) {
             placeholder="Search student, AI ID, event..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ width: '100%', padding: '0.55rem 0.85rem 0.55rem 2.2rem', fontSize: '0.88rem', borderRadius: '8px', background: 'rgba(15, 23, 42, 0.9)', color: '#ffffff', WebkitTextFillColor: '#ffffff', border: '1px solid rgba(0, 242, 254, 0.3)' }}
+            style={{ width: '100%', padding: '0.55rem 0.85rem 0.55rem 2.2rem', fontSize: '0.88rem', borderRadius: '8px', background: 'rgba(15, 23, 42, 0.9)', color: '#ffffff', WebkitTextFillColor: '#ffffff', border: `1px solid ${isReelsMode ? 'rgba(245, 158, 11, 0.4)' : 'rgba(0, 242, 254, 0.3)'}` }}
           />
           <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
         </div>
@@ -437,66 +487,54 @@ export default function PosterReviewerDashboard({ onBack }) {
 
       {/* SUBMISSIONS LIST GRID */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--primary-cyan)', fontSize: '1.1rem', fontWeight: '700' }}>
+        <div style={{ textAlign: 'center', padding: '3rem', color: isReelsMode ? '#f59e0b' : 'var(--primary-cyan)', fontSize: '1.1rem', fontWeight: '700' }}>
           Loading submissions for review...
         </div>
       ) : filteredSubmissions.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '3rem', background: 'rgba(15, 23, 42, 0.5)', borderRadius: '16px', border: '1px border-dashed rgba(255, 255, 255, 0.1)' }}>
-          <FileText size={42} style={{ color: 'var(--text-dim)', marginBottom: '0.75rem' }} />
+          {isReelsMode ? <Video size={42} style={{ color: 'var(--text-dim)', marginBottom: '0.75rem' }} /> : <FileText size={42} style={{ color: 'var(--text-dim)', marginBottom: '0.75rem' }} />}
           <h3 style={{ color: '#ffffff', margin: '0 0 0.5rem 0' }}>No Submissions Found</h3>
           <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', margin: 0 }}>
             {searchTerm || statusFilter !== 'ALL'
               ? 'No submissions match your search/filter criteria.'
-              : 'No poster or paper submissions have been uploaded yet.'}
+              : isReelsMode ? 'No reel submissions have been uploaded yet.' : 'No poster or paper submissions have been uploaded yet.'}
           </p>
         </div>
       ) : (
         <div style={{ display: 'grid', gap: '1.25rem' }}>
-          {filteredSubmissions.map(item => {
+          {filteredSubmissions.map((item) => {
             const sub = item.submission || {};
-            const posterUrl = sub.posterFile?.serverUrl
-              ? getAssetUrl(sub.posterFile.serverUrl)
-              : sub.posterLink || sub.reelLink || null;
-
             const isApproved = item.reviewStatus === 'APPROVED';
             const isRejected = item.reviewStatus === 'REJECTED';
+            const fileUrl = sub.posterFile?.path ? getAssetUrl(sub.posterFile.path) : (sub.reelLink || sub.posterLink);
 
             return (
               <div
                 key={item.submissionId}
                 style={{
-                  background: isApproved
-                    ? 'rgba(34, 197, 94, 0.04)'
-                    : isRejected
-                    ? 'rgba(239, 68, 68, 0.04)'
-                    : 'rgba(15, 23, 42, 0.8)',
-                  border: isApproved
-                    ? '1.5px solid rgba(34, 197, 94, 0.4)'
-                    : isRejected
-                    ? '1.5px solid rgba(239, 68, 68, 0.4)'
-                    : '1.5px solid rgba(251, 191, 36, 0.4)',
+                  background: 'rgba(15, 23, 42, 0.8)',
+                  border: isApproved ? '1px solid rgba(34, 197, 94, 0.4)' : isRejected ? '1px solid rgba(239, 68, 68, 0.4)' : `1px solid ${isReelsMode ? 'rgba(245, 158, 11, 0.3)' : 'rgba(0, 242, 254, 0.3)'}`,
                   borderRadius: '16px',
                   padding: '1.5rem',
-                  transition: 'all 0.2s ease'
+                  boxShadow: '0 8px 30px rgba(0, 0, 0, 0.3)'
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
+                {/* Top Info Bar */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: '0.78rem', background: 'rgba(0, 242, 254, 0.12)', color: '#00f2fe', padding: '0.2rem 0.6rem', borderRadius: '6px', fontWeight: '800', border: '1px solid rgba(0, 242, 254, 0.3)' }}>
-                        {item.eventTitle || 'COMPETITION'}
+                      <span style={{ fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', background: isReelsMode ? 'rgba(245, 158, 11, 0.15)' : 'rgba(0, 242, 254, 0.15)', color: isReelsMode ? '#f59e0b' : '#00f2fe', padding: '0.2rem 0.6rem', borderRadius: '6px', border: `1px solid ${isReelsMode ? 'rgba(245, 158, 11, 0.3)' : 'rgba(0, 242, 254, 0.3)'}` }}>
+                        {item.eventTitle}
                       </span>
                       {item.teamName && (
-                        <span style={{ fontSize: '0.78rem', background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc', padding: '0.2rem 0.6rem', borderRadius: '6px', fontWeight: '800', border: '1px solid rgba(168, 85, 247, 0.3)' }}>
-                          TEAM: {item.teamName}
+                        <span style={{ fontSize: '0.75rem', fontWeight: '800', background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc', padding: '0.2rem 0.6rem', borderRadius: '6px', border: '1px solid rgba(168, 85, 247, 0.3)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <Users size={12} /> Team: {item.teamName}
                         </span>
                       )}
                     </div>
-
-                    <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#ffffff', margin: 0 }}>
-                      {item.studentName} <span style={{ fontSize: '0.85rem', color: 'var(--primary-cyan)', fontFamily: 'monospace', fontWeight: '700' }}>({item.studentAiId})</span>
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#ffffff', margin: 0 }}>
+                      {item.studentName} <span style={{ color: 'var(--primary-cyan)', fontSize: '1rem', fontFamily: 'monospace' }}>({item.studentAiId})</span>
                     </h3>
-
                     <div style={{ fontSize: '0.85rem', color: 'var(--text-dim)', marginTop: '0.3rem' }}>
                       Reg No: <strong>{item.studentRegNo}</strong> • Year <strong>{item.studentYear}</strong> • Email: <strong>{item.studentEmail}</strong> {item.studentPhone && `• Phone: ${item.studentPhone}`}
                     </div>
@@ -520,7 +558,7 @@ export default function PosterReviewerDashboard({ onBack }) {
                   </div>
                 </div>
 
-                {/* Submission Document / Poster File Details */}
+                {/* Submission Document / Poster / Reel File Details */}
                 <div style={{ background: 'rgba(15, 23, 42, 0.9)', padding: '1rem 1.25rem', borderRadius: '12px', marginBottom: '1.25rem', border: '1px solid rgba(255, 255, 255, 0.06)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
                     <div>
@@ -528,22 +566,22 @@ export default function PosterReviewerDashboard({ onBack }) {
                         SUBMITTED FILE / LINK:
                       </div>
                       <div style={{ fontSize: '0.92rem', color: '#ffffff', fontWeight: '600', wordBreak: 'break-all' }}>
-                        {sub.posterFile?.fileName || sub.posterLink || sub.reelLink || 'Uploaded Document'}
+                        {sub.reelLink || sub.posterLink || sub.posterFile?.fileName || 'Uploaded Document'}
                       </div>
                       <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: '0.2rem' }}>
                         Submitted on: {sub.submittedAt ? new Date(sub.submittedAt).toLocaleString() : 'N/A'}
                       </div>
                     </div>
 
-                    {posterUrl && (
+                    {fileUrl && (
                       <a
-                        href={posterUrl}
+                        href={fileUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="btn btn-secondary"
                         style={{ padding: '0.55rem 1rem', fontSize: '0.85rem', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
                       >
-                        <ExternalLink size={15} /> View Poster / File
+                        <ExternalLink size={15} /> {isReelsMode ? 'View Reel Video' : 'View Poster / File'}
                       </a>
                     )}
                   </div>
@@ -578,7 +616,7 @@ export default function PosterReviewerDashboard({ onBack }) {
                       gap: '0.4rem'
                     }}
                   >
-                    <CheckCircle2 size={16} /> Approve Poster
+                    <CheckCircle2 size={16} /> {isReelsMode ? 'Approve Reel' : 'Approve Poster'}
                   </button>
 
                   <button
@@ -603,7 +641,7 @@ export default function PosterReviewerDashboard({ onBack }) {
                       gap: '0.4rem'
                     }}
                   >
-                    <XCircle size={16} /> Reject Poster (Give Explanation)
+                    <XCircle size={16} /> {isReelsMode ? 'Reject Reel (Give Explanation)' : 'Reject Poster (Give Explanation)'}
                   </button>
                 </div>
               </div>
@@ -638,7 +676,7 @@ export default function PosterReviewerDashboard({ onBack }) {
               <XCircle size={24} /> REJECT SUBMISSION & PROVIDE EXPLANATION
             </h3>
             <p style={{ color: 'var(--text-dim)', fontSize: '0.88rem', marginBottom: '1.25rem' }}>
-              Rejecting submission for <strong>{rejectingItem.studentName}</strong> ({rejectingItem.studentAiId}). The student will see this explanation and can resubmit their corrected poster.
+              Rejecting submission for <strong>{rejectingItem.studentName}</strong> ({rejectingItem.studentAiId}). The student will see this explanation and can resubmit their corrected entry.
             </p>
 
             {/* Template Presets */}
@@ -647,12 +685,7 @@ export default function PosterReviewerDashboard({ onBack }) {
                 QUICK EXPLANATION PRESETS (CLICK TO USE):
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                {[
-                  'Missing required methodology diagram or architecture overview.',
-                  'Poster resolution is low or text size is unreadable.',
-                  'Poster formatting does not adhere to A1 size guidelines.',
-                  'Incomplete content. Please update and re-upload poster.'
-                ].map((preset, idx) => (
+                {presets.map((preset, idx) => (
                   <button
                     key={idx}
                     type="button"
@@ -682,7 +715,7 @@ export default function PosterReviewerDashboard({ onBack }) {
               <textarea
                 rows={4}
                 className="form-control"
-                placeholder="Explain why the poster is rejected and what needs to be fixed..."
+                placeholder={isReelsMode ? "Explain why the reel is rejected..." : "Explain why the poster is rejected..."}
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
                 style={{ width: '100%', padding: '0.85rem', borderRadius: '10px', fontSize: '0.92rem', color: '#ffffff', WebkitTextFillColor: '#ffffff', background: 'rgba(15, 23, 42, 0.9)', border: '1px solid rgba(239, 68, 68, 0.4)' }}

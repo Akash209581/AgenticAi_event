@@ -36,6 +36,7 @@ export default function App() {
     const path = getNormalizedPath(rawPath);
     if (path === '/iamadmin') return 'admin';
     if (path.startsWith('/poster-reviewer') || path.startsWith('/reviewer')) return 'poster-reviewer';
+    if (path.startsWith('/reels-review') || path.startsWith('/reels-reviewer')) return 'reels-reviewer';
     if (path.startsWith('/events')) return 'events';
     if (path.startsWith('/register')) return 'register';
     if (path.startsWith('/team-register') || path.startsWith('/teams')) return 'team-register';
@@ -137,6 +138,7 @@ export default function App() {
       }
       const path = getNormalizedPath(rawPath);
       if (path.startsWith('/poster-reviewer') || path.startsWith('/reviewer')) setActiveTab('poster-reviewer');
+      else if (path.startsWith('/reels-review') || path.startsWith('/reels-reviewer')) setActiveTab('reels-reviewer');
       else if (path.startsWith('/events')) setActiveTab('events');
       else if (path.startsWith('/register')) setActiveTab('register');
       else if (path.startsWith('/team-register') || path.startsWith('/teams')) setActiveTab('team-register');
@@ -467,6 +469,15 @@ export default function App() {
         {/* POSTER & PAPER REVIEWER PORTAL */}
         {activeTab === 'poster-reviewer' && (
           <PosterReviewerDashboard
+            mode="poster"
+            onBack={() => changeTab('events', '/events')}
+          />
+        )}
+
+        {/* REELS COMPETITION REVIEWER PORTAL */}
+        {activeTab === 'reels-reviewer' && (
+          <PosterReviewerDashboard
+            mode="reels"
             onBack={() => changeTab('events', '/events')}
           />
         )}
