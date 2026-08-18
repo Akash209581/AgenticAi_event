@@ -985,5 +985,23 @@ router.post('/review-submission', async (req, res) => {
   }
 });
 
+/**
+ * GET /cseAI/view-review-log
+ * Serves the review_debug.log file contents for remote debugging.
+ */
+router.get('/view-review-log', (req, res) => {
+  try {
+    const logPath = path.join(process.cwd(), 'review_debug.log');
+    if (!fs.existsSync(logPath)) {
+      return res.send('No review_debug.log file found yet.');
+    }
+    const content = fs.readFileSync(logPath, 'utf8');
+    res.setHeader('Content-Type', 'text/plain');
+    return res.send(content);
+  } catch (err) {
+    return res.status(500).send('Error reading log: ' + err.message);
+  }
+});
+
 export default router;
 
