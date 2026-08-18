@@ -10,6 +10,8 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  // Holds server-fresh registered events (overrides props when available)
+  const [freshRegisteredEvents, setFreshRegisteredEvents] = useState(null);
 
   // Compute event type BEFORE early return (will be '' if event is null)
   const eventTitleStr = String(event?.title || '').toLowerCase();
@@ -17,7 +19,9 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
   const isReels = eventIdStr.includes('creative-1') || eventTitleStr.includes('reel');
   const isPoster = !isReels;
 
-  const matchedEvent = currentUser?.registeredEvents?.find(e => isSameEvent(event, e));
+  // Use freshRegisteredEvents from server if available, otherwise fall back to props
+  const effectiveRegisteredEvents = freshRegisteredEvents || currentUser?.registeredEvents;
+  const matchedEvent = effectiveRegisteredEvents?.find(e => isSameEvent(event, e));
 
   // Non-leader team member check: applies to BOTH Reels and Poster/Paper events
   // If the user is in a team (isTeam=true) but is NOT the leader (isLeader=false), they cannot submit
@@ -35,11 +39,29 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
     matchedEvent?.submission?.allowResubmit
   );
 
+  // Fetch fresh data from server when modal opens
+  useEffect(() => {
+    if (!isOpen || !currentUser) return;
+    const identifier = currentUser.aiId || currentUser.regNo || currentUser.email;
+    if (!identifier) return;
+
+    apiFetch(`/user-submission-status?identifier=${encodeURIComponent(identifier)}`, { method: 'GET' })
+      .then(({ data }) => {
+        if (data && data.success && Array.isArray(data.registeredEvents)) {
+          setFreshRegisteredEvents(data.registeredEvents);
+        }
+      })
+      .catch(() => {
+        // Silently fail — fall back to props data
+      });
+  }, [isOpen, currentUser?.aiId, currentUser?.regNo, currentUser?.email]);
+
   // ALL hooks must be unconditionally called — no early returns before this
   useEffect(() => {
     if (!isOpen || !event) return;
-    if (currentUser && Array.isArray(currentUser.registeredEvents)) {
-      const match = currentUser.registeredEvents.find(e => isSameEvent(event, e));
+    const eventsToSearch = freshRegisteredEvents || currentUser?.registeredEvents;
+    if (eventsToSearch && Array.isArray(eventsToSearch)) {
+      const match = eventsToSearch.find(e => isSameEvent(event, e));
 
       if (match && match.submission) {
         if (match.submission.reelLink) setReelLink(match.submission.reelLink);
@@ -55,7 +77,7 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
     // Reset errors when reopening
     setErrorMsg('');
     setSuccessMsg('');
-  }, [isOpen, event?.id, event?.title, currentUser]);
+  }, [isOpen, event?.id, event?.title, freshRegisteredEvents, currentUser]);
 
   // Handle File selection (PDF ONLY, Max 10MB)
   const handleFileChange = useCallback((e) => {
@@ -196,13 +218,13 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
       }}
     >
       <div style={{
-        background: 'linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.95))',
+              background: 'linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.95))',
         border: isReels ? '1.5px solid rgba(251, 191, 36, 0.5)' : '1.5px solid rgba(0, 240, 255, 0.5)',
         borderRadius: '20px',
         padding: '1.25rem 1.5rem',
-        maxWidth: '560px',
+        maxWidth: '820px',
         width: '100%',
-        maxHeight: '85vh',
+        maxHeight: '92vh',
         overflowY: 'auto',
         boxShadow: isReels ? '0 0 30px rgba(251, 191, 36, 0.25)' : '0 0 30px rgba(0, 240, 255, 0.25)',
         position: 'relative',
@@ -661,7 +683,7 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
                           )}
                         </div>
 
-                        {/* Interactive PDF Document Preview */}
+                                                {/* Interactive PDF Document Preview */}
                         {src && (
                           <div style={{ textAlign: 'center', marginTop: '0.8rem', background: 'rgba(15, 23, 42, 0.8)', padding: '0.75rem', borderRadius: '10px', border: '1px solid rgba(0, 240, 255, 0.25)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.6rem', color: '#38bdf8', fontSize: '0.85rem', fontWeight: '600' }}>
@@ -670,7 +692,7 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
                             <iframe
                               src={src}
                               title="Submitted PDF Document Preview"
-                              style={{ width: '100%', height: '280px', borderRadius: '8px', border: 'none', background: '#ffffff' }}
+                              style={{ width: '100%', height: '560px', borderRadius: '8px', border: 'none', background: '#ffffff' }}
                             />
                           </div>
                         )}

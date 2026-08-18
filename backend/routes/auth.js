@@ -695,6 +695,49 @@ router.post('/reviewer-login', async (req, res) => {
   }
 });
 
+/**
+ * GET /cseAI/user-submission-status?identifier=VUCSE00098
+ * Returns the latest registeredEvents for a user so the frontend can refresh review status.
+ */
+router.get('/user-submission-status', async (req, res) => {
+  try {
+    const { identifier } = req.query;
+    if (!identifier) {
+      return res.status(400).json({ success: false, message: 'identifier is required' });
+    }
+    const cleanIdLower = identifier.trim().toLowerCase();
+    const cleanIdUpper = identifier.trim().toUpperCase();
+
+    let user = null;
+    if (mongoose.connection.readyState === 1) {
+      user = await User.findOne({
+        $or: [
+          { email: cleanIdLower },
+          { regNo: cleanIdUpper },
+          { aiId: cleanIdUpper }
+        ]
+      }).lean();
+    } else {
+      user = memoryUsers.find(
+        u => u.email.toLowerCase() === cleanIdLower ||
+             u.regNo.toUpperCase() === cleanIdUpper ||
+             u.aiId.toUpperCase() === cleanIdUpper
+      );
+    }
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    return res.json({
+      success: true,
+      registeredEvents: user.registeredEvents || []
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 router.get('/reviewer-submissions', async (req, res) => {
   try {
     const { mode, type } = req.query;
