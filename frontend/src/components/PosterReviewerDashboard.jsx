@@ -193,7 +193,8 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
     const reviewPayload = {
       ...item.submission,
       reviewStatus: newStatus,
-      rejectionReason: newStatus === 'REJECTED' ? reason.trim() : '',
+      rejectionReason: (newStatus === 'REJECTED' || newStatus === 'RESUBMIT_ALLOWED') ? reason.trim() : '',
+      allowResubmit: newStatus === 'RESUBMIT_ALLOWED' || newStatus === 'REJECTED',
       reviewedAt: new Date().toISOString(),
       reviewedBy: reviewerPanelName
     };
@@ -248,7 +249,8 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
           return {
             ...s,
             reviewStatus: newStatus,
-            rejectionReason: newStatus === 'REJECTED' ? reason : '',
+            rejectionReason: (newStatus === 'REJECTED' || newStatus === 'RESUBMIT_ALLOWED') ? reason : '',
+            allowResubmit: newStatus === 'RESUBMIT_ALLOWED' || newStatus === 'REJECTED',
             reviewedAt: new Date().toISOString()
           };
         }

@@ -452,10 +452,11 @@ router.post('/submit-event-content', async (req, res) => {
 
     let eventIdx = user.registeredEvents.findIndex(e => isMatchEvent(cleanEvtId, cleanEvtTitle, e));
 
-    // Check if user has already submitted content for this event (allow file update/overwrite)
+    // Check if user has already submitted content for this event (allow file update/overwrite or resubmission)
     if (eventIdx !== -1) {
       const existingSub = user.registeredEvents[eventIdx].submission;
-      if (existingSub && existingSub.submittedBy && existingSub.submittedBy.aiId !== user.aiId) {
+      const isResubmitAllowed = existingSub?.reviewStatus === 'RESUBMIT_ALLOWED' || existingSub?.reviewStatus === 'REJECTED' || existingSub?.allowResubmit;
+      if (existingSub && existingSub.submittedBy && existingSub.submittedBy.aiId !== user.aiId && !isResubmitAllowed) {
         return res.status(400).json({
           success: false,
           message: `Submission Blocked: Your teammate '${existingSub.submittedBy.name}' (${existingSub.submittedBy.aiId}) has already submitted the work for this team.`
@@ -487,7 +488,7 @@ router.post('/submit-event-content', async (req, res) => {
     if (activeTeam) {
       const memberAiIds = activeTeam.members.map(m => m.aiId.toUpperCase());
 
-      // Double check if anyone in the team already has a submission
+      // Double check if anyone in the team already has an active submission that is NOT allowed for resubmission
       let teamUsers = [];
       if (mongoose.connection.readyState === 1) {
         teamUsers = await User.find({ aiId: { $in: memberAiIds } });
@@ -498,7 +499,8 @@ router.post('/submit-event-content', async (req, res) => {
       const alreadySubmittedUser = teamUsers.find(u => {
         if (!u.registeredEvents) return false;
         const match = u.registeredEvents.find(e => isMatchEvent(eventId, eventTitle, e));
-        return match && match.submission && (match.submission.reelLink || match.submission.posterFile || match.submission.posterLink);
+        const isResubmitOk = match?.submission?.reviewStatus === 'RESUBMIT_ALLOWED' || match?.submission?.reviewStatus === 'REJECTED' || match?.submission?.allowResubmit;
+        return match && match.submission && (match.submission.reelLink || match.submission.posterFile || match.submission.posterLink) && !isResubmitOk;
       });
 
       if (alreadySubmittedUser) {
@@ -795,7 +797,29 @@ router.post('/review-submission', async (req, res) => {
     const isMatchEvent = (e) => {
       const eId = String(e.id || '').trim().toLowerCase();
       const eTitle = String(e.title || '').trim().toLowerCase();
-      return (cleanEvtId && eId === cleanEvtId) || (cleanEvtTitle && eTitle === cleanEvtTitle);
+
+      // Keyword domain check (matching submit-event-content)
+      const isPosterTarget = cleanEvtTitle.includes('poster') || cleanEvtTitle.includes('paper') || cleanEvtId.includes('technical-3');
+      const isPosterE = eTitle.includes('poster') || eTitle.includes('paper') || eId.includes('technical-3');
+      if (isPosterTarget || isPosterE) return isPosterTarget && isPosterE;
+
+      const isReelsTarget = cleanEvtTitle.includes('reel') || cleanEvtId.includes('creative-1');
+      const isReelsE = eTitle.includes('reel') || eId.includes('creative-1');
+      if (isReelsTarget || isReelsE) return isReelsTarget && isReelsE;
+
+      const isHackTarget = cleanEvtTitle.includes('hack') || cleanEvtId.includes('technical-1');
+      const isHackE = eTitle.includes('hack') || eId.includes('technical-1');
+      if (isHackTarget || isHackE) return isHackTarget && isHackE;
+
+      if (cleanEvtId && eId && cleanEvtId === eId) return true;
+      if (cleanEvtTitle && eTitle) {
+        if (cleanEvtTitle === eTitle || cleanEvtTitle.includes(eTitle) || eTitle.includes(cleanEvtTitle)) return true;
+        const norm1 = cleanEvtTitle.replace(/competation/g, 'competition').replace(/[^a-z0-9]/g, '');
+        const norm2 = eTitle.replace(/competation/g, 'competition').replace(/[^a-z0-9]/g, '');
+        if (norm1 && norm2 && (norm1.includes(norm2) || norm2.includes(norm1))) return true;
+      }
+
+      return false;
     };
 
     let targetUsers = [];
