@@ -350,7 +350,10 @@ export const eventsRulesData = {
     coordinators: [
       { name: 'Mrs. Spandana (Faculty)', phone: '+91 99483 68555' },
       { name: 'Ms. Sajida (Faculty)', phone: '+91 79814 03193' },
-      { name: 'Mulpuri Mukunda Naga Datta Sarma (Student)', phone: '+91 91821 41804' },
+
+      { name: 'Sasi kanth(Student)', phone: '+91 80199 04168' },
+      { name: 'Karthik Reddy(Student)', phone: '+91 88852 89985' },
+      { name: 'Mulpuri Mukund (Student)', phone: '+91 91821 41804' },
       { name: 'Manukonda Deepak Sai (Student)', phone: '+91 77807 70159' },
       { name: 'Nagineni Venkata Sai Krishna (Student)', phone: '+91 63043 68343' }
     ]
@@ -362,7 +365,7 @@ export const eventsRulesData = {
     title: 'QUESTX',
     cardTitle: 'QUESTX',
     image: '/images/event_questx.png',
-    whatsappGroupLink: 'https://chat.whatsapp.com/YOUR_WHATSAPP_GROUP_LINK',
+    whatsappGroupLink: 'https://chat.whatsapp.com/GHLd8ixNoPDLHI26cwjnDF',
     registrationDeadline: '28 August 2026',
     eventDate: '29 August 2026',
     teamSize: 'Strictly 5 members per team',
@@ -401,7 +404,7 @@ export const eventsRulesData = {
     title: 'SPARKX',
     cardTitle: 'SPARKX',
     image: '/images/event_sparkx.png',
-    whatsappGroupLink: 'https://chat.whatsapp.com/YOUR_WHATSAPP_GROUP_LINK',
+    whatsappGroupLink: 'https://chat.whatsapp.com/E4M6DuwK5800Ir205o25mz',
     registrationDeadline: '28 August 2026',
     eventDate: '29 August 2026',
     teamSize: 'Maximum 2-3 members per team',
