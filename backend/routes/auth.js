@@ -214,13 +214,10 @@ router.post('/enroll-event', async (req, res) => {
       // Check if registration deadline has passed for this event
       const isBootcamp = cleanTargetTitle.includes('bootcamp') || targetId.includes('bootcamp');
       if (isBootcamp) {
-        const bootcampDeadline = new Date('2026-08-18T23:59:59.999+05:30');
-        if (new Date() > bootcampDeadline) {
-          return res.status(400).json({
-            success: false,
-            message: `Registration for '${event.title || 'AI AGENT BOOTCAMP'}' ended on 18th August 2026.`
-          });
-        }
+        return res.status(400).json({
+          success: false,
+          message: `Registration for '${event.title || 'AI AGENT BOOTCAMP'}' has closed.`
+        });
       } else if (event.registrationDeadline) {
         const cleanStr = String(event.registrationDeadline).replace(/(\d+)(st|nd|rd|th)/i, '$1').trim();
         const parsed = new Date(cleanStr);

@@ -466,8 +466,7 @@ export function isRegistrationClosed(deadlineString, eventTitle = '', eventId = 
 
   // Bootcamp registration strictly ends on 18th August 2026 23:59:59 IST
   if (isBootcamp) {
-    const bootcampDeadline = new Date('2026-08-18T23:59:59.999+05:30');
-    return new Date() > bootcampDeadline;
+    return true;
   }
 
   const effectiveDeadline = deadlineString || '26 August 2026';
