@@ -29,6 +29,12 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
     matchedEvent.submission.posterLink
   ));
 
+  const isResubmitAllowed = Boolean(
+    matchedEvent?.submission?.reviewStatus === 'RESUBMIT_ALLOWED' ||
+    matchedEvent?.submission?.reviewStatus === 'REJECTED' ||
+    matchedEvent?.submission?.allowResubmit
+  );
+
   // ALL hooks must be unconditionally called — no early returns before this
   useEffect(() => {
     if (!isOpen || !event) return;
@@ -296,14 +302,16 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
                 <div style={{ fontWeight: '800', fontSize: '0.95rem', marginBottom: '0.2rem' }}>
                   {matchedEvent?.submission?.reviewStatus === 'APPROVED'
                     ? '✅ POSTER / PAPER APPROVED BY REVIEW PANEL'
+                    : matchedEvent?.submission?.reviewStatus === 'RESUBMIT_ALLOWED'
+                    ? '🔄 RESUBMISSION ALLOWED BY REVIEW PANEL'
                     : matchedEvent?.submission?.reviewStatus === 'REJECTED'
                     ? '❌ SUBMISSION REJECTED BY REVIEW PANEL'
                     : '⏳ PENDING REVIEW BY JUDGES'}
                 </div>
-                {matchedEvent?.submission?.reviewStatus === 'REJECTED' && matchedEvent.submission.rejectionReason && (
-                  <div style={{ background: 'rgba(0, 0, 0, 0.25)', padding: '0.6rem 0.75rem', borderRadius: '8px', marginTop: '0.4rem', color: '#ffffff', fontSize: '0.85rem', border: '1px solid rgba(239, 68, 68, 0.4)' }}>
-                    <strong>Rejection Reason:</strong> "{matchedEvent.submission.rejectionReason}"<br />
-                    <span style={{ fontSize: '0.78rem', color: '#fca5a5' }}>Please fix the issue mentioned above and upload/submit your updated poster file below.</span>
+                {(matchedEvent?.submission?.reviewStatus === 'REJECTED' || matchedEvent?.submission?.reviewStatus === 'RESUBMIT_ALLOWED') && matchedEvent.submission.rejectionReason && (
+                  <div style={{ background: 'rgba(0, 0, 0, 0.25)', padding: '0.6rem 0.75rem', borderRadius: '8px', marginTop: '0.4rem', color: '#ffffff', fontSize: '0.85rem', border: matchedEvent.submission.reviewStatus === 'RESUBMIT_ALLOWED' ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid rgba(239, 68, 68, 0.4)' }}>
+                    <strong>{matchedEvent.submission.reviewStatus === 'RESUBMIT_ALLOWED' ? 'Reviewer Feedback:' : 'Rejection Reason:'}</strong> "{matchedEvent.submission.rejectionReason}"<br />
+                    <span style={{ fontSize: '0.78rem', color: matchedEvent.submission.reviewStatus === 'RESUBMIT_ALLOWED' ? '#7dd3fc' : '#fca5a5' }}>Please select your updated PDF file below and click "Update & Resubmit Poster".</span>
                   </div>
                 )}
                 {matchedEvent?.submission?.submittedBy && (
@@ -483,7 +491,7 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
           {/* POSTER / PAPER PRESENTATION INPUT / PREVIEW */}
           {isPoster && (
             <div style={{ marginBottom: '1.5rem' }}>
-              {!hasSubmitted ? (
+              {(!hasSubmitted || isResubmitAllowed) ? (
                 <>
                   <label style={{ display: 'block', fontSize: '0.88rem', fontWeight: '600', color: '#e2e8f0', marginBottom: '0.5rem' }}>
                     Upload Poster or Paper PDF File (.pdf only, max 10MB):
@@ -712,7 +720,7 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
 
           {/* Submit / Action Buttons */}
           <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
-            {hasSubmitted ? (
+            {(hasSubmitted && !isResubmitAllowed) ? (
               <button
                 type="button"
                 onClick={onClose}
@@ -766,7 +774,7 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
                     opacity: submitting ? 0.7 : 1
                   }}
                 >
-                  {submitting ? 'Saving...' : (isReels ? 'Submit Reel Link' : 'Submit Poster / Paper')}
+                  {submitting ? 'Saving...' : (isResubmitAllowed ? 'Update & Resubmit Poster' : (isReels ? 'Submit Reel Link' : 'Submit Poster / Paper'))}
                 </button>
               </>
             )}

@@ -22,7 +22,8 @@ import {
   EyeOff,
   Home,
   CheckCircle2,
-  Trash2
+  Trash2,
+  UserPlus
 } from 'lucide-react';
 
 import { eventsRulesData, isSameEvent } from '../data/eventsRulesData';
@@ -59,6 +60,11 @@ export default function AdminDashboard({ onBack }) {
   const [teamSearch, setTeamSearch] = useState('');
   const [teamEventFilter, setTeamEventFilter] = useState('all');
   const [teamsLoading, setTeamsLoading] = useState(false);
+
+  // Add Member Modal State
+  const [selectedTeamForAddMember, setSelectedTeamForAddMember] = useState(null);
+  const [newMemberAiId, setNewMemberAiId] = useState('');
+  const [addMemberLoading, setAddMemberLoading] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -257,6 +263,68 @@ export default function AdminDashboard({ onBack }) {
       }
     } catch (err) {
       alert('Server error removing team: ' + err.message);
+    }
+  };
+
+  // Remove individual member from a team
+  const handleRemoveMemberFromTeam = async (team, member) => {
+    if (!team || !team.teamId || !member || !member.aiId) return;
+    const confirmMsg = `Remove member '${member.name}' (${member.aiId}) from Team '${team.teamName}'?${member.isLeader ? '\n\nNote: This member is the Team Leader. Leadership will be reassigned to the next member.' : ''}`;
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      const adminToken = localStorage.getItem('vucse_admin_token') || 'ADMIN_SECRET_KEY_VUCSE_2026';
+      const { res, data } = await apiFetch(`/team/${encodeURIComponent(team.teamId)}/remove-member`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-token': adminToken
+        },
+        body: JSON.stringify({ memberAiId: member.aiId })
+      });
+
+      if (data && data.success) {
+        alert(data.message || `Member removed successfully.`);
+        fetchTeams();
+        fetchData();
+      } else {
+        alert(data.message || 'Failed to remove member.');
+      }
+    } catch (err) {
+      alert('Server error removing team member: ' + err.message);
+    }
+  };
+
+  // Add a new member to a team
+  const handleAddMemberToTeam = async (e) => {
+    e.preventDefault();
+    if (!selectedTeamForAddMember || !newMemberAiId.trim()) return;
+
+    setAddMemberLoading(true);
+    try {
+      const adminToken = localStorage.getItem('vucse_admin_token') || 'ADMIN_SECRET_KEY_VUCSE_2026';
+      const { res, data } = await apiFetch(`/team/${encodeURIComponent(selectedTeamForAddMember.teamId)}/add-member`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-token': adminToken
+        },
+        body: JSON.stringify({ studentAiId: newMemberAiId.trim() })
+      });
+
+      if (data && data.success) {
+        alert(data.message || `Member added to team successfully.`);
+        setSelectedTeamForAddMember(null);
+        setNewMemberAiId('');
+        fetchTeams();
+        fetchData();
+      } else {
+        alert(data.message || 'Failed to add member to team.');
+      }
+    } catch (err) {
+      alert('Server error adding team member: ' + err.message);
+    } finally {
+      setAddMemberLoading(false);
     }
   };
 
@@ -1807,11 +1875,55 @@ export default function AdminDashboard({ onBack }) {
                                   <span style={{ fontWeight: 600, color: '#f8fafc' }}>
                                     {m.name} <span style={{ color: '#94a3b8', fontSize: '0.72rem' }}>(Yr {m.year}){m.isLeader ? ' [Leader]' : ''}</span>
                                   </span>
-                                  <span style={{ fontFamily: 'monospace', color: '#38bdf8', fontWeight: 700 }}>
-                                    {m.aiId}
-                                  </span>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                    <span style={{ fontFamily: 'monospace', color: '#38bdf8', fontWeight: 700 }}>
+                                      {m.aiId}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveMemberFromTeam(t, m)}
+                                      title={`Remove ${m.name} from team`}
+                                      style={{
+                                        background: 'rgba(239, 68, 68, 0.15)',
+                                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                                        color: '#ef4444',
+                                        cursor: 'pointer',
+                                        padding: '0.15rem 0.35rem',
+                                        borderRadius: '4px',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        fontSize: '0.7rem'
+                                      }}
+                                    >
+                                      <Trash2 size={11} />
+                                    </button>
+                                  </div>
                                 </div>
                               ))}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedTeamForAddMember(t);
+                                  setNewMemberAiId('');
+                                }}
+                                style={{
+                                  marginTop: '0.2rem',
+                                  background: 'rgba(168, 85, 247, 0.12)',
+                                  border: '1px dashed rgba(168, 85, 247, 0.4)',
+                                  color: '#c084fc',
+                                  padding: '0.25rem 0.6rem',
+                                  borderRadius: '6px',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.3rem',
+                                  alignSelf: 'flex-start'
+                                }}
+                              >
+                                <UserPlus size={13} /> + Add Member
+                              </button>
                             </div>
                           </td>
                           <td style={{ fontSize: '0.8rem', color: '#94a3b8', whiteSpace: 'nowrap' }}>
@@ -1850,6 +1962,84 @@ export default function AdminDashboard({ onBack }) {
           </div>
         )}
       </main>
+
+      {/* ADD TEAM MEMBER MODAL FOR ADMIN */}
+      {selectedTeamForAddMember && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.85)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 9999,
+          padding: '1rem'
+        }}>
+          <div style={{
+            background: 'rgba(15, 23, 42, 0.95)',
+            border: '1.5px solid rgba(168, 85, 247, 0.5)',
+            borderRadius: '20px',
+            padding: '2rem',
+            width: '100%',
+            maxWidth: '480px',
+            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6)'
+          }}>
+            <h3 style={{ fontSize: '1.3rem', fontWeight: '800', color: '#c084fc', marginTop: 0, marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <UserPlus size={22} /> ADD MEMBER TO TEAM
+            </h3>
+            <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
+              Team: <strong style={{ color: '#ffffff' }}>{selectedTeamForAddMember.teamName}</strong> ({selectedTeamForAddMember.teamId})<br />
+              Event: <span style={{ color: '#00f2fe' }}>{selectedTeamForAddMember.eventTitle}</span>
+            </p>
+
+            <form onSubmit={handleAddMemberToTeam}>
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', color: '#ffffff', marginBottom: '0.4rem' }}>
+                  STUDENT VUCSE AI ID OR REG NO *
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. VUCSE202600123 or 2300090000"
+                  value={newMemberAiId}
+                  onChange={(e) => setNewMemberAiId(e.target.value)}
+                  className="cyber-input"
+                  style={{ width: '100%', fontSize: '0.9rem' }}
+                  required
+                  autoFocus
+                />
+                <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.35rem' }}>
+                  Enter the registered student's VUCSE AI ID or Register Number.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setSelectedTeamForAddMember(null)}
+                  style={{ padding: '0.6rem 1.2rem', fontSize: '0.85rem' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={addMemberLoading || !newMemberAiId.trim()}
+                  className="btn-primary"
+                  style={{
+                    background: 'linear-gradient(135deg, #c084fc, #6366f1)',
+                    padding: '0.6rem 1.4rem',
+                    fontSize: '0.85rem',
+                    opacity: (!newMemberAiId.trim() || addMemberLoading) ? 0.6 : 1
+                  }}
+                >
+                  {addMemberLoading ? 'Adding...' : 'Add Member to Team'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

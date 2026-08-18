@@ -780,12 +780,12 @@ router.post('/review-submission', async (req, res) => {
   try {
     const { studentAiId, eventId, eventTitle, status, rejectionReason, reviewerName } = req.body;
 
-    if (!status || !['APPROVED', 'REJECTED', 'PENDING'].includes(status)) {
-      return res.status(400).json({ success: false, message: 'Valid review status is required (APPROVED or REJECTED).' });
+    if (!status || !['APPROVED', 'REJECTED', 'PENDING', 'RESUBMIT_ALLOWED'].includes(status)) {
+      return res.status(400).json({ success: false, message: 'Valid review status is required (APPROVED, REJECTED, PENDING, or RESUBMIT_ALLOWED).' });
     }
 
-    if (status === 'REJECTED' && (!rejectionReason || !rejectionReason.trim())) {
-      return res.status(400).json({ success: false, message: 'Explanation/Reason for rejection is required.' });
+    if ((status === 'REJECTED' || status === 'RESUBMIT_ALLOWED') && (!rejectionReason || !rejectionReason.trim())) {
+      return res.status(400).json({ success: false, message: 'Explanation/Reason for rejection or resubmission request is required.' });
     }
 
     const cleanAiId = (studentAiId || '').toUpperCase();
@@ -829,7 +829,8 @@ router.post('/review-submission', async (req, res) => {
 
     const reviewUpdate = {
       reviewStatus: status,
-      rejectionReason: status === 'REJECTED' ? rejectionReason.trim() : '',
+      rejectionReason: (status === 'REJECTED' || status === 'RESUBMIT_ALLOWED') ? rejectionReason.trim() : '',
+      allowResubmit: status === 'RESUBMIT_ALLOWED' || status === 'REJECTED',
       reviewedAt: new Date().toISOString(),
       reviewedBy: reviewerName || 'Poster & Paper Reviewer'
     };

@@ -22,9 +22,11 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL'); // 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'
 
-  // Modal State for Reject Explanation
+  // Modal State for Reject Explanation & Resubmit Request
   const [rejectingItem, setRejectingItem] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
+  const [resubmittingItem, setResubmittingItem] = useState(null);
+  const [resubmitReason, setResubmitReason] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
   const fetchSubmissions = async () => {
@@ -281,7 +283,8 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
     total: submissions.length,
     pending: submissions.filter(s => !s.reviewStatus || s.reviewStatus === 'PENDING').length,
     approved: submissions.filter(s => s.reviewStatus === 'APPROVED').length,
-    rejected: submissions.filter(s => s.reviewStatus === 'REJECTED').length
+    rejected: submissions.filter(s => s.reviewStatus === 'REJECTED').length,
+    resubmit: submissions.filter(s => s.reviewStatus === 'RESUBMIT_ALLOWED').length
   };
 
   const presets = isReelsMode ? [
@@ -506,6 +509,7 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
             const sub = item.submission || {};
             const isApproved = item.reviewStatus === 'APPROVED';
             const isRejected = item.reviewStatus === 'REJECTED';
+            const isResubmit = item.reviewStatus === 'RESUBMIT_ALLOWED';
             const fileUrl = sub.posterFile?.path ? getAssetUrl(sub.posterFile.path) : (sub.reelLink || sub.posterLink);
 
             return (
@@ -513,7 +517,7 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
                 key={item.submissionId}
                 style={{
                   background: 'rgba(15, 23, 42, 0.8)',
-                  border: isApproved ? '1px solid rgba(34, 197, 94, 0.4)' : isRejected ? '1px solid rgba(239, 68, 68, 0.4)' : `1px solid ${isReelsMode ? 'rgba(245, 158, 11, 0.3)' : 'rgba(0, 242, 254, 0.3)'}`,
+                  border: isApproved ? '1px solid rgba(34, 197, 94, 0.4)' : isResubmit ? '1px solid rgba(56, 189, 248, 0.4)' : isRejected ? '1px solid rgba(239, 68, 68, 0.4)' : `1px solid ${isReelsMode ? 'rgba(245, 158, 11, 0.3)' : 'rgba(0, 242, 254, 0.3)'}`,
                   borderRadius: '16px',
                   padding: '1.5rem',
                   boxShadow: '0 8px 30px rgba(0, 0, 0, 0.3)'
@@ -545,6 +549,10 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
                     {isApproved ? (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(34, 197, 94, 0.18)', color: '#4ade80', border: '1.5px solid #22c55e', padding: '0.4rem 0.85rem', borderRadius: '8px', fontWeight: '800', fontSize: '0.85rem' }}>
                         <CheckCircle2 size={16} /> APPROVED
+                      </span>
+                    ) : isResubmit ? (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(56, 189, 248, 0.18)', color: '#38bdf8', border: '1.5px solid #0284c7', padding: '0.4rem 0.85rem', borderRadius: '8px', fontWeight: '800', fontSize: '0.85rem' }}>
+                        <RefreshCw size={16} /> RESUBMISSION ALLOWED
                       </span>
                     ) : isRejected ? (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(239, 68, 68, 0.18)', color: '#f87171', border: '1.5px solid #ef4444', padding: '0.4rem 0.85rem', borderRadius: '8px', fontWeight: '800', fontSize: '0.85rem' }}>
@@ -587,10 +595,10 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
                   </div>
                 </div>
 
-                {/* Display Rejection Reason if Rejected */}
-                {isRejected && item.rejectionReason && (
-                  <div style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.4)', padding: '0.85rem 1rem', borderRadius: '10px', marginBottom: '1.25rem', color: '#f87171', fontSize: '0.88rem' }}>
-                    <strong>Rejection Explanation to Student:</strong><br />
+                {/* Display Rejection / Resubmission Reason */}
+                {(isRejected || isResubmit) && item.rejectionReason && (
+                  <div style={{ background: isResubmit ? 'rgba(56, 189, 248, 0.12)' : 'rgba(239, 68, 68, 0.12)', border: isResubmit ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid rgba(239, 68, 68, 0.4)', padding: '0.85rem 1rem', borderRadius: '10px', marginBottom: '1.25rem', color: isResubmit ? '#38bdf8' : '#f87171', fontSize: '0.88rem' }}>
+                    <strong>{isResubmit ? 'Resubmission Feedback to Student:' : 'Rejection Explanation to Student:'}</strong><br />
                     "{item.rejectionReason}"
                   </div>
                 )}
@@ -617,6 +625,31 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
                     }}
                   >
                     <CheckCircle2 size={16} /> {isReelsMode ? 'Approve Reel' : 'Approve Poster'}
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={actionLoading || isResubmit}
+                    onClick={() => {
+                      setResubmittingItem(item);
+                      setResubmitReason(item.rejectionReason || '');
+                    }}
+                    style={{
+                      padding: '0.6rem 1.25rem',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: 'linear-gradient(135deg, #0284c7, #0369a1)',
+                      color: '#ffffff',
+                      fontWeight: '800',
+                      fontSize: '0.85rem',
+                      cursor: isResubmit ? 'not-allowed' : 'pointer',
+                      opacity: isResubmit ? 0.6 : 1,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.4rem'
+                    }}
+                  >
+                    <RefreshCw size={16} /> Allow Resubmit
                   </button>
 
                   <button
@@ -750,6 +783,115 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
                 }}
               >
                 {actionLoading ? 'Saving...' : 'Confirm Rejection'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ALLOW RESUBMISSION MODAL */}
+      {resubmittingItem && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.85)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 9999,
+          padding: '1rem'
+        }}>
+          <div style={{
+            background: 'rgba(15, 23, 42, 0.95)',
+            border: '1.5px solid rgba(56, 189, 248, 0.5)',
+            borderRadius: '20px',
+            padding: '2rem',
+            width: '100%',
+            maxWidth: '520px',
+            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6)'
+          }}>
+            <h3 style={{ fontSize: '1.35rem', fontWeight: '800', color: '#38bdf8', marginTop: 0, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <RefreshCw size={24} /> ALLOW PARTICIPANT TO RESUBMIT
+            </h3>
+            <p style={{ color: 'var(--text-dim)', fontSize: '0.88rem', marginBottom: '1.25rem' }}>
+              Granting resubmission permission for <strong>{resubmittingItem.studentName}</strong> ({resubmittingItem.studentAiId}). The participant will be allowed to upload an updated version of their poster/paper file.
+            </p>
+
+            {/* Template Presets */}
+            <div style={{ marginBottom: '1rem' }}>
+              <div style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-dim)', marginBottom: '0.4rem' }}>
+                QUICK INSTRUCTION PRESETS FOR STUDENT (CLICK TO USE):
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                {presets.map((preset, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setResubmitReason(preset)}
+                    style={{
+                      fontSize: '0.75rem',
+                      background: 'rgba(255, 255, 255, 0.06)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      color: '#e2e8f0',
+                      padding: '0.35rem 0.65rem',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      textAlign: 'left'
+                    }}
+                  >
+                    {preset}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Instructions Textarea */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ fontSize: '0.85rem', fontWeight: '700', color: '#ffffff', marginBottom: '0.5rem', display: 'block' }}>
+                INSTRUCTIONS / REASON FOR RESUBMISSION REQUEST *
+              </label>
+              <textarea
+                rows={4}
+                className="form-control"
+                placeholder="Explain what the student should fix or update before resubmitting..."
+                value={resubmitReason}
+                onChange={(e) => setResubmitReason(e.target.value)}
+                style={{ width: '100%', padding: '0.85rem', borderRadius: '10px', fontSize: '0.92rem', color: '#ffffff', WebkitTextFillColor: '#ffffff', background: 'rgba(15, 23, 42, 0.9)', border: '1px solid rgba(56, 189, 248, 0.4)' }}
+              />
+            </div>
+
+            {/* Modal Buttons */}
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setResubmittingItem(null)}
+                style={{ padding: '0.65rem 1.25rem' }}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={actionLoading || !resubmitReason.trim()}
+                onClick={() => {
+                  handleReviewStatus(resubmittingItem, 'RESUBMIT_ALLOWED', resubmitReason);
+                  setResubmittingItem(null);
+                }}
+                style={{
+                  padding: '0.65rem 1.4rem',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #0284c7, #0369a1)',
+                  color: '#ffffff',
+                  fontWeight: '800',
+                  fontSize: '0.9rem',
+                  cursor: !resubmitReason.trim() ? 'not-allowed' : 'pointer',
+                  opacity: !resubmitReason.trim() ? 0.5 : 1
+                }}
+              >
+                {actionLoading ? 'Saving...' : 'Confirm Allow Resubmit'}
               </button>
             </div>
           </div>

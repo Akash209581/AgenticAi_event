@@ -926,6 +926,258 @@ router.delete('/team/:teamId', requireAdminAuth, async (req, res) => {
 });
 
 /**
+ * POST /cseAI/team/:teamId/add-member
+ * Adds a new member to an existing team (Admin action - Protected)
+ */
+router.post('/team/:teamId/add-member', requireAdminAuth, async (req, res) => {
+  try {
+    const { teamId } = req.params;
+    const { studentAiId } = req.body;
+
+    if (!teamId || !teamId.trim()) {
+      return res.status(400).json({ success: false, message: 'Team ID is required.' });
+    }
+    if (!studentAiId || !studentAiId.trim()) {
+      return res.status(400).json({ success: false, message: 'Student VUCSE AI ID or Reg No is required.' });
+    }
+
+    const cleanTeamId = teamId.trim();
+    const targetAiId = studentAiId.trim().toUpperCase();
+
+    let targetTeam = null;
+    let targetUser = null;
+
+    if (mongoose.connection.readyState === 1) {
+      targetTeam = await Team.findOne({ teamId: cleanTeamId });
+      if (!targetTeam) {
+        return res.status(404).json({ success: false, message: `Team with ID '${cleanTeamId}' not found.` });
+      }
+      targetUser = await User.findOne({
+        $or: [
+          { aiId: targetAiId },
+          { regNo: new RegExp(`^${targetAiId}$`, 'i') }
+        ]
+      });
+    } else {
+      targetTeam = memoryTeams.find(t => t.teamId === cleanTeamId);
+      if (!targetTeam) {
+        return res.status(404).json({ success: false, message: `Team with ID '${cleanTeamId}' not found.` });
+      }
+      targetUser = memoryUsers.find(u =>
+        (u.aiId && u.aiId.toUpperCase() === targetAiId) ||
+        (u.regNo && u.regNo.toUpperCase() === targetAiId)
+      );
+    }
+
+    if (!targetUser) {
+      return res.status(404).json({ success: false, message: `Student '${targetAiId}' not found in system registrations.` });
+    }
+
+    const cleanUserAiId = targetUser.aiId.toUpperCase();
+
+    // Check if student is already in this team
+    if (targetTeam.members && targetTeam.members.some(m => m.aiId && m.aiId.toUpperCase() === cleanUserAiId)) {
+      return res.status(400).json({ success: false, message: `Student '${targetUser.name}' (${cleanUserAiId}) is already a member of Team '${targetTeam.teamName}'.` });
+    }
+
+    // Check single-team constraint: student cannot be in another team for this event
+    let existingTeams = [];
+    if (mongoose.connection.readyState === 1) {
+      existingTeams = await Team.find({ eventId: targetTeam.eventId });
+    } else {
+      existingTeams = memoryTeams.filter(t => t.eventId === targetTeam.eventId);
+    }
+
+    const conflictingTeam = existingTeams.find(t =>
+      t.members && t.members.some(m => m.aiId && m.aiId.toUpperCase() === cleanUserAiId)
+    );
+    if (conflictingTeam) {
+      return res.status(400).json({
+        success: false,
+        message: `Student '${targetUser.name}' (${cleanUserAiId}) is already registered in team '${conflictingTeam.teamName}' for this event.`
+      });
+    }
+
+    // Add member to team
+    const newMemberObj = {
+      name: targetUser.name,
+      aiId: targetUser.aiId,
+      regNo: targetUser.regNo,
+      year: targetUser.year,
+      gender: targetUser.gender || 'Unspecified',
+      phone: targetUser.phone || '',
+      isLeader: false
+    };
+
+    targetTeam.members.push(newMemberObj);
+
+    if (mongoose.connection.readyState === 1) {
+      targetTeam.markModified('members');
+      await targetTeam.save();
+    }
+
+    // Ensure event is in student's registeredEvents
+    const teamEventEntry = {
+      id: targetTeam.eventId,
+      title: targetTeam.eventTitle,
+      categoryName: targetTeam.categoryName || 'TEAM EVENT',
+      categoryId: 'team',
+      teamId: targetTeam.teamId,
+      teamName: targetTeam.teamName,
+      isTeam: true,
+      isLeader: false,
+      registeredAt: new Date().toISOString()
+    };
+
+    if (mongoose.connection.readyState === 1) {
+      const userDoc = await User.findOne({ aiId: cleanUserAiId });
+      if (userDoc) {
+        if (!userDoc.registeredEvents) userDoc.registeredEvents = [];
+        const existingIdx = userDoc.registeredEvents.findIndex(e => e.id === targetTeam.eventId || e.teamId === targetTeam.teamId);
+        if (existingIdx !== -1) {
+          userDoc.registeredEvents[existingIdx] = {
+            ...userDoc.registeredEvents[existingIdx],
+            ...teamEventEntry
+          };
+        } else {
+          userDoc.registeredEvents.push(teamEventEntry);
+        }
+        userDoc.markModified('registeredEvents');
+        await userDoc.save();
+      }
+    } else {
+      if (!targetUser.registeredEvents) targetUser.registeredEvents = [];
+      const existingIdx = targetUser.registeredEvents.findIndex(e => e.id === targetTeam.eventId || e.teamId === targetTeam.teamId);
+      if (existingIdx !== -1) {
+        targetUser.registeredEvents[existingIdx] = {
+          ...targetUser.registeredEvents[existingIdx],
+          ...teamEventEntry
+        };
+      } else {
+        targetUser.registeredEvents.push(teamEventEntry);
+      }
+    }
+
+    return res.json({
+      success: true,
+      message: `Student '${targetUser.name}' (${cleanUserAiId}) added to Team '${targetTeam.teamName}' successfully!`,
+      team: targetTeam
+    });
+  } catch (error) {
+    console.error('[Add Team Member Error]', error);
+    return res.status(500).json({ success: false, message: error.message || 'Server error adding team member' });
+  }
+});
+
+/**
+ * POST /cseAI/team/:teamId/remove-member
+ * Removes a member from an existing team (Admin action - Protected)
+ */
+router.post('/team/:teamId/remove-member', requireAdminAuth, async (req, res) => {
+  try {
+    const { teamId } = req.params;
+    const { memberAiId } = req.body;
+
+    if (!teamId || !teamId.trim()) {
+      return res.status(400).json({ success: false, message: 'Team ID is required.' });
+    }
+    if (!memberAiId || !memberAiId.trim()) {
+      return res.status(400).json({ success: false, message: 'Member AI ID is required.' });
+    }
+
+    const cleanTeamId = teamId.trim();
+    const cleanMemberAiId = memberAiId.trim().toUpperCase();
+
+    let targetTeam = null;
+
+    if (mongoose.connection.readyState === 1) {
+      targetTeam = await Team.findOne({ teamId: cleanTeamId });
+    } else {
+      targetTeam = memoryTeams.find(t => t.teamId === cleanTeamId);
+    }
+
+    if (!targetTeam) {
+      return res.status(404).json({ success: false, message: `Team with ID '${cleanTeamId}' not found.` });
+    }
+
+    const memberIdx = (targetTeam.members || []).findIndex(m => m.aiId && m.aiId.toUpperCase() === cleanMemberAiId);
+    if (memberIdx === -1) {
+      return res.status(404).json({ success: false, message: `Member '${cleanMemberAiId}' is not in Team '${targetTeam.teamName}'.` });
+    }
+
+    const removedMember = targetTeam.members[memberIdx];
+    const wasLeader = Boolean(removedMember.isLeader);
+
+    targetTeam.members.splice(memberIdx, 1);
+
+    // If team has 0 members left, delete team entirely
+    if (targetTeam.members.length === 0) {
+      if (mongoose.connection.readyState === 1) {
+        await Team.deleteOne({ teamId: cleanTeamId });
+      } else {
+        const tIdx = memoryTeams.findIndex(t => t.teamId === cleanTeamId);
+        if (tIdx !== -1) memoryTeams.splice(tIdx, 1);
+      }
+    } else {
+      // If removed member was leader, assign leadership to next member
+      if (wasLeader && targetTeam.members.length > 0) {
+        targetTeam.members[0].isLeader = true;
+        const newLeaderAiId = targetTeam.members[0].aiId;
+
+        // Update new leader user record
+        if (mongoose.connection.readyState === 1) {
+          const newLeaderUser = await User.findOne({ aiId: newLeaderAiId });
+          if (newLeaderUser && Array.isArray(newLeaderUser.registeredEvents)) {
+            const evIdx = newLeaderUser.registeredEvents.findIndex(e => e.teamId === cleanTeamId);
+            if (evIdx !== -1) {
+              newLeaderUser.registeredEvents[evIdx].isLeader = true;
+              newLeaderUser.markModified('registeredEvents');
+              await newLeaderUser.save();
+            }
+          }
+        } else {
+          const newLeaderUser = memoryUsers.find(u => u.aiId && u.aiId.toUpperCase() === newLeaderAiId.toUpperCase());
+          if (newLeaderUser && Array.isArray(newLeaderUser.registeredEvents)) {
+            const evIdx = newLeaderUser.registeredEvents.findIndex(e => e.teamId === cleanTeamId);
+            if (evIdx !== -1) {
+              newLeaderUser.registeredEvents[evIdx].isLeader = true;
+            }
+          }
+        }
+      }
+
+      if (mongoose.connection.readyState === 1) {
+        targetTeam.markModified('members');
+        await targetTeam.save();
+      }
+    }
+
+    // Clean up removed user's registeredEvents
+    if (mongoose.connection.readyState === 1) {
+      await User.updateOne(
+        { aiId: cleanMemberAiId },
+        { $pull: { registeredEvents: { teamId: cleanTeamId } } }
+      );
+    } else {
+      const removedUser = memoryUsers.find(u => u.aiId && u.aiId.toUpperCase() === cleanMemberAiId);
+      if (removedUser && Array.isArray(removedUser.registeredEvents)) {
+        removedUser.registeredEvents = removedUser.registeredEvents.filter(e => e.teamId !== cleanTeamId);
+      }
+    }
+
+    return res.json({
+      success: true,
+      message: `Member '${removedMember.name}' (${cleanMemberAiId}) removed from Team '${targetTeam.teamName}'.`,
+      team: targetTeam.members.length > 0 ? targetTeam : null
+    });
+
+  } catch (error) {
+    console.error('[Remove Team Member Error]', error);
+    return res.status(500).json({ success: false, message: error.message || 'Server error removing team member' });
+  }
+});
+
+/**
  * POST /cseAI/admin/create-backup
  * Manual or automatic backup trigger for DB records & poster files
  */
