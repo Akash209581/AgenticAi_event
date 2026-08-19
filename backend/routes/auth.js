@@ -225,25 +225,17 @@ router.post('/enroll-event', async (req, res) => {
     });
 
     if (!exists) {
-      // Check if registration deadline has passed for this event
-      const isBootcamp = cleanTargetTitle.includes('bootcamp') || targetId.includes('bootcamp');
-      if (isBootcamp) {
+      // Check if event is closed for registration (Hackathon, Prompt Combat, Bootcamp)
+      const checkTitle = String(event.title || cleanTargetTitle || '').toLowerCase();
+      const checkEvtId = String(event.id || targetId || '').toLowerCase();
+      const isClosed = checkEvtId === 'technical-1' || checkEvtId === 'technical-2' || checkEvtId === 'bootcamp-1' ||
+        checkTitle.includes('hackathon') || checkTitle.includes('prompt') || checkTitle.includes('bootcamp');
+      
+      if (isClosed) {
         return res.status(400).json({
           success: false,
-          message: `Registration for '${event.title || 'AI AGENT BOOTCAMP'}' has closed.`
+          message: `Registration for '${event.title || 'this event'}' has been closed.`
         });
-      } else if (event.registrationDeadline) {
-        const cleanStr = String(event.registrationDeadline).replace(/(\d+)(st|nd|rd|th)/i, '$1').trim();
-        const parsed = new Date(cleanStr);
-        if (!isNaN(parsed.getTime())) {
-          parsed.setHours(23, 59, 59, 999);
-          if (new Date() > parsed) {
-            return res.status(400).json({
-              success: false,
-              message: `Registration for '${event.title}' ended on ${event.registrationDeadline}.`
-            });
-          }
-        }
       }
 
       const compositeId = (event.categoryId && event.id && !String(event.id).includes('-'))
