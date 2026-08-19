@@ -51,7 +51,7 @@ export const eventsRulesData = {
     cardTitle: 'AI PROMPT COMBAT',
     image: '/images/event_prompt_1786084056457.png',
     whatsappGroupLink: 'https://chat.whatsapp.com/Dip9w8RQeulBuPvgcaPas0?s=cl&p=a&ilr=4',
-    registrationDeadline: '26 August 2026',
+    registrationDeadline: 'Registrations Closed',
     eventDate: '29 August 2026',
     reportingTime: '10:00 AM',
     teamSize: '2 to 3 members per team',
@@ -454,19 +454,6 @@ export const eventsRulesData = {
       { name: 'Google Student Ambassador', phone: '+91 93929 60026' }
     ]
   },
-  'technical-2': {
-    id: '2',
-    categoryId: 'technical',
-    categoryName: 'TECHNICAL EVENTS',
-    title: 'AI PROMPT COMBAT',
-    cardTitle: 'AI PROMPT COMBAT',
-    image: '/images/event_prompt_1786084056457.png',
-    whatsappGroupLink: 'https://chat.whatsapp.com/Dip9w8RQeulBuPvgcaPas0?s=cl&p=a&ilr=4',
-    registrationDeadline: 'Registration Closed',
-    eventDate: '29 August 2026',
-    teamSize: '2 to 3 members per team',
-    duration: '3 hours (Same Day)'
-  }
 };
 
 
