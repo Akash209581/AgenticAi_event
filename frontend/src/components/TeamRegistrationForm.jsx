@@ -116,7 +116,10 @@ const TEAM_EVENTS = [
 
 export default function TeamRegistrationForm({ onBack, onSuccess, currentUser, initialEventId }) {
   const findMatchingEventId = (evId) => {
-    if (!evId) return TEAM_EVENTS[0].id;
+    if (!evId) {
+      const openEvent = TEAM_EVENTS.find(e => !isRegistrationClosed(e.registrationDeadline, e.title, e.id));
+      return openEvent ? openEvent.id : TEAM_EVENTS[0].id;
+    }
     const cleanId = String(evId).toLowerCase().trim();
     const match = TEAM_EVENTS.find(e => 
       e.id === evId ||
@@ -610,45 +613,71 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser, i
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.85rem' }}>
           {TEAM_EVENTS.map((ev) => {
+            const isClosed = isRegistrationClosed(ev.registrationDeadline, ev.title, ev.id);
             const isSelected = selectedEventId === ev.id;
             return (
               <div
                 key={ev.id}
-                onClick={() => handleSelectEvent(ev.id)}
+                onClick={() => {
+                  handleSelectEvent(ev.id);
+                }}
                 className={`event-card ${isSelected ? 'active' : ''}`}
                 style={{
-                  background: isSelected ? 'rgba(0, 242, 254, 0.08)' : 'rgba(15, 23, 42, 0.6)',
-                  border: isSelected ? '2px solid var(--primary-cyan)' : '1px solid rgba(255, 255, 255, 0.08)',
+                  background: isClosed
+                    ? 'rgba(239, 68, 68, 0.08)'
+                    : isSelected
+                    ? 'rgba(0, 242, 254, 0.08)'
+                    : 'rgba(15, 23, 42, 0.6)',
+                  border: isClosed
+                    ? (isSelected ? '2px solid #ef4444' : '1px solid rgba(239, 68, 68, 0.4)')
+                    : isSelected
+                    ? '2px solid var(--primary-cyan)'
+                    : '1px solid rgba(255, 255, 255, 0.08)',
                   borderRadius: '16px',
                   padding: '1.75rem',
                   cursor: 'pointer',
+                  opacity: isClosed && !isSelected ? 0.75 : 1,
                   transition: 'all 0.25s ease',
                   position: 'relative'
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.4rem' }}>
                   <span style={{
                     fontSize: '0.75rem',
                     fontWeight: '800',
-                    color: 'var(--primary-cyan)',
-                    background: 'rgba(0, 242, 254, 0.12)',
+                    color: isClosed ? '#f87171' : 'var(--primary-cyan)',
+                    background: isClosed ? 'rgba(239, 68, 68, 0.15)' : 'rgba(0, 242, 254, 0.12)',
                     padding: '0.25rem 0.6rem',
                     borderRadius: '50px',
-                    border: '1px solid rgba(0, 242, 254, 0.3)'
+                    border: isClosed ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(0, 242, 254, 0.3)'
                   }}>
                     {ev.badgeText}
                   </span>
+
+                  {isClosed && (
+                    <span style={{
+                      fontSize: '0.72rem',
+                      fontWeight: '800',
+                      color: '#ffffff',
+                      background: '#ef4444',
+                      padding: '0.25rem 0.6rem',
+                      borderRadius: '6px',
+                      boxShadow: '0 0 10px rgba(239, 68, 68, 0.4)'
+                    }}>
+                      REGISTRATION CLOSED
+                    </span>
+                  )}
                 </div>
 
-                <h4 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#ffffff', marginBottom: '0.5rem' }}>
+                <h4 style={{ fontSize: '1.25rem', fontWeight: '800', color: isClosed ? '#f87171' : '#ffffff', marginBottom: '0.5rem' }}>
                   {ev.title}
                 </h4>
                 <p style={{ color: 'var(--text-dim)', fontSize: '0.88rem', lineHeight: '1.5', marginBottom: '1.25rem' }}>
-                  {ev.note}
+                  {isClosed ? '🚫 Registrations for this event have been officially closed.' : ev.note}
                 </p>
 
-                <div style={{ fontSize: '0.82rem', fontWeight: '700', color: isSelected ? 'var(--primary-cyan)' : 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  {isSelected ? '✓ Selected — Form Team Below' : 'Click to Select & Form Team →'}
+                <div style={{ fontSize: '0.82rem', fontWeight: '700', color: isClosed ? '#ef4444' : isSelected ? 'var(--primary-cyan)' : 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  {isClosed ? '🔒 Registration Closed' : isSelected ? '✓ Selected — Form Team Below' : 'Click to Select & Form Team →'}
                 </div>
               </div>
             );
@@ -973,36 +1002,50 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser, i
         )}
 
         {/* Submit Button */}
-        <button
-          type="submit"
-          className="btn btn-primary"
-          disabled={submitLoading || currentUserHasSubmittedSelectedEvent}
-          style={{
-            width: '100%',
-            padding: '1.15rem',
-            fontSize: '1.15rem',
-            fontWeight: '800',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: '0.6rem',
-            marginTop: '1rem',
-            opacity: currentUserHasSubmittedSelectedEvent ? 0.5 : 1,
-            cursor: currentUserHasSubmittedSelectedEvent ? 'not-allowed' : 'pointer'
-          }}
-        >
-          {submitLoading ? (
-            'REGISTERING TEAM...'
-          ) : currentUserHasSubmittedSelectedEvent ? (
-            <>
-              <AlertCircle size={22} /> TEAM REGISTRATION DISABLED (ALREADY SUBMITTED)
-            </>
-          ) : (
-            <>
-              <Sparkles size={22} /> REGISTER TEAM FOR {selectedEvent.shortName.toUpperCase()}
-            </>
-          )}
-        </button>
+        {(() => {
+          const isSelectedClosed = isRegistrationClosed(selectedEvent.registrationDeadline, selectedEvent.title, selectedEvent.id);
+          const isDisabled = submitLoading || currentUserHasSubmittedSelectedEvent || isSelectedClosed;
+
+          return (
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={isDisabled}
+              style={{
+                width: '100%',
+                padding: '1.15rem',
+                fontSize: '1.15rem',
+                fontWeight: '800',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '0.6rem',
+                marginTop: '1rem',
+                background: isSelectedClosed ? 'rgba(239, 68, 68, 0.2)' : undefined,
+                borderColor: isSelectedClosed ? '#ef4444' : undefined,
+                color: isSelectedClosed ? '#f87171' : undefined,
+                opacity: isDisabled ? 0.6 : 1,
+                cursor: isDisabled ? 'not-allowed' : 'pointer'
+              }}
+            >
+              {submitLoading ? (
+                'REGISTERING TEAM...'
+              ) : isSelectedClosed ? (
+                <>
+                  <Lock size={22} /> REGISTRATIONS CLOSED FOR {selectedEvent.shortName.toUpperCase()}
+                </>
+              ) : currentUserHasSubmittedSelectedEvent ? (
+                <>
+                  <AlertCircle size={22} /> TEAM REGISTRATION DISABLED (ALREADY SUBMITTED)
+                </>
+              ) : (
+                <>
+                  <Sparkles size={22} /> REGISTER TEAM FOR {selectedEvent.shortName.toUpperCase()}
+                </>
+              )}
+            </button>
+          );
+        })()}
       </form>
     </div>
   );

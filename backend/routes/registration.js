@@ -141,30 +141,56 @@ router.post('/register', async (req, res) => {
     // 4. Duplicate Checks (if DB is connected)
     if (mongoose.connection.readyState === 1) {
       const existingUser = await User.findOne({
-        $or: [{ email: cleanEmail }, { regNo: cleanRegNo }]
+        $or: [{ email: cleanEmail }, { regNo: cleanRegNo }, { phone: cleanPhone }]
       });
 
       if (existingUser) {
-        if (existingUser.email === cleanEmail) {
-          return res.status(400).json({
-            success: false,
-            message: `User with email '${cleanEmail}' is already registered (VUCSE ID: ${existingUser.aiId}).`
-          });
-        }
         if (existingUser.regNo === cleanRegNo) {
           return res.status(400).json({
             success: false,
-            message: `Registration number '${cleanRegNo}' is already registered (VUCSE ID: ${existingUser.aiId}).`
+            message: 'This Registration Number is already registered.'
+          });
+        }
+        if (existingUser.email === cleanEmail) {
+          return res.status(400).json({
+            success: false,
+            message: 'This Email address is already registered.'
+          });
+        }
+        if (existingUser.phone === cleanPhone) {
+          return res.status(400).json({
+            success: false,
+            message: 'This Phone number is already registered.'
           });
         }
       }
     } else {
       // In-memory check
-      const existingMem = memoryUsers.find(u => u.email === cleanEmail || u.regNo === cleanRegNo);
+      const existingMem = memoryUsers.find(
+        u => u.email === cleanEmail || u.regNo === cleanRegNo || u.phone === cleanPhone
+      );
       if (existingMem) {
+        if (existingMem.regNo === cleanRegNo) {
+          return res.status(400).json({
+            success: false,
+            message: 'This Registration Number is already registered.'
+          });
+        }
+        if (existingMem.email === cleanEmail) {
+          return res.status(400).json({
+            success: false,
+            message: 'This Email address is already registered.'
+          });
+        }
+        if (existingMem.phone === cleanPhone) {
+          return res.status(400).json({
+            success: false,
+            message: 'This Phone number is already registered.'
+          });
+        }
         return res.status(400).json({
           success: false,
-          message: `User with email or registration number is already registered (VUCSE ID: ${existingMem.aiId}).`
+          message: 'The provided registration details are already registered.'
         });
       }
     }
@@ -214,9 +240,31 @@ router.post('/register', async (req, res) => {
         }
         break; // Success! Break out of retry loop
       } catch (error) {
-        if (error.code === 11000 && attempt < MAX_RETRIES) {
-          console.warn(`[Collision Retry] Duplicate AI ID collision on attempt ${attempt}, retrying...`);
-          continue;
+        if (error.code === 11000) {
+          const keyPattern = error.keyPattern || error.keyValue || {};
+          const errStr = JSON.stringify(keyPattern).toLowerCase();
+          if (errStr.includes('regno') || error.message?.includes('regNo')) {
+            return res.status(400).json({
+              success: false,
+              message: 'This Registration Number is already registered.'
+            });
+          }
+          if (errStr.includes('email') || error.message?.includes('email')) {
+            return res.status(400).json({
+              success: false,
+              message: 'This Email address is already registered.'
+            });
+          }
+          if (errStr.includes('phone') || error.message?.includes('phone')) {
+            return res.status(400).json({
+              success: false,
+              message: 'This Phone number is already registered.'
+            });
+          }
+          if (attempt < MAX_RETRIES) {
+            console.warn(`[Collision Retry] Duplicate AI ID collision on attempt ${attempt}, retrying...`);
+            continue;
+          }
         }
         throw error;
       }
@@ -585,10 +633,15 @@ router.post('/team-register', async (req, res) => {
     const cleanEventId = eventId.trim();
     const cleanEventTitle = (eventTitle || '').trim() || cleanEventId;
 
-    if (cleanEventId === 'technical-1' || cleanEventTitle.toLowerCase().includes('hackathon')) {
+    if (
+      cleanEventId === 'technical-1' ||
+      cleanEventId === 'technical-2' ||
+      cleanEventTitle.toLowerCase().includes('hackathon') ||
+      cleanEventTitle.toLowerCase().includes('prompt')
+    ) {
       return res.status(400).json({
         success: false,
-        message: 'Registration for AGENTIC AI HACKATHON has been closed.'
+        message: `Registration for ${cleanEventTitle || 'this event'} has been closed.`
       });
     }
 

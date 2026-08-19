@@ -152,10 +152,15 @@ router.post('/enroll-event', async (req, res) => {
 
     const checkTitle = String(event.title || '').toLowerCase();
     const checkEvtId = String(event.id || '').toLowerCase();
-    if (checkEvtId === 'technical-1' || checkTitle.includes('hackathon')) {
+    if (
+      checkEvtId === 'technical-1' ||
+      checkEvtId === 'technical-2' ||
+      checkTitle.includes('hackathon') ||
+      checkTitle.includes('prompt')
+    ) {
       return res.status(400).json({
         success: false,
-        message: 'Registration for AGENTIC AI HACKATHON has been closed.'
+        message: `Registration for ${event.title || 'this event'} has been closed.`
       });
     }
 

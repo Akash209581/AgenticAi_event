@@ -453,6 +453,19 @@ export const eventsRulesData = {
     coordinators: [
       { name: 'Google Student Ambassador', phone: '+91 93929 60026' }
     ]
+  },
+  'technical-2': {
+    id: '2',
+    categoryId: 'technical',
+    categoryName: 'TECHNICAL EVENTS',
+    title: 'AI PROMPT COMBAT',
+    cardTitle: 'AI PROMPT COMBAT',
+    image: '/images/event_prompt_1786084056457.png',
+    whatsappGroupLink: 'https://chat.whatsapp.com/Dip9w8RQeulBuPvgcaPas0?s=cl&p=a&ilr=4',
+    registrationDeadline: 'Registration Closed',
+    eventDate: '29 August 2026',
+    teamSize: '2 to 3 members per team',
+    duration: '3 hours (Same Day)'
   }
 };
 
@@ -466,8 +479,11 @@ export function isRegistrationClosed(deadlineString, eventTitle = '', eventId = 
   const isHackathon = (eventTitle && eventTitle.toLowerCase().includes('hackathon')) ||
     (eventId && (eventId.toLowerCase().includes('hackathon') || eventId === 'technical-1' || eventId === '1'));
 
-  // Bootcamp & Hackathon registrations are closed immediately
-  if (isBootcamp || isHackathon) {
+  const isPromptCombat = (eventTitle && eventTitle.toLowerCase().includes('prompt')) ||
+    (eventId && (eventId.toLowerCase().includes('prompt') || eventId === 'technical-2' || eventId === '2'));
+
+  // Bootcamp, Hackathon & Prompt Combat registrations are closed immediately
+  if (isBootcamp || isHackathon || isPromptCombat) {
     return true;
   }
 

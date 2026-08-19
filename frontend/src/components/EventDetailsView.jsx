@@ -213,7 +213,24 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
                         <span>Registered for Event</span>
                       </div>
                     )}
-                    {isTeamEvent && renderTeamBtn()}
+                    {isTeamEvent && !isEventClosed && renderTeamBtn()}
+                    {isTeamEvent && isEventClosed && (
+                      <div
+                        className="card-quick-register-btn"
+                        style={{
+                          marginTop: '0.65rem',
+                          background: 'rgba(239, 68, 68, 0.15)',
+                          border: '1px solid rgba(239, 68, 68, 0.4)',
+                          color: '#f87171',
+                          justifyContent: 'center',
+                          cursor: 'not-allowed',
+                          fontWeight: '700'
+                        }}
+                      >
+                        <Lock size={18} />
+                        <span>Team Registrations Closed</span>
+                      </div>
+                    )}
                   </div>
                 );
               }

@@ -1699,20 +1699,37 @@ select::placeholder {
 
 .events-portrait-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   justify-content: center;
   gap: 1.25rem;
   width: 100%;
-  max-width: 1380px;
+  max-width: 1480px;
   margin: 1.5rem auto 3rem;
   padding: 0 1rem;
 }
 
 .events-portrait-grid.sub-portrait-grid {
+  display: grid;
   grid-template-columns: repeat(var(--sub-cols, 4), minmax(0, 1fr));
+  gap: 1.25rem;
+  width: 100%;
+  max-width: 1480px;
+  margin: 1.5rem auto 3rem;
+  padding: 0 1rem;
+}
+
+.events-portrait-grid.sub-portrait-grid.single-card-grid {
+  display: flex;
+  justify-content: center;
+}
+
+.sub-portrait-grid.single-card-grid .portrait-event-card {
+  max-width: 340px;
+  width: 100%;
 }
 
 .portrait-event-card {
+  width: 100%;
   background: transparent;
   border: none;
   padding: 0;
@@ -1732,7 +1749,7 @@ select::placeholder {
 
 .portrait-image-stage {
   width: 100%;
-  height: 340px;
+  height: 419px;
   border-radius: 18px;
   overflow: hidden;
   position: relative;
@@ -1753,7 +1770,7 @@ select::placeholder {
 .portrait-card-img {
   width: 100%;
   height: 100%;
-  object-fit: fill;
+  object-fit: cover;
   display: block;
   transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
@@ -1831,30 +1848,40 @@ select::placeholder {
 }
 
 @media (max-width: 1024px) {
-  .events-portrait-grid,
+  .events-portrait-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    max-width: 740px;
+  }
+
   .events-portrait-grid.sub-portrait-grid {
-    grid-template-columns: repeat(2, minmax(0, 340px));
-    gap: 1.75rem;
+    gap: 1.5rem;
     max-width: 740px;
   }
 
   .portrait-image-stage {
-    height: 320px;
+    height: 380px;
   }
 }
 
 @media (max-width: 768px) {
-  .events-portrait-grid,
-  .events-portrait-grid.sub-portrait-grid {
+  .events-portrait-grid {
     grid-template-columns: 1fr;
     gap: 1.5rem;
-    max-width: 320px;
+    max-width: 340px;
+    margin: 1rem auto 2.5rem;
+    padding: 0 1rem;
+  }
+
+  .events-portrait-grid.sub-portrait-grid {
+    gap: 1.5rem;
+    max-width: 340px;
     margin: 1rem auto 2.5rem;
     padding: 0 1rem;
   }
 
   .portrait-image-stage {
-    height: 290px;
+    height: 340px;
     border-radius: 16px;
   }
 }

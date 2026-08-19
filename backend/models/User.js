@@ -42,6 +42,7 @@ const userSchema = new mongoose.Schema(
     phone: {
       type: String,
       required: [true, 'Phone Number is mandatory'],
+      unique: true,
       trim: true,
       validate: {
         validator: function (v) {
@@ -80,6 +81,7 @@ const userSchema = new mongoose.Schema(
 // -------------------------------------------------------------------
 userSchema.index({ email: 1 });
 userSchema.index({ regNo: 1 });
+userSchema.index({ phone: 1 });
 userSchema.index({ aiId: 1 });
 
 export const User = mongoose.models.User || mongoose.model('User', userSchema);
