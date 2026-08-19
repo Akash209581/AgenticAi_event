@@ -128,6 +128,10 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser, i
       (e.title && e.title.toLowerCase().includes(cleanId)) ||
       (e.shortName && e.shortName.toLowerCase().includes(cleanId))
     );
+    if (match && isRegistrationClosed(match.registrationDeadline, match.title, match.id)) {
+      const openEvent = TEAM_EVENTS.find(e => !isRegistrationClosed(e.registrationDeadline, e.title, e.id));
+      return openEvent ? openEvent.id : match.id;
+    }
     return match ? match.id : TEAM_EVENTS[0].id;
   };
 
@@ -618,25 +622,32 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser, i
             return (
               <div
                 key={ev.id}
-                onClick={() => {
+                onClick={(e) => {
+                  if (isClosed) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                  }
                   handleSelectEvent(ev.id);
                 }}
                 className={`event-card ${isSelected ? 'active' : ''}`}
                 style={{
                   background: isClosed
-                    ? 'rgba(239, 68, 68, 0.08)'
+                    ? 'rgba(239, 68, 68, 0.05)'
                     : isSelected
                     ? 'rgba(0, 242, 254, 0.08)'
                     : 'rgba(15, 23, 42, 0.6)',
                   border: isClosed
-                    ? (isSelected ? '2px solid #ef4444' : '1px solid rgba(239, 68, 68, 0.4)')
+                    ? '1.5px solid rgba(239, 68, 68, 0.3)'
                     : isSelected
                     ? '2px solid var(--primary-cyan)'
                     : '1px solid rgba(255, 255, 255, 0.08)',
                   borderRadius: '16px',
                   padding: '1.75rem',
-                  cursor: 'pointer',
-                  opacity: isClosed && !isSelected ? 0.75 : 1,
+                  cursor: isClosed ? 'not-allowed' : 'pointer',
+                  opacity: isClosed ? 0.55 : 1,
+                  pointerEvents: isClosed ? 'none' : 'auto',
+                  userSelect: isClosed ? 'none' : 'auto',
                   transition: 'all 0.25s ease',
                   position: 'relative'
                 }}

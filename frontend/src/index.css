@@ -1709,23 +1709,21 @@ select::placeholder {
 }
 
 .events-portrait-grid.sub-portrait-grid {
-  display: grid;
-  grid-template-columns: repeat(var(--sub-cols, 4), minmax(0, 1fr));
-  gap: 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: stretch;
+  gap: 1.5rem;
   width: 100%;
   max-width: 1480px;
   margin: 1.5rem auto 3rem;
   padding: 0 1rem;
 }
 
-.events-portrait-grid.sub-portrait-grid.single-card-grid {
-  display: flex;
-  justify-content: center;
-}
-
-.sub-portrait-grid.single-card-grid .portrait-event-card {
-  max-width: 340px;
+.sub-portrait-grid .portrait-event-card {
   width: 100%;
+  max-width: 340px;
+  flex: 0 1 340px;
 }
 
 .portrait-event-card {
