@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Lock, FileText, CheckCircle2, XCircle, Clock, Search, RefreshCw, Filter, ExternalLink, MessageSquare, AlertTriangle, User, Users, Sparkles, ArrowLeft, LogOut, Download, Video } from 'lucide-react';
-import { apiFetch, getAssetUrl } from '../config/api';
+import { Shield, Lock, FileText, CheckCircle2, XCircle, Clock, Search, RefreshCw, Filter, ExternalLink, MessageSquare, AlertTriangle, User, Users, Sparkles, ArrowLeft, LogOut, Download, Video, Eye } from 'lucide-react';
+import { apiFetch, getAssetUrl, getUploadUrl } from '../config/api';
 
 export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
   const isReelsMode = mode === 'reels' || mode === 'reels-reviewer' || (typeof window !== 'undefined' && window.location.pathname.includes('/reels'));
@@ -22,12 +22,64 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL'); // 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'
 
-  // Modal State for Reject Explanation & Resubmit Request
+  // Modal State for Reject Explanation, Resubmit Request & Document Preview
   const [rejectingItem, setRejectingItem] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [resubmittingItem, setResubmittingItem] = useState(null);
   const [resubmitReason, setResubmitReason] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [previewModalItem, setPreviewModalItem] = useState(null);
+
+  // Helper to extract previewable URL from any submission structure
+  const getSubmissionFileUrl = (sub) => {
+    if (!sub) return null;
+
+    if (sub.posterLink && String(sub.posterLink).trim()) return String(sub.posterLink).trim();
+    if (sub.reelLink && String(sub.reelLink).trim()) return String(sub.reelLink).trim();
+    if (sub.paperLink && String(sub.paperLink).trim()) return String(sub.paperLink).trim();
+    if (sub.driveLink && String(sub.driveLink).trim()) return String(sub.driveLink).trim();
+    if (sub.fileUrl && String(sub.fileUrl).trim()) return String(sub.fileUrl).trim();
+
+    if (sub.posterFile) {
+      if (typeof sub.posterFile === 'string') {
+        const p = sub.posterFile.trim();
+        if (p.startsWith('data:') || p.startsWith('http://') || p.startsWith('https://')) return p;
+        return getUploadUrl(p) || getAssetUrl(p);
+      }
+      const pathCandidate = sub.posterFile.serverUrl ||
+                            sub.posterFile.savedDiskPath ||
+                            sub.posterFile.filePath ||
+                            sub.posterFile.path ||
+                            sub.posterFile.url ||
+                            sub.posterFile.fileData;
+      if (pathCandidate && typeof pathCandidate === 'string' && pathCandidate.trim()) {
+        const ft = pathCandidate.trim();
+        if (ft.startsWith('data:') || ft.startsWith('http://') || ft.startsWith('https://')) return ft;
+        return getUploadUrl(ft) || getAssetUrl(ft);
+      }
+    }
+
+    if (sub.paperFile) {
+      if (typeof sub.paperFile === 'string') {
+        const p = sub.paperFile.trim();
+        if (p.startsWith('data:') || p.startsWith('http://') || p.startsWith('https://')) return p;
+        return getUploadUrl(p) || getAssetUrl(p);
+      }
+      const pathCandidate = sub.paperFile.serverUrl ||
+                            sub.paperFile.savedDiskPath ||
+                            sub.paperFile.filePath ||
+                            sub.paperFile.path ||
+                            sub.paperFile.url ||
+                            sub.paperFile.fileData;
+      if (pathCandidate && typeof pathCandidate === 'string' && pathCandidate.trim()) {
+        const ft = pathCandidate.trim();
+        if (ft.startsWith('data:') || ft.startsWith('http://') || ft.startsWith('https://')) return ft;
+        return getUploadUrl(ft) || getAssetUrl(ft);
+      }
+    }
+
+    return null;
+  };
 
   const fetchSubmissions = async () => {
     setLoading(true);
@@ -46,7 +98,7 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
           if (isReelsMode) {
             return eId === 'creative-1' || title.includes('reel') || Boolean(sub.reelLink);
           } else {
-            return (eId === 'technical-3' || title.includes('poster') || title.includes('paper') || Boolean(sub.posterFile || sub.posterLink)) && !title.includes('reel');
+            return (eId === 'technical-3' || title.includes('poster') || title.includes('paper') || Boolean(sub.posterFile || sub.posterLink || sub.paperFile || sub.paperLink || sub.fileUrl || sub.driveLink)) && !title.includes('reel');
           }
         });
         setSubmissions(filtered);
@@ -83,7 +135,7 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
                 const sub = e.submission || {};
 
                 const isReel = eId === 'creative-1' || title.includes('reel') || Boolean(sub.reelLink);
-                const isPoster = eId === 'technical-3' || title.includes('poster') || title.includes('paper') || Boolean(sub.posterFile || sub.posterLink);
+                const isPoster = eId === 'technical-3' || title.includes('poster') || title.includes('paper') || Boolean(sub.posterFile || sub.posterLink || sub.paperFile || sub.paperLink || sub.fileUrl || sub.driveLink);
 
                 if (isReelsMode && !isReel) return;
                 if (!isReelsMode && (!isPoster || title.includes('reel'))) return;
@@ -532,7 +584,7 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
             const isApproved = item.reviewStatus === 'APPROVED';
             const isRejected = item.reviewStatus === 'REJECTED';
             const isResubmit = item.reviewStatus === 'RESUBMIT_ALLOWED';
-            const fileUrl = sub.posterFile?.path ? getAssetUrl(sub.posterFile.path) : (sub.reelLink || sub.posterLink);
+            const fileUrl = getSubmissionFileUrl(sub);
 
             return (
               <div
@@ -596,24 +648,37 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
                         SUBMITTED FILE / LINK:
                       </div>
                       <div style={{ fontSize: '0.92rem', color: '#ffffff', fontWeight: '600', wordBreak: 'break-all' }}>
-                        {sub.reelLink || sub.posterLink || sub.posterFile?.fileName || 'Uploaded Document'}
+                        {sub.reelLink || sub.posterLink || sub.paperLink || sub.posterFile?.fileName || sub.paperFile?.fileName || 'Uploaded Document'}
                       </div>
                       <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: '0.2rem' }}>
                         Submitted on: {sub.submittedAt ? new Date(sub.submittedAt).toLocaleString() : 'N/A'}
                       </div>
                     </div>
 
-                    {fileUrl && (
-                      <a
-                        href={fileUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn btn-secondary"
-                        style={{ padding: '0.55rem 1rem', fontSize: '0.85rem', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
-                      >
-                        <ExternalLink size={15} /> {isReelsMode ? 'View Reel Video' : 'View Poster / File'}
-                      </a>
-                    )}
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      {fileUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setPreviewModalItem(item)}
+                          className="btn btn-secondary"
+                          style={{ padding: '0.55rem 1rem', fontSize: '0.85rem', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(0, 242, 254, 0.15)', border: '1px solid rgba(0, 242, 254, 0.4)', color: '#00f2fe' }}
+                        >
+                          <Eye size={16} /> Preview Submission
+                        </button>
+                      )}
+
+                      {fileUrl && (
+                        <a
+                          href={fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn-secondary"
+                          style={{ padding: '0.55rem 1rem', fontSize: '0.85rem', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+                        >
+                          <ExternalLink size={15} /> {isReelsMode ? 'Open Reel Video' : 'Open Link / File'}
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -915,6 +980,139 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
               >
                 {actionLoading ? 'Saving...' : 'Confirm Allow Resubmit'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* INTERACTIVE SUBMISSION PREVIEW MODAL */}
+      {previewModalItem && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.88)',
+          backdropFilter: 'blur(10px)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 99999,
+          padding: '1.5rem'
+        }}>
+          <div style={{
+            background: '#0f172a',
+            border: '1.5px solid rgba(0, 242, 254, 0.4)',
+            borderRadius: '20px',
+            width: '100%',
+            maxWidth: '1000px',
+            maxHeight: '90vh',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            boxShadow: '0 25px 60px rgba(0, 0, 0, 0.8)'
+          }}>
+            {/* Modal Header */}
+            <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(15, 23, 42, 0.95)' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#ffffff', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <FileText size={20} style={{ color: '#00f2fe' }} />
+                  {previewModalItem.eventTitle} — Submission Preview
+                </h3>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-dim)', marginTop: '0.2rem' }}>
+                  Submitted by: <strong style={{ color: '#ffffff' }}>{previewModalItem.studentName}</strong> ({previewModalItem.studentAiId}) {previewModalItem.teamName ? `• Team: ${previewModalItem.teamName}` : ''}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewModalItem(null)}
+                style={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', color: '#ffffff', padding: '0.4rem 0.8rem', borderRadius: '8px', cursor: 'pointer', fontWeight: '700', fontSize: '0.9rem' }}
+              >
+                ✕ Close
+              </button>
+            </div>
+
+            {/* Modal Content / Preview Frame */}
+            <div style={{ flex: 1, padding: '1rem', overflowY: 'auto', background: '#0b1120', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '450px' }}>
+              {(() => {
+                const targetUrl = getSubmissionFileUrl(previewModalItem.submission);
+                if (!targetUrl) {
+                  return (
+                    <div style={{ color: 'var(--text-dim)', textAlign: 'center', padding: '2rem' }}>
+                      No previewable file or link found for this submission.
+                    </div>
+                  );
+                }
+
+                const isPdfOrDoc = targetUrl.toLowerCase().includes('.pdf') || targetUrl.startsWith('data:application/pdf') || targetUrl.includes('/uploads/posters/');
+                const isImage = targetUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)/i) || targetUrl.startsWith('data:image/');
+
+                if (isImage) {
+                  return (
+                    <img
+                      src={targetUrl}
+                      alt="Paper / Poster Preview"
+                      style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain', borderRadius: '8px', boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }}
+                    />
+                  );
+                }
+
+                if (isPdfOrDoc || targetUrl.startsWith('data:')) {
+                  return (
+                    <iframe
+                      src={targetUrl}
+                      title="Document Preview"
+                      style={{ width: '100%', height: '70vh', border: 'none', borderRadius: '10px', background: '#ffffff' }}
+                    />
+                  );
+                }
+
+                // Web / External link (e.g. Google Drive link)
+                return (
+                  <div style={{ textAlign: 'center', padding: '3rem 1.5rem', background: 'rgba(15, 23, 42, 0.8)', borderRadius: '16px', border: '1px solid rgba(0, 242, 254, 0.3)', maxWidth: '600px', margin: '0 auto' }}>
+                    <ExternalLink size={48} style={{ color: '#00f2fe', marginBottom: '1rem' }} />
+                    <h4 style={{ color: '#ffffff', fontSize: '1.2rem', margin: '0 0 0.5rem 0' }}>External Document / Drive Link</h4>
+                    <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginBottom: '1.5rem', wordBreak: 'break-all' }}>
+                      {targetUrl}
+                    </p>
+                    <a
+                      href={targetUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-primary"
+                      style={{ padding: '0.75rem 1.5rem', fontSize: '0.95rem', fontWeight: '800', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+                    >
+                      <ExternalLink size={18} /> Open External Document Link
+                    </a>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid rgba(255, 255, 255, 0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(15, 23, 42, 0.95)' }}>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>
+                {previewModalItem.submission?.submittedAt ? `Submitted on ${new Date(previewModalItem.submission.submittedAt).toLocaleString()}` : ''}
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                {getSubmissionFileUrl(previewModalItem.submission) && (
+                  <a
+                    href={getSubmissionFileUrl(previewModalItem.submission)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-secondary"
+                    style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                  >
+                    Open Fullscreen <ExternalLink size={14} />
+                  </a>
+                )}
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setPreviewModalItem(null)}
+                  style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem' }}
+                >
+                  Close Preview
+                </button>
+              </div>
             </div>
           </div>
         </div>

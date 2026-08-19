@@ -8,7 +8,7 @@ export const eventsRulesData = {
     image: '/images/event_hackathon_1786084020517.png',
     whatsappGroupLink: 'https://chat.whatsapp.com/DY7Ok514zSmCLiueVk2lq2',
     eventDate: '21st & 22nd August 2026',
-    registrationDeadline: '20th August 2026',
+    registrationDeadline: 'Registration Closed',
     teamSize: '4 to 5 members per team (strictly 4 members required, 5th member optional)',
     rules: [
       'Hackathon Dates: 21st & 22nd August 2026.',
@@ -463,8 +463,11 @@ export function isRegistrationClosed(deadlineString, eventTitle = '', eventId = 
   const isBootcamp = (eventTitle && eventTitle.toLowerCase().includes('bootcamp')) ||
     (eventId && eventId.toLowerCase().includes('bootcamp'));
 
-  // Bootcamp registration strictly ends on 18th August 2026 23:59:59 IST
-  if (isBootcamp) {
+  const isHackathon = (eventTitle && eventTitle.toLowerCase().includes('hackathon')) ||
+    (eventId && (eventId.toLowerCase().includes('hackathon') || eventId === 'technical-1' || eventId === '1'));
+
+  // Bootcamp & Hackathon registrations are closed immediately
+  if (isBootcamp || isHackathon) {
     return true;
   }
 

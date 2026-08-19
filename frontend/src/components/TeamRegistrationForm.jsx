@@ -16,7 +16,7 @@ import {
   Zap,
   Award
 } from 'lucide-react';
-import { isSameEvent } from '../data/eventsRulesData';
+import { isSameEvent, isRegistrationClosed } from '../data/eventsRulesData';
 
 const TEAM_EVENTS = [
   {
@@ -337,6 +337,11 @@ export default function TeamRegistrationForm({ onBack, onSuccess, currentUser, i
 
     if (!teamName.trim()) {
       setFormError('Please enter a Team Name.');
+      return;
+    }
+
+    if (isRegistrationClosed(selectedEvent.registrationDeadline, selectedEvent.title, selectedEvent.id)) {
+      setFormError(`Registration for '${selectedEvent.title}' has been closed.`);
       return;
     }
 

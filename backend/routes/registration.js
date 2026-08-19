@@ -585,6 +585,13 @@ router.post('/team-register', async (req, res) => {
     const cleanEventId = eventId.trim();
     const cleanEventTitle = (eventTitle || '').trim() || cleanEventId;
 
+    if (cleanEventId === 'technical-1' || cleanEventTitle.toLowerCase().includes('hackathon')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Registration for AGENTIC AI HACKATHON has been closed.'
+      });
+    }
+
 
     // 1. Verify Event Constraint (Min and Max team size)
     const constraint = EVENT_CONSTRAINTS[cleanEventId] || { min: 1, max: 5, name: cleanEventTitle };
