@@ -458,29 +458,24 @@ export const eventsRulesData = {
 
 
 
-// Helper lookup to get event details by category and event item
+// Helper lookup to check if event registration is closed
 export function isRegistrationClosed(deadlineString, eventTitle = '', eventId = '') {
-  const isBootcamp = (eventTitle && eventTitle.toLowerCase().includes('bootcamp')) ||
-    (eventId && eventId.toLowerCase().includes('bootcamp'));
+  const t = String(eventTitle || '').toLowerCase();
+  const id = String(eventId || '').toLowerCase();
 
-  const isHackathon = (eventTitle && eventTitle.toLowerCase().includes('hackathon')) ||
-    (eventId && (eventId.toLowerCase().includes('hackathon') || eventId === 'technical-1' || eventId === '1'));
+  // Hackathon is ONLY technical-1 or event title containing 'hackathon'
+  const isHackathon = t.includes('hackathon') || id === 'technical-1';
 
-  const isPromptCombat = (eventTitle && eventTitle.toLowerCase().includes('prompt')) ||
-    (eventId && (eventId.toLowerCase().includes('prompt') || eventId === 'technical-2' || eventId === '2'));
+  // Prompt Combat is ONLY technical-2 or event title containing 'prompt'
+  const isPromptCombat = (t.includes('prompt') && (t.includes('combat') || t.includes('ai'))) || id === 'technical-2';
 
-  // Bootcamp, Hackathon & Prompt Combat registrations are closed immediately
-  if (isBootcamp || isHackathon || isPromptCombat) {
+  // Strictly ONLY Hackathon and AI Prompt Combat registrations are closed.
+  if (isHackathon || isPromptCombat) {
     return true;
   }
 
-  const effectiveDeadline = deadlineString || '26 August 2026';
-  const cleanStr = String(effectiveDeadline).replace(/(\d+)(st|nd|rd|th)/i, '$1').trim();
-  const parsed = new Date(cleanStr);
-  if (isNaN(parsed.getTime())) return false;
-
-  parsed.setHours(23, 59, 59, 999);
-  return new Date() > parsed;
+  // All other events (AI Agents Expo, Reels, AI Musical, Paper/Poster, Quiz, QuestX, SparkX, Podcast, Summit, Bootcamp) remain OPEN!
+  return false;
 }
 
 export function getEventDetails(categoryId, eventId, fallbackTitle = '') {
