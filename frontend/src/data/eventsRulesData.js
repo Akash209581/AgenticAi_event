@@ -277,10 +277,10 @@ export const eventsRulesData = {
     image: '/images/event_musical.png',
     whatsappGroupLink: 'https://chat.whatsapp.com/F5kLamLrx1i8Q2ehFdgWyP',
     eventDate: '29 August 2026',
-    teamSize: 'Strictly 3 members per team',
+    teamSize: '1 to 3 members per team',
     rules: [
       'Eligibility: Open to all B.Tech students from all departments and all academic years.',
-      'Team Composition: Each team must consist of strictly 3 members.',
+      'Team Composition: Maximum 3 members per team (1 to 3 members allowed).',
       'Real-Time Generation: Songs must be created entirely during the competition using approved AI tools.',
       'Theme Announcement: The organizing committee will announce the theme at the start of the competition.',
       'Evaluation Window: Participants may generate songs of any duration; however, only the first 60 seconds of the submitted song will be considered during the initial evaluation.',

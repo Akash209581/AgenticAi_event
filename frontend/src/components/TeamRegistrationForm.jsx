@@ -56,8 +56,7 @@ const TEAM_EVENTS = [
     category: 'TECHNICAL',
     minSize: 1,
     maxSize: 3,
-    badgeText: '1 to 3 Members',
-    note: 'Maximum 10 slides or A1 poster format.'
+    badgeText: '1 to 3 Members'
   },
   {
     id: 'industry-2',
@@ -84,10 +83,9 @@ const TEAM_EVENTS = [
     title: 'AI MUSICAL COMPETITION',
     shortName: 'AI Musical Competition',
     category: 'CREATIVE',
-    minSize: 3,
+    minSize: 1,
     maxSize: 3,
-    exactSize: 3,
-    badgeText: 'Strictly 3 Members',
+    badgeText: '1 to 3 Members',
     note: 'Real-time AI song creation (audio, lyrics & prompts).'
   },
   {
