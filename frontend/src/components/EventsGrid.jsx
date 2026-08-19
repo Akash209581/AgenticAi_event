@@ -273,11 +273,9 @@ export default function EventsGrid({ onRegister, currentUser = null, onEnrollEve
       ) : (
         /* SUB-EVENTS VIEW: PURE IMAGE CARDS */
         <div
-          className="events-portrait-grid"
+          className="events-portrait-grid sub-portrait-grid"
           style={{
-            gridTemplateColumns: selectedCategory.events.length < 4
-              ? `repeat(${selectedCategory.events.length}, minmax(0, 320px))`
-              : undefined,
+            '--sub-cols': selectedCategory.events.length < 4 ? selectedCategory.events.length : 4,
             justifyContent: 'center'
           }}
         >

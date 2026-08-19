@@ -1,5 +1,4 @@
 export const eventsRulesData = {
-  // TECHNICAL CATEGORY EVENTS
   'technical-1': {
     id: '1',
     categoryId: 'technical',
@@ -181,7 +180,7 @@ export const eventsRulesData = {
     coordinators: [
       { name: 'Dr. O. Baskaru (Faculty)', phone: '+91 63015 77419' },
       { name: 'Mr. Rajulu (Faculty)', phone: '+91 97050 21183' },
-      { name: 'Student Coordinator', phone: 'To be announced' }
+      { name: 'Nihari', phone: '+91 79957 98055' }
     ]
   },
   'industry-2': {
@@ -228,7 +227,7 @@ export const eventsRulesData = {
     coordinators: [
       { name: 'Dr. James Deva Koresh (Faculty)', phone: '+91 99947 62822' },
       { name: 'Dr. T.R. Rajesh (Faculty)', phone: '+91 96765 60542' },
-      { name: 'Student Coordinator', phone: 'To be announced' }
+      { name: 'Sri Nikhi (student)', phone: '+91 80741 38093' }
     ]
   },
 

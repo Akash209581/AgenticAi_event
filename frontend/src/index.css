@@ -1699,13 +1699,17 @@ select::placeholder {
 
 .events-portrait-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(260px, 320px));
   justify-content: center;
   gap: 1.5rem 1.75rem;
   width: 100%;
   max-width: 1380px;
   margin: 1.5rem auto 3rem;
   padding: 0 1rem;
+}
+
+.events-portrait-grid.sub-portrait-grid {
+  grid-template-columns: repeat(var(--sub-cols, 3), minmax(0, 320px));
 }
 
 .portrait-event-card {
@@ -1740,34 +1744,6 @@ select::placeholder {
   align-items: center;
   justify-content: center;
 }
-
-@media (max-width: 1120px) {
-  .events-portrait-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 2rem;
-    max-width: 780px;
-  }
-
-  .portrait-image-stage {
-    height: 340px !important;
-  }
-}
-
-@media (max-width: 640px) {
-  .events-portrait-grid {
-    grid-template-columns: 1fr;
-    gap: 1.75rem;
-    max-width: 340px;
-    margin: 0.75rem auto 2rem;
-    padding: 0 1rem;
-  }
-
-  .portrait-image-stage {
-    height: 280px !important;
-    border-radius: 16px;
-  }
-}
-
 
 .portrait-event-card:hover .portrait-image-stage {
   box-shadow: 0 18px 40px rgba(0, 240, 255, 0.3);
@@ -1855,27 +1831,30 @@ select::placeholder {
 }
 
 @media (max-width: 1024px) {
-  .events-portrait-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 2.5rem;
+  .events-portrait-grid,
+  .events-portrait-grid.sub-portrait-grid {
+    grid-template-columns: repeat(2, minmax(0, 340px));
+    gap: 2rem;
+    max-width: 740px;
   }
 
   .portrait-image-stage {
-    height: 380px;
+    height: 360px;
   }
 }
 
-@media (max-width: 640px) {
-  .events-portrait-grid {
+@media (max-width: 768px) {
+  .events-portrait-grid,
+  .events-portrait-grid.sub-portrait-grid {
     grid-template-columns: 1fr;
-    gap: 2.25rem;
-    max-width: 420px;
-    margin: 1.5rem auto 3rem;
+    gap: 2rem;
+    max-width: 380px;
+    margin: 1rem auto 2.5rem;
     padding: 0 1rem;
   }
 
   .portrait-image-stage {
-    height: 400px;
+    height: 420px;
     border-radius: 20px;
   }
 }
