@@ -200,46 +200,91 @@ export default function AdminDashboard({ onBack }) {
     }
 
     const headers = [
+      'S.No',
       'Team ID',
       'Team Name',
       'Event Title',
       'Event ID',
+      'Total Members',
       'Leader Name',
       'Leader AI ID',
       'Leader Reg No',
       'Leader Year',
       'Leader Phone',
       'Leader Email',
-      'Total Members',
-      'All Members Breakdown (Name | AI ID | RegNo | Year)',
-      'Registered At'
+      'Member 2 Name',
+      'Member 2 AI ID',
+      'Member 2 Reg No',
+      'Member 2 Year',
+      'Member 3 Name',
+      'Member 3 AI ID',
+      'Member 3 Reg No',
+      'Member 3 Year',
+      'Member 4 Name',
+      'Member 4 AI ID',
+      'Member 4 Reg No',
+      'Member 4 Year',
+      'Member 5 Name',
+      'Member 5 AI ID',
+      'Member 5 Reg No',
+      'Member 5 Year',
+      'All Members Summary',
+      'Registered Date'
     ];
 
-    const rows = teams.map(t => {
+    const rows = teams.map((t, index) => {
       const leader = (t.members || []).find(m => m.isLeader) || t.members?.[0] || {};
+      const nonLeaders = (t.members || []).filter(m => !m.isLeader);
+      if (!nonLeaders.length && t.members && t.members.length > 1) {
+        nonLeaders.push(...t.members.slice(1));
+      }
+
+      const m2 = nonLeaders[0] || {};
+      const m3 = nonLeaders[1] || {};
+      const m4 = nonLeaders[2] || {};
+      const m5 = nonLeaders[3] || {};
+
       const membersSummary = (t.members || [])
         .map(m => `${m.name} (${m.aiId}, Reg: ${m.regNo}, Yr: ${m.year}${m.isLeader ? ' [Leader]' : ''})`)
         .join(' ; ')
         .replace(/"/g, '""');
 
       return [
+        index + 1,
         t.teamId,
         `"${(t.teamName || '').replace(/"/g, '""')}"`,
         `"${(t.eventTitle || '').replace(/"/g, '""')}"`,
-        t.eventId,
+        t.eventId || '',
+        t.members ? t.members.length : 0,
         `"${(leader.name || '').replace(/"/g, '""')}"`,
-        leader.aiId || t.leaderAiId,
+        leader.aiId || t.leaderAiId || '',
         leader.regNo || '',
         leader.year || '',
         leader.phone || '',
         leader.email || '',
-        t.members ? t.members.length : 0,
+        `"${(m2.name || '').replace(/"/g, '""')}"`,
+        m2.aiId || '',
+        m2.regNo || '',
+        m2.year || '',
+        `"${(m3.name || '').replace(/"/g, '""')}"`,
+        m3.aiId || '',
+        m3.regNo || '',
+        m3.year || '',
+        `"${(m4.name || '').replace(/"/g, '""')}"`,
+        m4.aiId || '',
+        m4.regNo || '',
+        m4.year || '',
+        `"${(m5.name || '').replace(/"/g, '""')}"`,
+        m5.aiId || '',
+        m5.regNo || '',
+        m5.year || '',
         `"${membersSummary}"`,
-        new Date(t.createdAt).toLocaleString()
+        t.createdAt ? new Date(t.createdAt).toLocaleString() : 'N/A'
       ];
     });
 
-    downloadCSV(headers, rows, `Agentic_AI_Day_Team_Registrations_${Date.now()}.csv`);
+    const safeEventFilter = teamEventFilter === 'all' ? 'All_Teams' : teamEventFilter;
+    downloadCSV(headers, rows, `Agentic_AI_Day_Team_Registrations_${safeEventFilter}_${Date.now()}.csv`);
   };
 
   // Delete / Remove Team Handler for Admin
@@ -587,14 +632,16 @@ export default function AdminDashboard({ onBack }) {
   };
 
   const downloadCSV = (headers, rows, filename) => {
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
+    const csvLines = [headers.join(','), ...rows.map(e => e.join(','))].join('\r\n');
+    const blob = new Blob(['\uFEFF' + csvLines], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
+    link.href = url;
     link.setAttribute('download', filename);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   // =========================================================================

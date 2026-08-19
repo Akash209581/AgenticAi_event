@@ -860,11 +860,70 @@ router.get('/team-registrations', requireAdminAuth, async (req, res) => {
       const query = {};
 
       if (event && event !== 'all') {
-        const cleanEvent = String(event).trim();
-        query.$or = [
+        const cleanEvent = String(event).trim().toLowerCase();
+        
+        let eventConditions = [
           { eventId: cleanEvent },
           { eventTitle: new RegExp(cleanEvent, 'i') }
         ];
+
+        if (cleanEvent === 'technical-1' || cleanEvent === '1' || cleanEvent.includes('hackathon')) {
+          eventConditions = [
+            { eventId: 'technical-1' },
+            { eventId: '1' },
+            { eventTitle: new RegExp('hackathon', 'i') }
+          ];
+        } else if (cleanEvent === 'technical-2' || cleanEvent === '2' || cleanEvent.includes('prompt')) {
+          eventConditions = [
+            { eventId: 'technical-2' },
+            { eventId: '2' },
+            { eventTitle: new RegExp('prompt', 'i') }
+          ];
+        } else if (cleanEvent === 'technical-3' || cleanEvent === '3' || cleanEvent.includes('poster') || cleanEvent.includes('paper')) {
+          eventConditions = [
+            { eventId: 'technical-3' },
+            { eventId: '3' },
+            { eventTitle: new RegExp('poster|paper', 'i') }
+          ];
+        } else if (cleanEvent === 'industry-2' || cleanEvent.includes('expo')) {
+          eventConditions = [
+            { eventId: 'industry-2' },
+            { eventId: '2' },
+            { eventTitle: new RegExp('expo', 'i') }
+          ];
+        } else if (cleanEvent === 'creative-1' || cleanEvent.includes('reel')) {
+          eventConditions = [
+            { eventId: 'creative-1' },
+            { eventId: '1' },
+            { eventTitle: new RegExp('reel', 'i') }
+          ];
+        } else if (cleanEvent === 'creative-2' || cleanEvent.includes('music')) {
+          eventConditions = [
+            { eventId: 'creative-2' },
+            { eventId: '2' },
+            { eventTitle: new RegExp('music', 'i') }
+          ];
+        } else if (cleanEvent === 'creative-3' || cleanEvent.includes('quiz')) {
+          eventConditions = [
+            { eventId: 'creative-3' },
+            { eventId: '3' },
+            { eventTitle: new RegExp('quiz', 'i') }
+          ];
+        } else if (cleanEvent === 'creative-4' || cleanEvent.includes('quest')) {
+          eventConditions = [
+            { eventId: 'creative-4' },
+            { eventId: '4' },
+            { eventTitle: new RegExp('quest', 'i') }
+          ];
+        } else if (cleanEvent === 'innovative-1' || cleanEvent.includes('spark')) {
+          eventConditions = [
+            { eventId: 'innovative-1' },
+            { eventId: '1' },
+            { eventTitle: new RegExp('spark', 'i') }
+          ];
+        }
+
+        query.$or = eventConditions;
       }
 
       if (search && search.trim()) {
@@ -895,7 +954,9 @@ router.get('/team-registrations', requireAdminAuth, async (req, res) => {
         const cleanEvent = String(event).trim().toLowerCase();
         teams = teams.filter(t =>
           String(t.eventId).toLowerCase() === cleanEvent ||
-          (t.eventTitle && t.eventTitle.toLowerCase().includes(cleanEvent))
+          String(t.eventId) === '2' ||
+          (t.eventTitle && t.eventTitle.toLowerCase().includes(cleanEvent)) ||
+          (cleanEvent.includes('prompt') && t.eventTitle && t.eventTitle.toLowerCase().includes('prompt'))
         );
       }
 
