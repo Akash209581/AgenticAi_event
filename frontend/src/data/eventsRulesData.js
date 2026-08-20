@@ -180,7 +180,7 @@ export const eventsRulesData = {
     coordinators: [
       { name: 'Dr. O. Baskaru (Faculty)', phone: '+91 63015 77419' },
       { name: 'Mr. Rajulu (Faculty)', phone: '+91 97050 21183' },
-      { name: 'Nihari', phone: '+91 79957 98055' }
+      { name: 'Nihari (Student)', phone: '+91 79957 98055' }
     ]
   },
   'industry-2': {
