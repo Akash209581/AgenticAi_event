@@ -139,6 +139,29 @@ router.post('/login', async (req, res) => {
 });
 
 /**
+ * GET /cseAI/bootcamp-count
+ * Returns the total number of students registered for the AI Agent Bootcamp
+ */
+router.get('/bootcamp-count', async (req, res) => {
+  try {
+    let bootcampCount = 0;
+    if (mongoose.connection.readyState === 1) {
+      bootcampCount = await User.countDocuments({
+        'registeredEvents.id': 'bootcamp-1'
+      });
+    } else {
+      bootcampCount = memoryUsers.filter(u => 
+        u.registeredEvents?.some(e => e.id === 'bootcamp-1')
+      ).length;
+    }
+    return res.json({ success: true, count: bootcampCount });
+  } catch (error) {
+    console.error('[Bootcamp Count Error]', error);
+    return res.status(500).json({ success: false, message: error.message || 'Server error' });
+  }
+});
+
+/**
  * POST /cseAI/enroll-event
  * Enrolls a user into a specific event
  */
@@ -225,17 +248,39 @@ router.post('/enroll-event', async (req, res) => {
     });
 
     if (!exists) {
-      // Check if event is closed for registration (Hackathon, Prompt Combat, Bootcamp)
+      // Check if event is closed for registration (Hackathon, Prompt Combat)
       const checkTitle = String(event.title || cleanTargetTitle || '').toLowerCase();
       const checkEvtId = String(event.id || targetId || '').toLowerCase();
-      const isClosed = checkEvtId === 'technical-1' || checkEvtId === 'technical-2' || checkEvtId === 'bootcamp-1' ||
-        checkTitle.includes('hackathon') || checkTitle.includes('prompt') || checkTitle.includes('bootcamp');
+      const isClosed = checkEvtId === 'technical-1' || checkEvtId === 'technical-2' ||
+        checkTitle.includes('hackathon') || checkTitle.includes('prompt');
       
       if (isClosed) {
         return res.status(400).json({
           success: false,
           message: `Registration for '${event.title || 'this event'}' has been closed.`
         });
+      }
+
+      // Dynamic check for AI Agent Bootcamp: limit to 120 registrations
+      const isBootcamp = checkEvtId === 'bootcamp-1' || checkTitle.includes('bootcamp');
+      if (isBootcamp) {
+        let bootcampCount = 0;
+        if (mongoose.connection.readyState === 1) {
+          bootcampCount = await User.countDocuments({
+            'registeredEvents.id': 'bootcamp-1'
+          });
+        } else {
+          bootcampCount = memoryUsers.filter(u => 
+            u.registeredEvents?.some(e => e.id === 'bootcamp-1')
+          ).length;
+        }
+
+        if (bootcampCount >= 120) {
+          return res.status(400).json({
+            success: false,
+            message: `Registration for '${event.title || 'AI Agent Bootcamp'}' has been closed.`
+          });
+        }
       }
 
       const compositeId = (event.categoryId && event.id && !String(event.id).includes('-'))
