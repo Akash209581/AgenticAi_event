@@ -192,7 +192,69 @@ export default function AdminDashboard({ onBack }) {
     }
   }, [isAuthenticated, yearFilter, genderFilter, teamSearch, teamEventFilter]);
 
-  // Export CSV for Team Registrations
+  // Export CSV for Team Registrations (Flattened Roster: 1 Row per Team Member)
+  const exportTeamsPerMemberCSV = () => {
+    if (!teams || !teams.length) {
+      alert('No team registrations available to export.');
+      return;
+    }
+
+    const headers = [
+      'S.No',
+      'Team ID',
+      'Team Name',
+      'Event Title',
+      'Event ID',
+      'Member Role',
+      'Member Name',
+      'VUCSE ID',
+      'Registration No',
+      'Year',
+      'Gender',
+      'Phone',
+      'Email',
+      'Total Team Size',
+      'Team Leader Name',
+      'Team Leader Phone',
+      'Registered Date'
+    ];
+
+    const rows = [];
+    let serialNo = 1;
+
+    teams.forEach((t) => {
+      const leader = (t.members || []).find(m => m.isLeader) || t.members?.[0] || {};
+      const members = t.members || [];
+
+      members.forEach((m) => {
+        const isLeader = Boolean(m.isLeader || m.aiId === leader.aiId || (m.regNo && m.regNo === leader.regNo));
+        rows.push([
+          serialNo++,
+          t.teamId || '',
+          `"${(t.teamName || '').replace(/"/g, '""')}"`,
+          `"${(t.eventTitle || '').replace(/"/g, '""')}"`,
+          t.eventId || '',
+          isLeader ? 'Team Leader' : 'Team Member',
+          `"${(m.name || '').replace(/"/g, '""')}"`,
+          m.aiId || '',
+          m.regNo || '',
+          m.year || '',
+          m.gender || '',
+          m.phone || '',
+          m.email || '',
+          members.length,
+          `"${(leader.name || '').replace(/"/g, '""')}"`,
+          leader.phone || '',
+          t.createdAt ? new Date(t.createdAt).toLocaleString() : 'N/A'
+        ]);
+      });
+    });
+
+    const safeEventFilter = teamEventFilter === 'all' ? 'All_Teams' : teamEventFilter;
+    downloadCSV(headers, rows, `Agentic_AI_Day_Team_Member_Roster_${safeEventFilter}_${Date.now()}.csv`);
+  };
+
+  // Export CSV for Team Registrations (Overview: 1 Row per Team)
   const exportTeamsCSV = () => {
     if (!teams || !teams.length) {
       alert('No team registrations available to export.');
@@ -216,25 +278,33 @@ export default function AdminDashboard({ onBack }) {
       'Member 2 AI ID',
       'Member 2 Reg No',
       'Member 2 Year',
+      'Member 2 Phone',
+      'Member 2 Email',
       'Member 3 Name',
       'Member 3 AI ID',
       'Member 3 Reg No',
       'Member 3 Year',
+      'Member 3 Phone',
+      'Member 3 Email',
       'Member 4 Name',
       'Member 4 AI ID',
       'Member 4 Reg No',
       'Member 4 Year',
+      'Member 4 Phone',
+      'Member 4 Email',
       'Member 5 Name',
       'Member 5 AI ID',
       'Member 5 Reg No',
       'Member 5 Year',
-      'All Members Summary',
+      'Member 5 Phone',
+      'Member 5 Email',
+      'All Members Summary List',
       'Registered Date'
     ];
 
     const rows = teams.map((t, index) => {
       const leader = (t.members || []).find(m => m.isLeader) || t.members?.[0] || {};
-      const nonLeaders = (t.members || []).filter(m => !m.isLeader);
+      const nonLeaders = (t.members || []).filter(m => m !== leader && !m.isLeader);
       if (!nonLeaders.length && t.members && t.members.length > 1) {
         nonLeaders.push(...t.members.slice(1));
       }
@@ -245,13 +315,13 @@ export default function AdminDashboard({ onBack }) {
       const m5 = nonLeaders[3] || {};
 
       const membersSummary = (t.members || [])
-        .map(m => `${m.name} (${m.aiId}, Reg: ${m.regNo}, Yr: ${m.year}${m.isLeader ? ' [Leader]' : ''})`)
-        .join(' ; ')
+        .map((m, idx) => `${idx + 1}. ${m.name || 'N/A'} (ID: ${m.aiId || '-'}, Reg: ${m.regNo || '-'}, Yr: ${m.year || '-'}${m.isLeader ? ' [Leader]' : ''})`)
+        .join('\n')
         .replace(/"/g, '""');
 
       return [
         index + 1,
-        t.teamId,
+        t.teamId || '',
         `"${(t.teamName || '').replace(/"/g, '""')}"`,
         `"${(t.eventTitle || '').replace(/"/g, '""')}"`,
         t.eventId || '',
@@ -266,25 +336,33 @@ export default function AdminDashboard({ onBack }) {
         m2.aiId || '',
         m2.regNo || '',
         m2.year || '',
+        m2.phone || '',
+        m2.email || '',
         `"${(m3.name || '').replace(/"/g, '""')}"`,
         m3.aiId || '',
         m3.regNo || '',
         m3.year || '',
+        m3.phone || '',
+        m3.email || '',
         `"${(m4.name || '').replace(/"/g, '""')}"`,
         m4.aiId || '',
         m4.regNo || '',
         m4.year || '',
+        m4.phone || '',
+        m4.email || '',
         `"${(m5.name || '').replace(/"/g, '""')}"`,
         m5.aiId || '',
         m5.regNo || '',
         m5.year || '',
+        m5.phone || '',
+        m5.email || '',
         `"${membersSummary}"`,
         t.createdAt ? new Date(t.createdAt).toLocaleString() : 'N/A'
       ];
     });
 
     const safeEventFilter = teamEventFilter === 'all' ? 'All_Teams' : teamEventFilter;
-    downloadCSV(headers, rows, `Agentic_AI_Day_Team_Registrations_${safeEventFilter}_${Date.now()}.csv`);
+    downloadCSV(headers, rows, `Agentic_AI_Day_Team_Overview_${safeEventFilter}_${Date.now()}.csv`);
   };
 
   // Delete / Remove Team Handler for Admin
@@ -936,8 +1014,12 @@ export default function AdminDashboard({ onBack }) {
             <Download size={16} /> Export All Events CSV
           </button>
 
-          <button onClick={exportTeamsCSV} className="btn-primary" disabled={!teams.length} style={{ padding: '0.45rem 1rem', fontSize: '0.85rem', background: 'linear-gradient(135deg, #00f2fe, #3b82f6)' }}>
-            <Download size={16} /> Export Teams CSV ({teams.length})
+          <button onClick={exportTeamsPerMemberCSV} className="btn-primary" disabled={!teams.length} title="Export CSV with 1 row per team member" style={{ padding: '0.45rem 1rem', fontSize: '0.85rem', background: 'linear-gradient(135deg, #00f2fe, #3b82f6)' }}>
+            <Download size={16} /> Export Team Roster (1 Row/Member)
+          </button>
+
+          <button onClick={exportTeamsCSV} className="btn-primary" disabled={!teams.length} title="Export summary CSV with 1 row per team" style={{ padding: '0.45rem 1rem', fontSize: '0.85rem', background: 'linear-gradient(135deg, #0284c7, #2563eb)' }}>
+            <Download size={16} /> Export Team Overview (1 Row/Team)
           </button>
 
           {selectedEventData && (
@@ -1775,15 +1857,27 @@ export default function AdminDashboard({ onBack }) {
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={exportTeamsCSV}
-                className="btn-primary"
-                disabled={!teams.length}
-                style={{ background: 'linear-gradient(135deg, #c084fc, #6366f1)', fontSize: '0.85rem', padding: '0.5rem 1.2rem' }}
-              >
-                <Download size={16} /> Export Teams CSV ({teams.length})
-              </button>
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={exportTeamsPerMemberCSV}
+                  className="btn-primary"
+                  disabled={!teams.length}
+                  style={{ background: 'linear-gradient(135deg, #00f2fe, #3b82f6)', fontSize: '0.85rem', padding: '0.5rem 1.1rem' }}
+                >
+                  <Download size={16} /> Export Member Roster (1 Row/Member)
+                </button>
+
+                <button
+                  type="button"
+                  onClick={exportTeamsCSV}
+                  className="btn-primary"
+                  disabled={!teams.length}
+                  style={{ background: 'linear-gradient(135deg, #c084fc, #6366f1)', fontSize: '0.85rem', padding: '0.5rem 1.1rem' }}
+                >
+                  <Download size={16} /> Export Team Overview (1 Row/Team)
+                </button>
+              </div>
             </div>
 
             {/* Filter Toolbar */}

@@ -115,12 +115,11 @@ export const eventsRulesData = {
     cardTitle: 'PAPER / POSTER',
     image: '/images/event_paper_poster.png',
     whatsappGroupLink: 'https://chat.whatsapp.com/Fnp1kBsezE88pohkcMkQ02',
-    registrationDeadline: '26 August 2026',
+    registrationDeadline: '25 August 2026',
     rules: [
       'Maximum 3 students per team.',
       'Participants must carry their college ID card.',
       'Presentation duration is 10 minutes (8 minutes presentation + 2 minutes Q&A).',
-      'Papers and posters must be original and free from plagiarism.',
       'Similar or duplicate submissions will be rejected.',
       'The decision of the judges will be final.',
       'Late submissions will not be accepted.',

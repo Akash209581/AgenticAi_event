@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { X, Video, FileText, Upload, CheckCircle2, AlertCircle, Link as LinkIcon, ExternalLink, Trash2, ShieldCheck } from 'lucide-react';
+import { X, Video, FileText, Upload, CheckCircle2, AlertCircle, Link as LinkIcon, ExternalLink, Trash2, ShieldCheck, BookOpen, Image as ImageIcon, History, ChevronDown, ChevronUp } from 'lucide-react';
 import { isSameEvent } from '../data/eventsRulesData';
 import { apiFetch, getUploadUrl } from '../config/api';
 
@@ -12,6 +12,10 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
   const [successMsg, setSuccessMsg] = useState('');
   // Holds server-fresh registered events (overrides props when available)
   const [freshRegisteredEvents, setFreshRegisteredEvents] = useState(null);
+  // Paper vs Poster type selection
+  const [submissionType, setSubmissionType] = useState(null); // 'paper' | 'poster'
+  const [showTypeDialog, setShowTypeDialog] = useState(false);
+  const [showResubHistory, setShowResubHistory] = useState(false);
 
   // Compute event type BEFORE early return (will be '' if event is null)
   const eventTitleStr = String(event?.title || '').toLowerCase();
@@ -66,6 +70,8 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
       if (match && match.submission) {
         if (match.submission.reelLink) setReelLink(match.submission.reelLink);
         if (match.submission.posterLink) setPosterLink(match.submission.posterLink);
+        // Restore submissionType if previously set
+        if (match.submission.submissionType) setSubmissionType(match.submission.submissionType);
         const isResubmitReq = match.submission.reviewStatus === 'RESUBMIT_ALLOWED' || match.submission.reviewStatus === 'REJECTED' || match.submission.allowResubmit;
         if (match.submission.posterFile && !isResubmitReq) {
           setFileObj(match.submission.posterFile);
@@ -77,6 +83,8 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
     // Reset errors when reopening
     setErrorMsg('');
     setSuccessMsg('');
+    setShowTypeDialog(false);
+    setShowResubHistory(false);
   }, [isOpen, event?.id, event?.title, freshRegisteredEvents, currentUser]);
 
   // Handle File selection (PDF ONLY, Max 10MB)
@@ -141,11 +149,32 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
 
     setSubmitting(true);
     try {
+      // Preserve and append existing submission to resubmissionHistory if resubmitting
+      const prevSub = matchedEvent?.submission;
+      const existingHistory = prevSub?.resubmissionHistory || [];
+      let updatedHistory = [...existingHistory];
+      if (isResubmitAllowed && (prevSub?.posterFile || prevSub?.posterLink)) {
+        const alreadyInHistory = updatedHistory.some(h => h.submittedAt === prevSub.submittedAt);
+        if (!alreadyInHistory) {
+          updatedHistory.push({
+            submissionType: prevSub.submissionType || 'poster',
+            posterFile: prevSub.posterFile,
+            posterLink: prevSub.posterLink,
+            submittedAt: prevSub.submittedAt || new Date().toISOString(),
+            rejectionReason: prevSub.rejectionReason
+          });
+        }
+      }
+
       const submissionPayload = {
         type: isReels ? 'reels' : 'poster',
+        submissionType: isPoster ? (submissionType || 'poster') : undefined,
         reelLink: isReels ? reelLink.trim() : undefined,
         posterFile: isPoster ? fileObj : undefined,
-        posterLink: isPoster ? posterLink.trim() : undefined
+        posterLink: isPoster ? posterLink.trim() : undefined,
+        resubmissionHistory: updatedHistory,
+        submittedAt: new Date().toISOString(),
+        reviewStatus: 'PENDING'
       };
       const identifier = currentUser?.aiId || currentUser?.regNo || currentUser?.email;
       const { res, data } = await apiFetch('/submit-event-content', {
@@ -164,11 +193,7 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
             // Fallback: patch locally
             const prevEvents = currentUser?.registeredEvents || [];
             const submissionPayloadLocal = {
-              type: isReels ? 'reels' : 'poster',
-              reelLink: isReels ? reelLink.trim() : undefined,
-              posterFile: isPoster ? fileObj : undefined,
-              posterLink: isPoster ? posterLink.trim() : undefined,
-              submittedAt: new Date().toISOString()
+              ...submissionPayload
             };
             const cleanT = String(event?.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
             const patchedIdx = prevEvents.findIndex(e => {
@@ -377,6 +402,64 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
           </div>
         )}
 
+        {/* RESUBMISSION HISTORY — shown when there are previous submissions */}
+        {isPoster && matchedEvent?.submission?.resubmissionHistory?.length > 0 && (
+          <div style={{
+            background: 'rgba(15, 23, 42, 0.7)',
+            border: '1px solid rgba(56, 189, 248, 0.3)',
+            borderRadius: '12px',
+            marginBottom: '1.25rem',
+            overflow: 'hidden'
+          }}>
+            <button
+              type="button"
+              onClick={() => setShowResubHistory(v => !v)}
+              style={{
+                width: '100%', background: 'none', border: 'none',
+                padding: '0.85rem 1.1rem',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                color: '#38bdf8', cursor: 'pointer', fontWeight: '700', fontSize: '0.88rem'
+              }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <History size={16} />
+                Resubmission History ({matchedEvent.submission.resubmissionHistory.length} previous {matchedEvent.submission.resubmissionHistory.length === 1 ? 'entry' : 'entries'})
+              </span>
+              {showResubHistory ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </button>
+            {showResubHistory && (
+              <div style={{ padding: '0 1.1rem 1rem 1.1rem', display: 'grid', gap: '0.65rem' }}>
+                {matchedEvent.submission.resubmissionHistory.map((entry, idx) => (
+                  <div key={idx} style={{
+                    background: 'rgba(56,189,248,0.06)',
+                    border: '1px solid rgba(56,189,248,0.2)',
+                    borderRadius: '10px',
+                    padding: '0.75rem 1rem',
+                    fontSize: '0.82rem'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem', flexWrap: 'wrap', gap: '0.3rem' }}>
+                      <span style={{ fontWeight: '800', color: '#7dd3fc' }}>
+                        Submission #{idx + 1} — {entry.submissionType ? (entry.submissionType === 'paper' ? '📄 Research Paper' : '🖼 Poster') : '📁 File'}
+                      </span>
+                      <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>
+                        {entry.submittedAt ? new Date(entry.submittedAt).toLocaleString() : 'N/A'}
+                      </span>
+                    </div>
+                    <div style={{ color: '#cbd5e1' }}>
+                      {entry.posterFile?.fileName || entry.posterLink || 'Uploaded file'}
+                    </div>
+                    {entry.rejectionReason && (
+                      <div style={{ marginTop: '0.35rem', color: '#f87171', fontSize: '0.78rem' }}>
+                        ❌ Reason: "{entry.rejectionReason}"
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {errorMsg && (
           <div style={{
             background: 'rgba(239, 68, 68, 0.15)',
@@ -523,14 +606,35 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
             <div style={{ marginBottom: '1.5rem' }}>
               {(!hasSubmitted || isResubmitAllowed) ? (
                 <>
+                  {/* Submission Type Badge (if selected) */}
+                  {submissionType && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                        padding: '0.35rem 0.85rem', borderRadius: '20px', fontWeight: '800', fontSize: '0.8rem',
+                        textTransform: 'uppercase', letterSpacing: '0.5px',
+                        background: submissionType === 'paper' ? 'rgba(168, 85, 247, 0.18)' : 'rgba(0, 240, 255, 0.18)',
+                        color: submissionType === 'paper' ? '#c084fc' : '#00f0ff',
+                        border: submissionType === 'paper' ? '1px solid rgba(168,85,247,0.5)' : '1px solid rgba(0,240,255,0.5)'
+                      }}>
+                        {submissionType === 'paper' ? <BookOpen size={14} /> : <ImageIcon size={14} />}
+                        {submissionType === 'paper' ? 'Research Paper' : 'Poster'}
+                      </span>
+                      <button type="button" onClick={() => { setSubmissionType(null); setFileObj(null); }}
+                        style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '0.75rem', textDecoration: 'underline' }}>
+                        Change Type
+                      </button>
+                    </div>
+                  )}
+
                   <label style={{ display: 'block', fontSize: '0.88rem', fontWeight: '600', color: '#e2e8f0', marginBottom: '0.5rem' }}>
-                    Upload Poster or Paper PDF File (.pdf only, max 10MB):
+                    Upload {submissionType === 'paper' ? 'Research Paper' : submissionType === 'poster' ? 'Poster' : 'Poster or Paper'} PDF File (.pdf only, max 10MB):
                   </label>
 
-                  {/* Upload Drop Area */}
+                  {/* Upload Drop Area — shows type selector first */}
                   <div
                     style={{
-                      border: '2px dashed rgba(0, 240, 255, 0.4)',
+                      border: `2px dashed ${submissionType === 'paper' ? 'rgba(168,85,247,0.5)' : 'rgba(0, 240, 255, 0.4)'}`,
                       borderRadius: '12px',
                       padding: '1.5rem 1rem',
                       textAlign: 'center',
@@ -539,7 +643,13 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
                       transition: 'all 0.2s ease',
                       position: 'relative'
                     }}
-                    onClick={() => document.getElementById('poster-file-input')?.click()}
+                    onClick={() => {
+                      if (!submissionType) {
+                        setShowTypeDialog(true);
+                      } else {
+                        document.getElementById('poster-file-input')?.click();
+                      }
+                    }}
                   >
                     <input
                       id="poster-file-input"
@@ -548,14 +658,93 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
                       onChange={handleFileChange}
                       style={{ display: 'none' }}
                     />
-                    <Upload size={32} color="#00f0ff" style={{ margin: '0 auto 0.5rem auto' }} />
+                    <Upload size={32} color={submissionType === 'paper' ? '#c084fc' : '#00f0ff'} style={{ margin: '0 auto 0.5rem auto' }} />
                     <p style={{ color: '#f8fafc', fontSize: '0.9rem', fontWeight: '600', margin: '0 0 0.25rem 0' }}>
-                      Click to select PDF poster/paper file
+                      {submissionType ? `Click to select ${submissionType === 'paper' ? 'Research Paper' : 'Poster'} PDF` : 'Click to Upload — Select Paper or Poster'}
                     </p>
                     <p style={{ color: '#94a3b8', fontSize: '0.78rem', margin: 0 }}>
-                      Supports PDF files only (Max 10MB)
+                      {submissionType ? 'Supports PDF files only (Max 10MB)' : '📌 You will be asked to choose: Research Paper or Poster'}
                     </p>
                   </div>
+
+                  {/* TYPE SELECTION DIALOG */}
+                  {showTypeDialog && (
+                    <div style={{
+                      position: 'fixed', inset: 0,
+                      background: 'rgba(5, 10, 20, 0.88)', backdropFilter: 'blur(8px)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      zIndex: 9999999, padding: '1rem'
+                    }}>
+                      <div style={{
+                        background: 'linear-gradient(145deg, rgba(15,23,42,0.98), rgba(30,41,59,0.96))',
+                        border: '1.5px solid rgba(0,240,255,0.4)', borderRadius: '20px',
+                        padding: '2rem', maxWidth: '440px', width: '100%',
+                        boxShadow: '0 0 40px rgba(0,240,255,0.2), 0 20px 60px rgba(0,0,0,0.5)',
+                        animation: 'fadeIn 0.2s ease-out'
+                      }}>
+                        <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#ffffff', margin: '0 0 0.35rem 0', textAlign: 'center' }}>
+                          What are you submitting?
+                        </h3>
+                        <p style={{ color: '#94a3b8', fontSize: '0.85rem', textAlign: 'center', marginBottom: '1.75rem', marginTop: 0 }}>
+                          Choose the type of document you want to upload.
+                        </p>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                          {/* PAPER */}
+                          <button type="button"
+                            onClick={() => {
+                              setSubmissionType('paper');
+                              setShowTypeDialog(false);
+                              setTimeout(() => document.getElementById('poster-file-input')?.click(), 100);
+                            }}
+                            style={{
+                              background: 'rgba(168,85,247,0.1)', border: '2px solid rgba(168,85,247,0.5)',
+                              borderRadius: '14px', padding: '1.5rem 1rem', cursor: 'pointer',
+                              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem',
+                              transition: 'all 0.2s ease', color: '#c084fc'
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.background='rgba(168,85,247,0.2)'; e.currentTarget.style.borderColor='#c084fc'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background='rgba(168,85,247,0.1)'; e.currentTarget.style.borderColor='rgba(168,85,247,0.5)'; }}
+                          >
+                            <BookOpen size={36} color="#c084fc" />
+                            <div style={{ textAlign: 'center' }}>
+                              <div style={{ fontWeight: '800', fontSize: '1rem', marginBottom: '0.25rem' }}>Research Paper</div>
+                              <div style={{ fontSize: '0.75rem', color: '#94a3b8', lineHeight: '1.4' }}>Academic / research document</div>
+                            </div>
+                          </button>
+
+                          {/* POSTER */}
+                          <button type="button"
+                            onClick={() => {
+                              setSubmissionType('poster');
+                              setShowTypeDialog(false);
+                              setTimeout(() => document.getElementById('poster-file-input')?.click(), 100);
+                            }}
+                            style={{
+                              background: 'rgba(0,240,255,0.08)', border: '2px solid rgba(0,240,255,0.4)',
+                              borderRadius: '14px', padding: '1.5rem 1rem', cursor: 'pointer',
+                              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem',
+                              transition: 'all 0.2s ease', color: '#00f0ff'
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.background='rgba(0,240,255,0.15)'; e.currentTarget.style.borderColor='#00f0ff'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background='rgba(0,240,255,0.08)'; e.currentTarget.style.borderColor='rgba(0,240,255,0.4)'; }}
+                          >
+                            <ImageIcon size={36} color="#00f0ff" />
+                            <div style={{ textAlign: 'center' }}>
+                              <div style={{ fontWeight: '800', fontSize: '1rem', marginBottom: '0.25rem' }}>Poster</div>
+                              <div style={{ fontSize: '0.75rem', color: '#94a3b8', lineHeight: '1.4' }}>Visual presentation / poster board</div>
+                            </div>
+                          </button>
+                        </div>
+
+                        <button type="button"
+                          onClick={() => setShowTypeDialog(false)}
+                          style={{ width: '100%', marginTop: '1.25rem', background: 'none', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '10px', color: '#94a3b8', padding: '0.6rem', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '600' }}>
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {isResubmitAllowed && matchedEvent?.submission?.posterFile?.fileName && !fileObj && (
                     <p style={{ color: '#38bdf8', fontSize: '0.78rem', marginTop: '0.5rem', marginBottom: '0.5rem' }}>
