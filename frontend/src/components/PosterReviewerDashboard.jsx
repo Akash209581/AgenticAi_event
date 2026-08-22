@@ -21,6 +21,7 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL'); // 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'
+  const [activeSection, setActiveSection] = useState('POSTERS'); // 'POSTERS' | 'RESUBMIT' | 'PAPERS'
 
   // Modal State for Reject Explanation & Resubmit Request
   const [rejectingItem, setRejectingItem] = useState(null);
@@ -721,11 +722,11 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
         </div>
 
         <div
-          onClick={() => setStatusFilter('RESUBMIT')}
+          onClick={() => { setStatusFilter('RESUBMIT'); setActiveSection('RESUBMIT'); }}
           style={{ background: 'rgba(56, 189, 248, 0.08)', border: '1px solid rgba(56, 189, 248, 0.3)', padding: '1.25rem', borderRadius: '14px', cursor: 'pointer' }}
         >
           <div style={{ fontSize: '0.82rem', fontWeight: '700', color: '#38bdf8', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <History size={16} /> RESUBMISSION HISTORY
+            <History size={16} /> RE-SUBMISSION HISTORY
           </div>
           <div style={{ fontSize: '1.8rem', fontWeight: '900', color: '#38bdf8' }}>{counts.resubmit}</div>
         </div>
@@ -738,7 +739,14 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
           {['ALL', 'PENDING', 'APPROVED', 'REJECTED', 'RESUBMIT'].map(f => (
             <button
               key={f}
-              onClick={() => setStatusFilter(f)}
+              onClick={() => {
+                setStatusFilter(f);
+                if (f === 'RESUBMIT') {
+                  setActiveSection('RESUBMIT');
+                } else if (activeSection === 'RESUBMIT') {
+                  setActiveSection('POSTERS');
+                }
+              }}
               style={{
                 padding: '0.5rem 1rem',
                 borderRadius: '8px',
@@ -791,97 +799,172 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
           {filteredSubmissions.map((item) => renderSubmissionCard(item, 'reel'))}
         </div>
       ) : (
-        /* POSTER MODE: Three columns — Papers | Posters | Re-Submission History */
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem', alignItems: 'start' }}>
-          {/* COLUMN 1: RESEARCH PAPERS */}
-          <div>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: '0.6rem',
-              marginBottom: '1rem', paddingBottom: '0.75rem',
-              borderBottom: '2px solid rgba(168,85,247,0.4)'
-            }}>
-              <BookOpen size={20} color="#c084fc" />
-              <span style={{ fontWeight: '800', fontSize: '1rem', color: '#c084fc', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                Research Papers
-              </span>
-              <span style={{
-                background: 'rgba(168,85,247,0.2)', color: '#c084fc',
-                border: '1px solid rgba(168,85,247,0.4)',
-                borderRadius: '20px', padding: '0.15rem 0.6rem',
-                fontSize: '0.78rem', fontWeight: '800'
-              }}>{paperSubmissions.length}</span>
-            </div>
-            {paperSubmissions.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '2rem', background: 'rgba(168,85,247,0.05)', borderRadius: '14px', border: '1px dashed rgba(168,85,247,0.25)' }}>
-                <BookOpen size={32} style={{ color: 'rgba(168,85,247,0.4)', marginBottom: '0.5rem' }} />
-                <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: 0 }}>No paper submissions</p>
-              </div>
-            ) : (
-              <div style={{ display: 'grid', gap: '1.1rem' }}>
-                {paperSubmissions.map(item => renderSubmissionCard(item, 'paper'))}
-              </div>
-            )}
+        /* POSTER MODE: Section Tabs & Single Active Section View */
+        <div>
+          {/* Section Selector Tabs */}
+          <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.85rem', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => setActiveSection('POSTERS')}
+              style={{
+                padding: '0.6rem 1.25rem',
+                borderRadius: '10px',
+                border: activeSection === 'POSTERS' ? '1px solid #00f2fe' : '1px solid rgba(255,255,255,0.1)',
+                background: activeSection === 'POSTERS' ? 'rgba(0, 242, 254, 0.18)' : 'rgba(15, 23, 42, 0.6)',
+                color: activeSection === 'POSTERS' ? '#00f2fe' : '#94a3b8',
+                fontWeight: '800',
+                fontSize: '0.88rem',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                boxShadow: activeSection === 'POSTERS' ? '0 0 12px rgba(0, 242, 254, 0.2)' : 'none',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <ImageIcon size={16} color={activeSection === 'POSTERS' ? '#00f2fe' : '#94a3b8'} />
+              POSTERS ({posterSubmissions.length})
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveSection('RESUBMIT')}
+              style={{
+                padding: '0.6rem 1.25rem',
+                borderRadius: '10px',
+                border: activeSection === 'RESUBMIT' ? '1px solid #38bdf8' : '1px solid rgba(255,255,255,0.1)',
+                background: activeSection === 'RESUBMIT' ? 'rgba(56, 189, 248, 0.18)' : 'rgba(15, 23, 42, 0.6)',
+                color: activeSection === 'RESUBMIT' ? '#38bdf8' : '#94a3b8',
+                fontWeight: '800',
+                fontSize: '0.88rem',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                boxShadow: activeSection === 'RESUBMIT' ? '0 0 12px rgba(56, 189, 248, 0.2)' : 'none',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <History size={16} color={activeSection === 'RESUBMIT' ? '#38bdf8' : '#94a3b8'} />
+              RE-SUBMISSION HISTORY ({resubmissionItems.length})
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveSection('PAPERS')}
+              style={{
+                padding: '0.6rem 1.25rem',
+                borderRadius: '10px',
+                border: activeSection === 'PAPERS' ? '1px solid #c084fc' : '1px solid rgba(255,255,255,0.1)',
+                background: activeSection === 'PAPERS' ? 'rgba(168, 85, 247, 0.18)' : 'rgba(15, 23, 42, 0.6)',
+                color: activeSection === 'PAPERS' ? '#c084fc' : '#94a3b8',
+                fontWeight: '800',
+                fontSize: '0.88rem',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                boxShadow: activeSection === 'PAPERS' ? '0 0 12px rgba(168, 85, 247, 0.2)' : 'none',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <BookOpen size={16} color={activeSection === 'PAPERS' ? '#c084fc' : '#94a3b8'} />
+              RESEARCH PAPERS ({paperSubmissions.length})
+            </button>
           </div>
 
-          {/* COLUMN 2: POSTERS */}
-          <div>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: '0.6rem',
-              marginBottom: '1rem', paddingBottom: '0.75rem',
-              borderBottom: '2px solid rgba(0,242,254,0.4)'
-            }}>
-              <ImageIcon size={20} color="#00f2fe" />
-              <span style={{ fontWeight: '800', fontSize: '1rem', color: '#00f2fe', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                Posters
-              </span>
-              <span style={{
-                background: 'rgba(0,242,254,0.15)', color: '#00f2fe',
-                border: '1px solid rgba(0,242,254,0.4)',
-                borderRadius: '20px', padding: '0.15rem 0.6rem',
-                fontSize: '0.78rem', fontWeight: '800'
-              }}>{posterSubmissions.length}</span>
+          {/* ACTIVE SECTION CONTENT */}
+          {activeSection === 'RESUBMIT' || statusFilter === 'RESUBMIT' ? (
+            /* RE-SUBMISSION HISTORY SECTION */
+            <div>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '0.6rem',
+                marginBottom: '1.25rem', paddingBottom: '0.75rem',
+                borderBottom: '2px solid rgba(56,189,248,0.4)'
+              }}>
+                <History size={22} color="#38bdf8" />
+                <span style={{ fontWeight: '800', fontSize: '1.1rem', color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                  Re-Submission History
+                </span>
+                <span style={{
+                  background: 'rgba(56,189,248,0.15)', color: '#38bdf8',
+                  border: '1px solid rgba(56,189,248,0.4)',
+                  borderRadius: '20px', padding: '0.2rem 0.75rem',
+                  fontSize: '0.82rem', fontWeight: '800'
+                }}>{resubmissionItems.length}</span>
+              </div>
+              {resubmissionItems.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '3rem', background: 'rgba(56,189,248,0.04)', borderRadius: '16px', border: '1px dashed rgba(56,189,248,0.2)' }}>
+                  <History size={36} style={{ color: 'rgba(56,189,248,0.4)', marginBottom: '0.5rem' }} />
+                  <p style={{ color: '#94a3b8', fontSize: '0.9rem', margin: 0 }}>No resubmission history items found matching current filter.</p>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '1.25rem' }}>
+                  {resubmissionItems.map(item => renderSubmissionCard(item, 'resubmit'))}
+                </div>
+              )}
             </div>
-            {posterSubmissions.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '2rem', background: 'rgba(0,242,254,0.04)', borderRadius: '14px', border: '1px dashed rgba(0,242,254,0.2)' }}>
-                <ImageIcon size={32} style={{ color: 'rgba(0,242,254,0.4)', marginBottom: '0.5rem' }} />
-                <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: 0 }}>No poster submissions</p>
+          ) : activeSection === 'PAPERS' ? (
+            /* RESEARCH PAPERS SECTION */
+            <div>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '0.6rem',
+                marginBottom: '1.25rem', paddingBottom: '0.75rem',
+                borderBottom: '2px solid rgba(168,85,247,0.4)'
+              }}>
+                <BookOpen size={22} color="#c084fc" />
+                <span style={{ fontWeight: '800', fontSize: '1.1rem', color: '#c084fc', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                  Research Papers
+                </span>
+                <span style={{
+                  background: 'rgba(168,85,247,0.2)', color: '#c084fc',
+                  border: '1px solid rgba(168,85,247,0.4)',
+                  borderRadius: '20px', padding: '0.2rem 0.75rem',
+                  fontSize: '0.82rem', fontWeight: '800'
+                }}>{paperSubmissions.length}</span>
               </div>
-            ) : (
-              <div style={{ display: 'grid', gap: '1.1rem' }}>
-                {posterSubmissions.map(item => renderSubmissionCard(item, 'poster'))}
-              </div>
-            )}
-          </div>
-
-          {/* COLUMN 3: RE-SUBMISSION HISTORY */}
-          <div>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: '0.6rem',
-              marginBottom: '1rem', paddingBottom: '0.75rem',
-              borderBottom: '2px solid rgba(56,189,248,0.4)'
-            }}>
-              <History size={20} color="#38bdf8" />
-              <span style={{ fontWeight: '800', fontSize: '1rem', color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                Re-Submission History
-              </span>
-              <span style={{
-                background: 'rgba(56,189,248,0.15)', color: '#38bdf8',
-                border: '1px solid rgba(56,189,248,0.4)',
-                borderRadius: '20px', padding: '0.15rem 0.6rem',
-                fontSize: '0.78rem', fontWeight: '800'
-              }}>{resubmissionItems.length}</span>
+              {paperSubmissions.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '3rem', background: 'rgba(168,85,247,0.05)', borderRadius: '16px', border: '1px dashed rgba(168,85,247,0.25)' }}>
+                  <BookOpen size={36} style={{ color: 'rgba(168,85,247,0.4)', marginBottom: '0.5rem' }} />
+                  <p style={{ color: '#94a3b8', fontSize: '0.9rem', margin: 0 }}>No paper submissions found matching current filter.</p>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '1.25rem' }}>
+                  {paperSubmissions.map(item => renderSubmissionCard(item, 'paper'))}
+                </div>
+              )}
             </div>
-            {resubmissionItems.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '2rem', background: 'rgba(56,189,248,0.04)', borderRadius: '14px', border: '1px dashed rgba(56,189,248,0.2)' }}>
-                <History size={32} style={{ color: 'rgba(56,189,248,0.4)', marginBottom: '0.5rem' }} />
-                <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: 0 }}>No resubmission history yet</p>
+          ) : (
+            /* POSTERS SECTION (DEFAULT) */
+            <div>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '0.6rem',
+                marginBottom: '1.25rem', paddingBottom: '0.75rem',
+                borderBottom: '2px solid rgba(0,242,254,0.4)'
+              }}>
+                <ImageIcon size={22} color="#00f2fe" />
+                <span style={{ fontWeight: '800', fontSize: '1.1rem', color: '#00f2fe', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                  Posters
+                </span>
+                <span style={{
+                  background: 'rgba(0,242,254,0.15)', color: '#00f2fe',
+                  border: '1px solid rgba(0,242,254,0.4)',
+                  borderRadius: '20px', padding: '0.2rem 0.75rem',
+                  fontSize: '0.82rem', fontWeight: '800'
+                }}>{posterSubmissions.length}</span>
               </div>
-            ) : (
-              <div style={{ display: 'grid', gap: '1.1rem' }}>
-                {resubmissionItems.map(item => renderSubmissionCard(item, 'resubmit'))}
-              </div>
-            )}
-          </div>
+              {posterSubmissions.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '3rem', background: 'rgba(0,242,254,0.04)', borderRadius: '16px', border: '1px dashed rgba(0,242,254,0.2)' }}>
+                  <ImageIcon size={36} style={{ color: 'rgba(0,242,254,0.4)', marginBottom: '0.5rem' }} />
+                  <p style={{ color: '#94a3b8', fontSize: '0.9rem', margin: 0 }}>No poster submissions found matching current filter.</p>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '1.25rem' }}>
+                  {posterSubmissions.map(item => renderSubmissionCard(item, 'poster'))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
