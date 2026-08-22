@@ -5,7 +5,7 @@ import {
   Mic, Bot, Users, Video, Music, HelpCircle, ArrowRight, Trash2, Lock, Upload, ExternalLink, MessageCircle, Compass
 } from 'lucide-react';
 import SubmissionModal from './SubmissionModal';
-import { getEventDetails } from '../data/eventsRulesData';
+import { getEventDetails, isRegistrationClosed } from '../data/eventsRulesData';
 import { apiFetch } from '../config/api';
 
 const registeredEventsList = [
@@ -546,11 +546,12 @@ export default function UserProfile({ user, onLogout, onExploreEvents, onUnenrol
                     })()}
 
                     {(() => {
+                      const isClosedEvent = isRegistrationClosed(item.registrationDeadline || item.deadline, item.title, item.id);
                       const isBootcamp = item.id === 'bootcamp-1' || String(item.title || '').toLowerCase().includes('bootcamp');
-                      if (isBootcamp) {
+                      if (isClosedEvent || isBootcamp) {
                         return (
                           <span
-                            title="Bootcamp Registration Locked: Bootcamp registrations are locked and cannot be deleted or re-registered."
+                            title="Registration Locked: Registrations for this event are closed and cannot be deleted or re-registered."
                             style={{
                               background: 'rgba(56, 189, 248, 0.12)',
                               border: '1px solid rgba(56, 189, 248, 0.35)',

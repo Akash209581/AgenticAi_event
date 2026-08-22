@@ -416,11 +416,12 @@ router.post('/unenroll-event', async (req, res) => {
       );
     }
 
-    const isBootcamp = cleanEvtId === 'bootcamp-1' || cleanEvtTitle.includes('bootcamp');
-    if (isBootcamp) {
+    const isClosedEvent = cleanEvtId === 'technical-1' || cleanEvtId === 'technical-2' || cleanEvtId === 'bootcamp-1' ||
+      cleanEvtTitle.includes('hackathon') || cleanEvtTitle.includes('prompt') || cleanEvtTitle.includes('bootcamp');
+    if (isClosedEvent) {
       return res.status(400).json({
         success: false,
-        message: 'Action Blocked: Bootcamp registration is locked in your profile and cannot be removed or cancelled.'
+        message: 'Action Blocked: Registrations for this event are closed. Registrations cannot be removed or cancelled.'
       });
     }
 
