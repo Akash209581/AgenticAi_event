@@ -1,13 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Award, Phone, UserPlus, Sparkles, ShieldCheck, Calendar, Video, FileText, CheckCircle2, Bot, Zap, MessageCircle, ExternalLink, Lock, Users } from 'lucide-react';
 import SubmissionModal from './SubmissionModal';
 import { isSameEvent, getEventDetails, isRegistrationClosed } from '../data/eventsRulesData';
-import { getAssetUrl } from '../config/api';
+import { getAssetUrl, apiFetch } from '../config/api';
 
 export default function EventDetailsView({ event, onBack, onRegister, currentUser = null, onEnrollEvent, onTeamRegister, onSubmissionUpdate }) {
   const [isSubmissionModalOpen, setIsSubmissionModalOpen] = useState(false);
   // Track freshly submitted data locally so button updates even before parent re-renders
   const [localSubmission, setLocalSubmission] = useState(null);
+  const [bootcampCount, setBootcampCount] = useState(0);
+
+  useEffect(() => {
+    if (!event) return;
+    const isBootcampOrExpo = event.id === 'bootcamp-1' || 
+                             event.id === 'industry-2' || 
+                             String(event.title || '').toLowerCase().includes('bootcamp') ||
+                             String(event.title || '').toLowerCase().includes('expo');
+    if (!isBootcampOrExpo) return;
+
+    let isMounted = true;
+    const fetchCount = async () => {
+      try {
+        const { data } = await apiFetch('/bootcamp-count', { method: 'GET' });
+        if (data && data.success && isMounted) {
+          setBootcampCount(data.count);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch bootcamp count:', err);
+      }
+    };
+    fetchCount();
+    const interval = setInterval(fetchCount, 10000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [event]);
 
   if (!event) return null;
 
@@ -99,7 +128,7 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
             </div>
             {/* Quick Register / Submission & Team Formation Button Place */}
             {(() => {
-              const isEventClosed = isRegistrationClosed(event.registrationDeadline, event.title, event.id);
+              const isEventClosed = isRegistrationClosed(event.registrationDeadline, event.title, event.id, bootcampCount);
 
               const renderTeamBtn = () => (
                 <button
@@ -405,100 +434,100 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
 
                   {/* REGISTER FOR BOOTCAMP BUTTON */}
                   <div style={{ marginTop: '1.25rem', textAlign: 'center' }}>
-                    {(() => {
-                      const bootcampEventObj = getEventDetails('bootcamp', '1', 'AI AGENT BOOTCAMP');
-                      const isBootcampEnrolled = currentUser?.registeredEvents?.some(e => isSameEvent(bootcampEventObj, e));
-                      const isBootcampClosed = isRegistrationClosed(bootcampEventObj.registrationDeadline, bootcampEventObj.title, bootcampEventObj.id);
+                     {(() => {
+                       const bootcampEventObj = getEventDetails('bootcamp', '1', 'AI AGENT BOOTCAMP');
+                       const isBootcampEnrolled = currentUser?.registeredEvents?.some(e => isSameEvent(bootcampEventObj, e));
+                       const isBootcampClosed = isRegistrationClosed(bootcampEventObj.registrationDeadline, bootcampEventObj.title, bootcampEventObj.id, bootcampCount);
 
-                      if (isBootcampEnrolled) {
-                        return (
-                          <div
-                            className="card-quick-register-btn"
-                            style={{
-                              maxWidth: '320px',
-                              margin: '0 auto',
-                              background: 'rgba(16, 185, 129, 0.2)',
-                              border: '1px solid rgba(16, 185, 129, 0.5)',
-                              color: '#34d399',
-                              justifyContent: 'center',
-                              cursor: 'default',
-                              fontWeight: '700'
-                            }}
-                          >
-                            <CheckCircle2 size={18} />
-                            <span>Registered for Bootcamp</span>
-                          </div>
-                        );
-                      }
+                       if (isBootcampEnrolled) {
+                         return (
+                           <div
+                             className="card-quick-register-btn"
+                             style={{
+                               maxWidth: '320px',
+                               margin: '0 auto',
+                               background: 'rgba(16, 185, 129, 0.2)',
+                               border: '1px solid rgba(16, 185, 129, 0.5)',
+                               color: '#34d399',
+                               justifyContent: 'center',
+                               cursor: 'default',
+                               fontWeight: '700'
+                             }}
+                           >
+                             <CheckCircle2 size={18} />
+                             <span>Registered for Bootcamp</span>
+                           </div>
+                         );
+                       }
 
-                      if (isBootcampClosed) {
-                        return (
-                          <div
-                            className="card-quick-register-btn"
-                            style={{
-                              maxWidth: '350px',
-                              margin: '0 auto',
-                              background: 'rgba(239, 68, 68, 0.15)',
-                              border: '1px solid rgba(239, 68, 68, 0.4)',
-                              color: '#f87171',
-                              justifyContent: 'center',
-                              cursor: 'not-allowed',
-                              fontWeight: '700'
-                            }}
-                            title="Bootcamp registration ended on 18th August 2026"
-                          >
-                            <Lock size={18} />
-                            <span>Bootcamp Registrations Closed</span>
-                          </div>
-                        );
-                      }
+                       if (isBootcampClosed) {
+                         return (
+                           <div
+                             className="card-quick-register-btn"
+                             style={{
+                               maxWidth: '350px',
+                               margin: '0 auto',
+                               background: 'rgba(239, 68, 68, 0.15)',
+                               border: '1px solid rgba(239, 68, 68, 0.4)',
+                               color: '#f87171',
+                               justifyContent: 'center',
+                               cursor: 'not-allowed',
+                               fontWeight: '700'
+                             }}
+                             title="Bootcamp registrations are closed"
+                           >
+                             <Lock size={18} />
+                             <span>Bootcamp Registrations Closed</span>
+                           </div>
+                         );
+                       }
 
-                      if (!currentUser) {
-                        return (
-                          <button
-                            type="button"
-                            className="card-quick-register-btn"
-                            disabled
-                            style={{
-                              maxWidth: '320px',
-                              margin: '0 auto',
-                              background: 'rgba(148, 163, 184, 0.15)',
-                              border: '1px solid rgba(148, 163, 184, 0.3)',
-                              color: '#94a3b8',
-                              fontWeight: '700',
-                              fontSize: '1rem',
-                              cursor: 'not-allowed',
-                              boxShadow: 'none'
-                            }}
-                          >
-                            <Lock size={18} />
-                            <span>Register for Bootcamp</span>
-                          </button>
-                        );
-                      }
+                       if (!currentUser) {
+                         return (
+                           <button
+                             type="button"
+                             className="card-quick-register-btn"
+                             onClick={() => onRegister && onRegister(bootcampEventObj)}
+                             style={{
+                               maxWidth: '320px',
+                               margin: '0 auto',
+                               background: 'linear-gradient(135deg, #0072ff, #00f0ff)',
+                               borderColor: '#00f0ff',
+                               color: '#ffffff',
+                               fontWeight: '700',
+                               fontSize: '1rem',
+                               cursor: 'pointer',
+                               boxShadow: '0 4px 15px rgba(0, 240, 255, 0.3)'
+                             }}
+                           >
+                             <Sparkles size={18} />
+                             <span>Register for Bootcamp</span>
+                           </button>
+                         );
+                       }
 
-                      return (
-                        <button
-                          type="button"
-                          className="card-quick-register-btn"
-                          disabled
-                          style={{
-                            maxWidth: '320px',
-                            margin: '0 auto',
-                            background: 'rgba(148, 163, 184, 0.15)',
-                            border: '1px solid rgba(148, 163, 184, 0.3)',
-                            color: '#94a3b8',
-                            fontWeight: '700',
-                            fontSize: '1rem',
-                            cursor: 'not-allowed',
-                            boxShadow: 'none'
-                          }}
-                        >
-                          <Lock size={18} />
-                          <span>Register for Bootcamp</span>
-                        </button>
-                      );
-                    })()}
+                       return (
+                         <button
+                           type="button"
+                           className="card-quick-register-btn"
+                           onClick={() => onEnrollEvent && onEnrollEvent(bootcampEventObj)}
+                           style={{
+                             maxWidth: '320px',
+                             margin: '0 auto',
+                             background: 'linear-gradient(135deg, #0072ff, #00f0ff)',
+                             borderColor: '#00f0ff',
+                             color: '#ffffff',
+                             fontWeight: '700',
+                             fontSize: '1rem',
+                             cursor: 'pointer',
+                             boxShadow: '0 4px 15px rgba(0, 240, 255, 0.3)'
+                           }}
+                         >
+                           <Sparkles size={18} />
+                           <span>Register for Bootcamp</span>
+                         </button>
+                       );
+                     })()}
                   </div>
                 </div>
               )}

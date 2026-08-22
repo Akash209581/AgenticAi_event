@@ -458,7 +458,7 @@ export const eventsRulesData = {
 
 
 // Helper lookup to check if event registration is closed
-export function isRegistrationClosed(deadlineString, eventTitle = '', eventId = '') {
+export function isRegistrationClosed(deadlineString, eventTitle = '', eventId = '', bootcampCount = 0) {
   const t = String(eventTitle || '').toLowerCase();
   const id = String(eventId || '').toLowerCase();
 
@@ -471,9 +471,13 @@ export function isRegistrationClosed(deadlineString, eventTitle = '', eventId = 
   // Bootcamp is ONLY bootcamp-1 or event title containing 'bootcamp'
   const isBootcamp = t.includes('bootcamp') || id === 'bootcamp-1';
 
-  // Strictly ONLY Hackathon, AI Prompt Combat & AI Agent Bootcamp registrations are closed.
-  if (isHackathon || isPromptCombat || isBootcamp) {
+  // Strictly ONLY Hackathon and AI Prompt Combat registrations are closed.
+  if (isHackathon || isPromptCombat) {
     return true;
+  }
+
+  if (isBootcamp) {
+    return bootcampCount >= 120;
   }
 
   // All other events (AI Agents Expo, Reels, AI Musical, Paper/Poster, Quiz, QuestX, SparkX, Podcast, Summit) remain OPEN!
