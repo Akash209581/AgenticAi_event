@@ -144,17 +144,45 @@ router.post('/login', async (req, res) => {
  */
 router.get('/bootcamp-count', async (req, res) => {
   try {
-    let bootcampCount = 0;
+    let newBootcampCount = 0;
+    let totalBootcampCount = 0;
+
     if (mongoose.connection.readyState === 1) {
-      bootcampCount = await User.countDocuments({
-        'registeredEvents.id': 'bootcamp-1'
+      totalBootcampCount = await User.countDocuments({
+        $or: [
+          { 'registeredEvents.id': 'bootcamp-1' },
+          { 'registeredEvents.title': /bootcamp/i }
+        ]
+      });
+
+      newBootcampCount = await User.countDocuments({
+        'registeredEvents': {
+          $elemMatch: {
+            $or: [{ id: 'bootcamp-1' }, { title: /bootcamp/i }],
+            isNewBootcampRegistration: true
+          }
+        }
       });
     } else {
-      bootcampCount = memoryUsers.filter(u => 
-        u.registeredEvents?.some(e => e.id === 'bootcamp-1')
+      const bootcampUsers = memoryUsers.filter(u =>
+        u.registeredEvents?.some(e => e.id === 'bootcamp-1' || (e.title && e.title.toLowerCase().includes('bootcamp')))
+      );
+      totalBootcampCount = bootcampUsers.length;
+      newBootcampCount = memoryUsers.filter(u =>
+        u.registeredEvents?.some(e =>
+          (e.id === 'bootcamp-1' || (e.title && e.title.toLowerCase().includes('bootcamp'))) &&
+          e.isNewBootcampRegistration === true
+        )
       ).length;
     }
-    return res.json({ success: true, count: bootcampCount });
+
+    return res.json({
+      success: true,
+      count: newBootcampCount,
+      totalCount: totalBootcampCount,
+      limit: 120,
+      isClosed: newBootcampCount >= 120
+    });
   } catch (error) {
     console.error('[Bootcamp Count Error]', error);
     return res.status(500).json({ success: false, message: error.message || 'Server error' });
@@ -261,24 +289,32 @@ router.post('/enroll-event', async (req, res) => {
         });
       }
 
-      // Dynamic check for AI Agent Bootcamp: limit to 120 registrations
+      // Dynamic check for AI Agent Bootcamp: limit to 120 NEW registrations
       const isBootcamp = checkEvtId === 'bootcamp-1' || checkTitle.includes('bootcamp');
       if (isBootcamp) {
-        let bootcampCount = 0;
+        let newBootcampCount = 0;
         if (mongoose.connection.readyState === 1) {
-          bootcampCount = await User.countDocuments({
-            'registeredEvents.id': 'bootcamp-1'
+          newBootcampCount = await User.countDocuments({
+            'registeredEvents': {
+              $elemMatch: {
+                $or: [{ id: 'bootcamp-1' }, { title: /bootcamp/i }],
+                isNewBootcampRegistration: true
+              }
+            }
           });
         } else {
-          bootcampCount = memoryUsers.filter(u => 
-            u.registeredEvents?.some(e => e.id === 'bootcamp-1')
+          newBootcampCount = memoryUsers.filter(u =>
+            u.registeredEvents?.some(e =>
+              (e.id === 'bootcamp-1' || (e.title && e.title.toLowerCase().includes('bootcamp'))) &&
+              e.isNewBootcampRegistration === true
+            )
           ).length;
         }
 
-        if (bootcampCount >= 120) {
+        if (newBootcampCount >= 120) {
           return res.status(400).json({
             success: false,
-            message: `Registration for '${event.title || 'AI Agent Bootcamp'}' has been closed.`
+            message: `Registration for '${event.title || 'AI Agent Bootcamp'}' has reached the limit of 120 new submissions and is now closed.`
           });
         }
       }
@@ -293,7 +329,8 @@ router.post('/enroll-event', async (req, res) => {
         categoryName: event.categoryName || event.category || 'EVENT COMPETITION',
         categoryId: event.categoryId || 'technical',
         image: event.image || '',
-        registeredAt: new Date().toISOString()
+        registeredAt: new Date().toISOString(),
+        ...(isBootcamp ? { isNewBootcampRegistration: true } : {})
       };
 
       user.registeredEvents.push(newEventEntry);
@@ -377,6 +414,14 @@ router.post('/unenroll-event', async (req, res) => {
         ((cleanEvtId && t.eventId === cleanEvtId) || (cleanEvtTitle && t.eventTitle && t.eventTitle.toLowerCase() === cleanEvtTitle)) &&
         t.members && t.members.some(m => m.aiId && m.aiId.toUpperCase() === userAiId)
       );
+    }
+
+    const isBootcamp = cleanEvtId === 'bootcamp-1' || cleanEvtTitle.includes('bootcamp');
+    if (isBootcamp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Action Blocked: Bootcamp registration is locked in your profile and cannot be removed or cancelled.'
+      });
     }
 
     if (activeTeam) {
@@ -854,13 +899,18 @@ router.get('/reviewer-submissions', async (req, res) => {
     allUsers.forEach(u => {
       if (u.registeredEvents && Array.isArray(u.registeredEvents)) {
         u.registeredEvents.forEach(e => {
-          if (e.submission && (e.submission.posterFile || e.submission.posterLink || e.submission.reelLink)) {
+          const sub = e.submission || {};
+          const hasFilesOrLinks = Boolean(
+            sub.posterFile || sub.posterLink || sub.reelLink || sub.paperFile || sub.paperLink || sub.fileUrl || sub.driveLink
+          );
+          const isResubmitStatus = sub.reviewStatus === 'RESUBMIT_ALLOWED' || sub.allowResubmit || (Array.isArray(sub.resubmissionHistory) && sub.resubmissionHistory.length > 0);
+
+          if (e.submission && (hasFilesOrLinks || isResubmitStatus)) {
             const title = String(e.title || '').toLowerCase();
             const eId = String(e.id || '').toLowerCase();
-            const sub = e.submission || {};
 
-            const isReel = eId === 'creative-1' || title.includes('reel') || Boolean(sub.reelLink);
-            const isPoster = eId === 'technical-3' || title.includes('poster') || title.includes('paper') || Boolean(sub.posterFile || sub.posterLink);
+            const isReel = eId === 'creative-1' || title.includes('reel') || sub.submissionType === 'reel' || Boolean(sub.reelLink);
+            const isPoster = eId === 'technical-3' || title.includes('poster') || title.includes('paper') || sub.submissionType === 'paper' || sub.submissionType === 'poster' || Boolean(sub.posterFile || sub.posterLink || sub.paperFile || sub.paperLink || sub.fileUrl || sub.driveLink) || isResubmitStatus;
 
             if (filterMode === 'reels' && !isReel) return;
             if (filterMode === 'poster' && (!isPoster || title.includes('reel'))) return;
@@ -918,7 +968,7 @@ router.get('/reviewer-submissions', async (req, res) => {
  */
 router.post('/review-submission', async (req, res) => {
   try {
-    const { studentAiId, eventId, eventTitle, status, rejectionReason, reviewerName } = req.body;
+    const { studentAiId, eventId, eventTitle, status, rejectionReason, reviewerName, resubmissionHistory } = req.body;
 
     if (!status || !['APPROVED', 'REJECTED', 'PENDING', 'RESUBMIT_ALLOWED'].includes(status)) {
       return res.status(400).json({ success: false, message: 'Valid review status is required (APPROVED, REJECTED, PENDING, or RESUBMIT_ALLOWED).' });
@@ -1025,6 +1075,10 @@ router.post('/review-submission', async (req, res) => {
       reviewedAt: new Date().toISOString(),
       reviewedBy: reviewerName || 'Poster & Paper Reviewer'
     };
+
+    if (Array.isArray(resubmissionHistory)) {
+      reviewUpdate.resubmissionHistory = resubmissionHistory;
+    }
 
     // If allowed to resubmit, delete the previous submission files/links so the user starts fresh
     if (status === 'RESUBMIT_ALLOWED') {

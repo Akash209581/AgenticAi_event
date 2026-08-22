@@ -1455,13 +1455,18 @@ router.get('/reviewer-submissions', async (req, res) => {
     allUsers.forEach(u => {
       if (u.registeredEvents && Array.isArray(u.registeredEvents)) {
         u.registeredEvents.forEach(e => {
-          if (e.submission && (e.submission.posterFile || e.submission.posterLink || e.submission.reelLink)) {
+          const sub = e.submission || {};
+          const hasFilesOrLinks = Boolean(
+            sub.posterFile || sub.posterLink || sub.reelLink || sub.paperFile || sub.paperLink || sub.fileUrl || sub.driveLink
+          );
+          const isResubmitStatus = sub.reviewStatus === 'RESUBMIT_ALLOWED' || sub.allowResubmit || (Array.isArray(sub.resubmissionHistory) && sub.resubmissionHistory.length > 0);
+
+          if (e.submission && (hasFilesOrLinks || isResubmitStatus)) {
             const title = String(e.title || '').toLowerCase();
             const eId = String(e.id || '').toLowerCase();
-            const sub = e.submission || {};
 
-            const isReel = eId === 'creative-1' || title.includes('reel') || Boolean(sub.reelLink);
-            const isPoster = eId === 'technical-3' || title.includes('poster') || title.includes('paper') || Boolean(sub.posterFile || sub.posterLink);
+            const isReel = eId === 'creative-1' || title.includes('reel') || sub.submissionType === 'reel' || Boolean(sub.reelLink);
+            const isPoster = eId === 'technical-3' || title.includes('poster') || title.includes('paper') || sub.submissionType === 'paper' || sub.submissionType === 'poster' || Boolean(sub.posterFile || sub.posterLink || sub.paperFile || sub.paperLink || sub.fileUrl || sub.driveLink) || isResubmitStatus;
 
             if (filterMode === 'reels' && !isReel) return;
             if (filterMode === 'poster' && (!isPoster || title.includes('reel'))) return;
