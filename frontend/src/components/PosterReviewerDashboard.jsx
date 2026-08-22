@@ -97,10 +97,11 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
           const title = String(s.eventTitle || '').toLowerCase();
           const eId = String(s.eventId || '').toLowerCase();
           const sub = s.submission || {};
+          const isResubmit = sub.reviewStatus === 'RESUBMIT_ALLOWED' || sub.allowResubmit || s.reviewStatus === 'RESUBMIT_ALLOWED' || (Array.isArray(sub.resubmissionHistory) && sub.resubmissionHistory.length > 0);
           if (isReelsMode) {
-            return eId === 'creative-1' || title.includes('reel') || Boolean(sub.reelLink);
+            return eId === 'creative-1' || title.includes('reel') || sub.submissionType === 'reel' || Boolean(sub.reelLink);
           } else {
-            return (eId === 'technical-3' || title.includes('poster') || title.includes('paper') || Boolean(sub.posterFile || sub.posterLink || sub.paperFile || sub.paperLink || sub.fileUrl || sub.driveLink)) && !title.includes('reel');
+            return (eId === 'technical-3' || title.includes('poster') || title.includes('paper') || sub.submissionType === 'paper' || sub.submissionType === 'poster' || isResubmit || Boolean(sub.posterFile || sub.posterLink || sub.paperFile || sub.paperLink || sub.fileUrl || sub.driveLink)) && !title.includes('reel');
           }
         });
         setSubmissions(filtered);
@@ -131,13 +132,18 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
         regData.users.forEach(u => {
           if (u.registeredEvents && Array.isArray(u.registeredEvents)) {
             u.registeredEvents.forEach(e => {
-              if (e.submission && (e.submission.posterFile || e.submission.posterLink || e.submission.reelLink)) {
+              const sub = e.submission || {};
+              const hasFilesOrLinks = Boolean(
+                sub.posterFile || sub.posterLink || sub.reelLink || sub.paperFile || sub.paperLink || sub.fileUrl || sub.driveLink
+              );
+              const isResubmit = sub.reviewStatus === 'RESUBMIT_ALLOWED' || sub.allowResubmit || (Array.isArray(sub.resubmissionHistory) && sub.resubmissionHistory.length > 0);
+
+              if (e.submission && (hasFilesOrLinks || isResubmit)) {
                 const title = String(e.title || '').toLowerCase();
                 const eId = String(e.id || '').toLowerCase();
-                const sub = e.submission || {};
 
-                const isReel = eId === 'creative-1' || title.includes('reel') || Boolean(sub.reelLink);
-                const isPoster = eId === 'technical-3' || title.includes('poster') || title.includes('paper') || Boolean(sub.posterFile || sub.posterLink || sub.paperFile || sub.paperLink || sub.fileUrl || sub.driveLink);
+                const isReel = eId === 'creative-1' || title.includes('reel') || sub.submissionType === 'reel' || Boolean(sub.reelLink);
+                const isPoster = eId === 'technical-3' || title.includes('poster') || title.includes('paper') || sub.submissionType === 'paper' || sub.submissionType === 'poster' || isResubmit || Boolean(sub.posterFile || sub.posterLink || sub.paperFile || sub.paperLink || sub.fileUrl || sub.driveLink);
 
                 if (isReelsMode && !isReel) return;
                 if (!isReelsMode && (!isPoster || title.includes('reel'))) return;
@@ -392,7 +398,7 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
     pending: submissions.filter(s => !s.reviewStatus || s.reviewStatus === 'PENDING').length,
     approved: submissions.filter(s => s.reviewStatus === 'APPROVED').length,
     rejected: submissions.filter(s => s.reviewStatus === 'REJECTED').length,
-    resubmit: submissions.filter(s => s.reviewStatus === 'RESUBMIT_ALLOWED' || (Array.isArray(s.submission?.resubmissionHistory) && s.submission.resubmissionHistory.length > 0)).length
+    resubmit: submissions.filter(s => s.reviewStatus === 'RESUBMIT_ALLOWED' || (Array.isArray(s.submission?.resubmissionHistory) && s.submission.resubmissionHistory.length > 0) || (resubHistoryMap[s.submissionId || `${s.studentAiId}_${s.eventId}`]?.length > 0)).length
   };
 
   const presets = isReelsMode ? [

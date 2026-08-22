@@ -465,7 +465,7 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
                            <div
                              className="card-quick-register-btn"
                              style={{
-                               maxWidth: '350px',
+                               maxWidth: '380px',
                                margin: '0 auto',
                                background: 'rgba(239, 68, 68, 0.15)',
                                border: '1px solid rgba(239, 68, 68, 0.4)',
@@ -474,20 +474,52 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
                                cursor: 'not-allowed',
                                fontWeight: '700'
                              }}
-                             title="Bootcamp registrations are closed"
+                             title="120 new slots filled - Bootcamp registrations closed"
                            >
                              <Lock size={18} />
-                             <span>Bootcamp Registrations Closed</span>
+                             <span>120 New Slots Filled • Closed</span>
                            </div>
                          );
                        }
 
                        if (!currentUser) {
                          return (
+                           <div>
+                             <div style={{ fontSize: '0.82rem', color: '#38bdf8', fontWeight: '700', marginBottom: '0.5rem' }}>
+                               ⚡ Reopened • {bootcampCount}/120 New Slots Filled
+                             </div>
+                             <button
+                               type="button"
+                               className="card-quick-register-btn"
+                               onClick={() => onRegister && onRegister(bootcampEventObj)}
+                               style={{
+                                 maxWidth: '320px',
+                                 margin: '0 auto',
+                                 background: 'linear-gradient(135deg, #0072ff, #00f0ff)',
+                                 borderColor: '#00f0ff',
+                                 color: '#ffffff',
+                                 fontWeight: '700',
+                                 fontSize: '1rem',
+                                 cursor: 'pointer',
+                                 boxShadow: '0 4px 15px rgba(0, 240, 255, 0.3)'
+                               }}
+                             >
+                               <Sparkles size={18} />
+                               <span>Register for Bootcamp</span>
+                             </button>
+                           </div>
+                         );
+                       }
+
+                       return (
+                         <div>
+                           <div style={{ fontSize: '0.82rem', color: '#38bdf8', fontWeight: '700', marginBottom: '0.5rem' }}>
+                             ⚡ Reopened • {bootcampCount}/120 New Slots Filled
+                           </div>
                            <button
                              type="button"
                              className="card-quick-register-btn"
-                             onClick={() => onRegister && onRegister(bootcampEventObj)}
+                             onClick={() => onEnrollEvent && onEnrollEvent(bootcampEventObj)}
                              style={{
                                maxWidth: '320px',
                                margin: '0 auto',
@@ -503,35 +535,12 @@ export default function EventDetailsView({ event, onBack, onRegister, currentUse
                              <Sparkles size={18} />
                              <span>Register for Bootcamp</span>
                            </button>
-                         );
-                       }
-
-                       return (
-                         <button
-                           type="button"
-                           className="card-quick-register-btn"
-                           onClick={() => onEnrollEvent && onEnrollEvent(bootcampEventObj)}
-                           style={{
-                             maxWidth: '320px',
-                             margin: '0 auto',
-                             background: 'linear-gradient(135deg, #0072ff, #00f0ff)',
-                             borderColor: '#00f0ff',
-                             color: '#ffffff',
-                             fontWeight: '700',
-                             fontSize: '1rem',
-                             cursor: 'pointer',
-                             boxShadow: '0 4px 15px rgba(0, 240, 255, 0.3)'
-                           }}
-                         >
-                           <Sparkles size={18} />
-                           <span>Register for Bootcamp</span>
-                         </button>
+                         </div>
                        );
                      })()}
                   </div>
                 </div>
               )}
-
               {/* JUDGING CRITERIA IF ANY */}
               {event.judgingCriteria && event.judgingCriteria.length > 0 && (
                 <div style={{ marginBottom: '1.5rem' }}>
