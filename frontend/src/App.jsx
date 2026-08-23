@@ -54,11 +54,15 @@ export default function App() {
 
   // Sync currentUser changes to encrypted secureStorage
   useEffect(() => {
-    if (currentUser) {
-      secureStorage.setItem('vucse_current_user', currentUser);
-    } else {
-      secureStorage.removeItem('vucse_current_user');
-      secureStorage.removeItem('vucse_auth_token');
+    try {
+      if (currentUser) {
+        secureStorage.setItem('vucse_current_user', currentUser);
+      } else {
+        secureStorage.removeItem('vucse_current_user');
+        secureStorage.removeItem('vucse_auth_token');
+      }
+    } catch (err) {
+      console.warn('Failed to sync currentUser to secureStorage:', err);
     }
   }, [currentUser]);
 

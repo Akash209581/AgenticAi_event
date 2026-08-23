@@ -67,40 +67,98 @@ function decrypt(cipherText) {
   }
 }
 
+/**
+ * Recursively strips huge base64/file payload strings from objects before persisting to storage
+ */
+function sanitizeForStorage(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(sanitizeForStorage);
+
+  const clean = {};
+  for (const key of Object.keys(obj)) {
+    const val = obj[key];
+    if (typeof val === 'string') {
+      // Omit/truncate massive base64 strings or fileData blobs (>20KB)
+      if (val.length > 20000 || (val.startsWith('data:') && val.includes('base64,'))) {
+        clean[key] = key === 'fileData' || key === 'posterFile' ? '[STORED_ON_SERVER]' : val.slice(0, 500) + '...[TRUNCATED]';
+      } else {
+        clean[key] = val;
+      }
+    } else if (typeof val === 'object' && val !== null) {
+      clean[key] = sanitizeForStorage(val);
+    } else {
+      clean[key] = val;
+    }
+  }
+  return clean;
+}
+
 export const secureStorage = {
   /**
-   * Set item encrypted in storage
+   * Set item encrypted in storage with quota crash prevention & auto-sanitization
    */
   setItem(key, value, isSession = false) {
     const storage = isSession ? sessionStorage : localStorage;
     const encKey = '_v_enc_' + btoa(key).replace(/=/g, '');
-    const stringVal = typeof value === 'object' ? JSON.stringify(value) : String(value);
+
+    let processedValue = value;
+    if (typeof value === 'object' && value !== null) {
+      processedValue = sanitizeForStorage(value);
+    }
+
+    const stringVal = typeof processedValue === 'object' ? JSON.stringify(processedValue) : String(processedValue);
     const encVal = encrypt(stringVal);
-    storage.setItem(encKey, encVal);
+
+    try {
+      storage.setItem(encKey, encVal);
+    } catch (e) {
+      console.warn(`[secureStorage] Local storage setItem failed for key "${key}":`, e);
+      // Fallback: try sessionStorage if localStorage fails (e.g. QuotaExceededError)
+      try {
+        sessionStorage.setItem(encKey, encVal);
+      } catch (sessionErr) {
+        console.warn(`[secureStorage] Session storage fallback also failed for key "${key}":`, sessionErr);
+      }
+    }
 
     // Clean up legacy unencrypted key if it exists
-    if (storage.getItem(key)) {
-      storage.removeItem(key);
-    }
+    try {
+      if (storage.getItem(key)) {
+        storage.removeItem(key);
+      }
+    } catch (_) {}
   },
 
   /**
    * Get decrypted item from storage
    */
   getItem(key, isSession = false) {
-    const storage = isSession ? sessionStorage : localStorage;
-    const encKey = '_v_enc_' + btoa(key).replace(/=/g, '');
+    try {
+      const storage = isSession ? sessionStorage : localStorage;
+      const encKey = '_v_enc_' + btoa(key).replace(/=/g, '');
 
-    let raw = storage.getItem(encKey);
-    
-    // Check legacy unencrypted fallback
-    if (!raw) {
-      const legacyRaw = storage.getItem(key);
-      if (legacyRaw) return legacyRaw;
+      let raw = storage.getItem(encKey);
+      if (!raw) {
+        // Fallback check in sessionStorage
+        try {
+          raw = sessionStorage.getItem(encKey);
+        } catch (_) {}
+      }
+
+      // Check legacy unencrypted fallback
+      if (!raw) {
+        try {
+          const legacyRaw = storage.getItem(key);
+          if (legacyRaw) return legacyRaw;
+        } catch (_) {}
+        return null;
+      }
+
+      return decrypt(raw);
+    } catch (e) {
+      console.warn(`[secureStorage] getItem failed for key "${key}":`, e);
       return null;
     }
-
-    return decrypt(raw);
   },
 
   /**
@@ -120,9 +178,15 @@ export const secureStorage = {
    * Remove item from storage
    */
   removeItem(key, isSession = false) {
-    const storage = isSession ? sessionStorage : localStorage;
-    const encKey = '_v_enc_' + btoa(key).replace(/=/g, '');
-    storage.removeItem(encKey);
-    storage.removeItem(key); // Also clear legacy unencrypted key
+    try {
+      const storage = isSession ? sessionStorage : localStorage;
+      const encKey = '_v_enc_' + btoa(key).replace(/=/g, '');
+      storage.removeItem(encKey);
+      storage.removeItem(key); // Also clear legacy unencrypted key
+    } catch (_) {}
+    try {
+      const encKey = '_v_enc_' + btoa(key).replace(/=/g, '');
+      sessionStorage.removeItem(encKey);
+    } catch (_) {}
   }
 };
