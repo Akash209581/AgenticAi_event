@@ -193,6 +193,17 @@ export default function AdminDashboard({ onBack }) {
     }
   }, [isAuthenticated, yearFilter, genderFilter, teamSearch, teamEventFilter]);
 
+  // Helper to format CSV cells safely and force text mode for numeric strings (phone, regNo, IDs) in Excel
+  const formatCSVCell = (val, forceText = false) => {
+    if (val === null || val === undefined) return '""';
+    const str = String(val).trim();
+    if (!str) return '""';
+    if (forceText) {
+      return `="${str.replace(/"/g, '""')}"`;
+    }
+    return `"${str.replace(/"/g, '""')}"`;
+  };
+
   // Export CSV for Team Registrations (Flattened Roster: 1 Row per Team Member)
   const exportTeamsPerMemberCSV = () => {
     if (!teams || !teams.length) {
@@ -231,22 +242,22 @@ export default function AdminDashboard({ onBack }) {
         const isLeader = Boolean(m.isLeader || m.aiId === leader.aiId || (m.regNo && m.regNo === leader.regNo));
         rows.push([
           serialNo++,
-          t.teamId || '',
-          `"${(t.teamName || '').replace(/"/g, '""')}"`,
-          `"${(t.eventTitle || '').replace(/"/g, '""')}"`,
-          t.eventId || '',
+          formatCSVCell(t.teamId, true),
+          formatCSVCell(t.teamName),
+          formatCSVCell(t.eventTitle),
+          formatCSVCell(t.eventId),
           isLeader ? 'Team Leader' : 'Team Member',
-          `"${(m.name || '').replace(/"/g, '""')}"`,
-          m.aiId || '',
-          m.regNo || '',
-          m.year || '',
-          m.gender || '',
-          m.phone || '',
-          m.email || '',
+          formatCSVCell(m.name),
+          formatCSVCell(m.aiId, true),
+          formatCSVCell(m.regNo, true),
+          formatCSVCell(m.year),
+          formatCSVCell(m.gender),
+          formatCSVCell(m.phone, true),
+          formatCSVCell(m.email),
           members.length,
-          `"${(leader.name || '').replace(/"/g, '""')}"`,
-          leader.phone || '',
-          t.createdAt ? `"${new Date(t.createdAt).toLocaleString()}"` : 'N/A'
+          formatCSVCell(leader.name),
+          formatCSVCell(leader.phone, true),
+          t.createdAt ? formatCSVCell(new Date(t.createdAt).toLocaleString()) : 'N/A'
         ]);
       });
     });
@@ -317,48 +328,47 @@ export default function AdminDashboard({ onBack }) {
 
       const membersSummary = (t.members || [])
         .map((m, idx) => `${idx + 1}. ${m.name || 'N/A'} (ID: ${m.aiId || '-'}, Reg: ${m.regNo || '-'}, Yr: ${m.year || '-'}${m.isLeader ? ' [Leader]' : ''})`)
-        .join('\n')
-        .replace(/"/g, '""');
+        .join('\n');
 
       return [
         index + 1,
-        t.teamId || '',
-        `"${(t.teamName || '').replace(/"/g, '""')}"`,
-        `"${(t.eventTitle || '').replace(/"/g, '""')}"`,
-        t.eventId || '',
+        formatCSVCell(t.teamId, true),
+        formatCSVCell(t.teamName),
+        formatCSVCell(t.eventTitle),
+        formatCSVCell(t.eventId),
         t.members ? t.members.length : 0,
-        `"${(leader.name || '').replace(/"/g, '""')}"`,
-        leader.aiId || t.leaderAiId || '',
-        leader.regNo || '',
-        leader.year || '',
-        leader.phone || '',
-        leader.email || '',
-        `"${(m2.name || '').replace(/"/g, '""')}"`,
-        m2.aiId || '',
-        m2.regNo || '',
-        m2.year || '',
-        m2.phone || '',
-        m2.email || '',
-        `"${(m3.name || '').replace(/"/g, '""')}"`,
-        m3.aiId || '',
-        m3.regNo || '',
-        m3.year || '',
-        m3.phone || '',
-        m3.email || '',
-        `"${(m4.name || '').replace(/"/g, '""')}"`,
-        m4.aiId || '',
-        m4.regNo || '',
-        m4.year || '',
-        m4.phone || '',
-        m4.email || '',
-        `"${(m5.name || '').replace(/"/g, '""')}"`,
-        m5.aiId || '',
-        m5.regNo || '',
-        m5.year || '',
-        m5.phone || '',
-        m5.email || '',
-        `"${membersSummary}"`,
-        t.createdAt ? `"${new Date(t.createdAt).toLocaleString()}"` : 'N/A'
+        formatCSVCell(leader.name),
+        formatCSVCell(leader.aiId || t.leaderAiId, true),
+        formatCSVCell(leader.regNo, true),
+        formatCSVCell(leader.year),
+        formatCSVCell(leader.phone, true),
+        formatCSVCell(leader.email),
+        formatCSVCell(m2.name),
+        formatCSVCell(m2.aiId, true),
+        formatCSVCell(m2.regNo, true),
+        formatCSVCell(m2.year),
+        formatCSVCell(m2.phone, true),
+        formatCSVCell(m2.email),
+        formatCSVCell(m3.name),
+        formatCSVCell(m3.aiId, true),
+        formatCSVCell(m3.regNo, true),
+        formatCSVCell(m3.year),
+        formatCSVCell(m3.phone, true),
+        formatCSVCell(m3.email),
+        formatCSVCell(m4.name),
+        formatCSVCell(m4.aiId, true),
+        formatCSVCell(m4.regNo, true),
+        formatCSVCell(m4.year),
+        formatCSVCell(m4.phone, true),
+        formatCSVCell(m4.email),
+        formatCSVCell(m5.name),
+        formatCSVCell(m5.aiId, true),
+        formatCSVCell(m5.regNo, true),
+        formatCSVCell(m5.year),
+        formatCSVCell(m5.phone, true),
+        formatCSVCell(m5.email),
+        formatCSVCell(membersSummary),
+        t.createdAt ? formatCSVCell(new Date(t.createdAt).toLocaleString()) : 'N/A'
       ];
     });
 
@@ -642,19 +652,19 @@ export default function AdminDashboard({ onBack }) {
       const ts = teamStatusMap[(r.aiId || '').toUpperCase()];
       const regDateTime = r.createdAt ? new Date(r.createdAt).toLocaleString() : 'N/A';
       return [
-        r.aiId,
-        `"${(r.name || '').replace(/"/g, '""')}"`,
-        r.regNo,
-        r.year || '1',
-        r.gender || 'Unspecified',
-        r.dob,
-        r.phone,
-        r.email,
-        `"${(r.registeredEvents || []).map(e => e.title).join(' | ').replace(/"/g, '""')}"`,
+        formatCSVCell(r.aiId, true),
+        formatCSVCell(r.name),
+        formatCSVCell(r.regNo, true),
+        formatCSVCell(r.year || '1'),
+        formatCSVCell(r.gender || 'Unspecified'),
+        formatCSVCell(r.dob, true),
+        formatCSVCell(r.phone, true),
+        formatCSVCell(r.email),
+        formatCSVCell((r.registeredEvents || []).map(e => e.title).join(' | ')),
         ts ? (ts.isLeader ? 'Leader' : 'Member') : 'No Team',
-        ts ? `"${(ts.teamName || '').replace(/"/g, '""')}"` : '',
-        ts ? `"${(ts.eventTitle || '').replace(/"/g, '""')}"` : '',
-        `"${regDateTime}"`
+        ts ? formatCSVCell(ts.teamName) : '""',
+        ts ? formatCSVCell(ts.eventTitle) : '""',
+        formatCSVCell(regDateTime)
       ];
     });
 
@@ -675,17 +685,17 @@ export default function AdminDashboard({ onBack }) {
         : 'N/A';
 
       return [
-        r.aiId,
-        `"${(r.name || '').replace(/"/g, '""')}"`,
-        r.regNo,
-        r.year || '1',
-        r.gender || 'Unspecified',
-        r.phone,
-        r.email,
-        `"${(selectedEventData.event.title || '').replace(/"/g, '""')}"`,
-        `"${bootcampStatus}"`,
-        `"${eventRegTime}"`,
-        `"${accountCreatedTime}"`
+        formatCSVCell(r.aiId, true),
+        formatCSVCell(r.name),
+        formatCSVCell(r.regNo, true),
+        formatCSVCell(r.year || '1'),
+        formatCSVCell(r.gender || 'Unspecified'),
+        formatCSVCell(r.phone, true),
+        formatCSVCell(r.email),
+        formatCSVCell(selectedEventData.event.title),
+        formatCSVCell(bootcampStatus),
+        formatCSVCell(eventRegTime),
+        formatCSVCell(accountCreatedTime)
       ];
     });
 
@@ -707,18 +717,18 @@ export default function AdminDashboard({ onBack }) {
             : 'N/A';
 
           rows.push([
-            r.aiId,
-            `"${(r.name || '').replace(/"/g, '""')}"`,
-            r.regNo,
-            r.year || '1',
-            r.gender || 'Unspecified',
-            r.phone,
-            r.email,
-            `"${(ev.title || ev.cardTitle || '').replace(/"/g, '""')}"`,
-            `"${(ev.categoryName || 'TECHNICAL EVENTS').replace(/"/g, '""')}"`,
-            `"${bootcampStatus}"`,
-            `"${eventRegTime}"`,
-            `"${accountCreatedTime}"`
+            formatCSVCell(r.aiId, true),
+            formatCSVCell(r.name),
+            formatCSVCell(r.regNo, true),
+            formatCSVCell(r.year || '1'),
+            formatCSVCell(r.gender || 'Unspecified'),
+            formatCSVCell(r.phone, true),
+            formatCSVCell(r.email),
+            formatCSVCell(ev.title || ev.cardTitle),
+            formatCSVCell(ev.categoryName || 'TECHNICAL EVENTS'),
+            formatCSVCell(bootcampStatus),
+            formatCSVCell(eventRegTime),
+            formatCSVCell(accountCreatedTime)
           ]);
         });
       }
@@ -754,17 +764,17 @@ export default function AdminDashboard({ onBack }) {
         : 'N/A';
 
       return [
-        r.aiId,
-        `"${(r.name || '').replace(/"/g, '""')}"`,
-        r.regNo,
-        r.year || '1',
-        r.gender || 'Unspecified',
-        r.phone,
-        r.email,
-        `"${(catalogEvt.title || '').replace(/"/g, '""')}"`,
-        `"${bootcampStatus}"`,
-        `"${eventRegTime}"`,
-        `"${accountCreatedTime}"`
+        formatCSVCell(r.aiId, true),
+        formatCSVCell(r.name),
+        formatCSVCell(r.regNo, true),
+        formatCSVCell(r.year || '1'),
+        formatCSVCell(r.gender || 'Unspecified'),
+        formatCSVCell(r.phone, true),
+        formatCSVCell(r.email),
+        formatCSVCell(catalogEvt.title),
+        formatCSVCell(bootcampStatus),
+        formatCSVCell(eventRegTime),
+        formatCSVCell(accountCreatedTime)
       ];
     });
 
