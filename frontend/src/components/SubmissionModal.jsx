@@ -152,13 +152,26 @@ export default function SubmissionModal({ isOpen, onClose, event, currentUser, o
       // Preserve and append existing submission to resubmissionHistory if resubmitting
       const prevSub = matchedEvent?.submission;
       const existingHistory = prevSub?.resubmissionHistory || [];
-      let updatedHistory = [...existingHistory];
+      let updatedHistory = existingHistory.map(item => {
+        if (!item) return item;
+        if (item.posterFile && item.posterFile.fileData) {
+          const pf = { ...item.posterFile };
+          delete pf.fileData;
+          return { ...item, posterFile: pf };
+        }
+        return item;
+      });
+
       if (isResubmitAllowed && (prevSub?.posterFile || prevSub?.posterLink)) {
         const alreadyInHistory = updatedHistory.some(h => h.submittedAt === prevSub.submittedAt);
         if (!alreadyInHistory) {
+          const histPosterFile = prevSub.posterFile ? { ...prevSub.posterFile } : undefined;
+          if (histPosterFile && histPosterFile.fileData) {
+            delete histPosterFile.fileData;
+          }
           updatedHistory.push({
             submissionType: prevSub.submissionType || 'poster',
-            posterFile: prevSub.posterFile,
+            posterFile: histPosterFile,
             posterLink: prevSub.posterLink,
             submittedAt: prevSub.submittedAt || new Date().toISOString(),
             rejectionReason: prevSub.rejectionReason

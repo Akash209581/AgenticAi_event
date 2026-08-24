@@ -53,6 +53,7 @@ export default function AdminDashboard({ onBack }) {
   const [selectedEventId, setSelectedEventId] = useState(null);
   const [eventYearFilter, setEventYearFilter] = useState('all');
   const [eventGenderFilter, setEventGenderFilter] = useState('all');
+  const [bootcampBatchFilter, setBootcampBatchFilter] = useState('all');
   const [eventSearch, setEventSearch] = useState('');
 
   // Team Registrations State
@@ -573,8 +574,29 @@ export default function AdminDashboard({ onBack }) {
 
     const key = `${eventObj.categoryId}-${eventObj.id}`;
     let rawList = eventParticipantsMap[key] || eventParticipantsMap[eventObj.title] || [];
+    const isBootcamp = eventObj.id === 'bootcamp-1' || String(eventObj.title || '').toLowerCase().includes('bootcamp');
+
+    const newCount = isBootcamp
+      ? rawList.filter(u =>
+          (u.registeredEvents || []).some(e =>
+            (e.id === 'bootcamp-1' || String(e.title || '').toLowerCase().includes('bootcamp')) &&
+            e.isNewBootcampRegistration === true
+          )
+        ).length
+      : 0;
+
+    const originalCount = isBootcamp ? rawList.length - newCount : rawList.length;
 
     let filteredList = rawList.filter(user => {
+      if (isBootcamp && bootcampBatchFilter !== 'all') {
+        const isNew = (user.registeredEvents || []).some(e =>
+          (e.id === 'bootcamp-1' || String(e.title || '').toLowerCase().includes('bootcamp')) &&
+          e.isNewBootcampRegistration === true
+        );
+        if (bootcampBatchFilter === 'new' && !isNew) return false;
+        if (bootcampBatchFilter === 'original' && isNew) return false;
+      }
+
       if (eventYearFilter !== 'all') {
         const selY = String(eventYearFilter).trim().toLowerCase();
         const uY = String(user.year || '').trim().toLowerCase();
@@ -604,10 +626,13 @@ export default function AdminDashboard({ onBack }) {
 
     return {
       event: eventObj,
+      isBootcamp,
       rawCount: rawList.length,
+      newCount,
+      originalCount,
       filteredList
     };
-  }, [selectedEventId, eventParticipantsMap, officialEventsList, eventYearFilter, eventGenderFilter, eventSearch]);
+  }, [selectedEventId, eventParticipantsMap, officialEventsList, eventYearFilter, eventGenderFilter, bootcampBatchFilter, eventSearch]);
 
   // Export CSV for overall registrations
   const exportOverallCSV = () => {
@@ -639,11 +664,15 @@ export default function AdminDashboard({ onBack }) {
   // Export CSV for specific event
   const exportEventCSV = () => {
     if (!selectedEventData || !selectedEventData.filteredList.length) return;
-    const headers = ['VUCSE ID', 'Name', 'Registration No', 'Year', 'Gender', 'Phone', 'Email', 'Event Title', 'Event Registration Date & Time', 'Account Registration Date & Time'];
+    const headers = ['VUCSE ID', 'Name', 'Registration No', 'Year', 'Gender', 'Phone', 'Email', 'Event Title', 'Bootcamp Phase / Status', 'Event Registration Date & Time', 'Account Registration Date & Time'];
     const rows = selectedEventData.filteredList.map(r => {
       const matchingEv = (r.registeredEvents || []).find(e => isEventMatch(e, selectedEventData.event));
       const eventRegTime = matchingEv?.registeredAt ? new Date(matchingEv.registeredAt).toLocaleString() : (r.createdAt ? new Date(r.createdAt).toLocaleString() : 'N/A');
       const accountCreatedTime = r.createdAt ? new Date(r.createdAt).toLocaleString() : 'N/A';
+      const isBootcamp = selectedEventData.isBootcamp || matchingEv?.id === 'bootcamp-1' || String(matchingEv?.title || '').toLowerCase().includes('bootcamp');
+      const bootcampStatus = isBootcamp
+        ? (matchingEv?.isNewBootcampRegistration === true ? 'Newly Registered (Phase 2)' : 'Phase 1 Registration')
+        : 'N/A';
 
       return [
         r.aiId,
@@ -654,6 +683,7 @@ export default function AdminDashboard({ onBack }) {
         r.phone,
         r.email,
         `"${(selectedEventData.event.title || '').replace(/"/g, '""')}"`,
+        `"${bootcampStatus}"`,
         `"${eventRegTime}"`,
         `"${accountCreatedTime}"`
       ];
@@ -671,6 +701,10 @@ export default function AdminDashboard({ onBack }) {
         r.registeredEvents.forEach(ev => {
           const eventRegTime = ev.registeredAt ? new Date(ev.registeredAt).toLocaleString() : (r.createdAt ? new Date(r.createdAt).toLocaleString() : 'N/A');
           const accountCreatedTime = r.createdAt ? new Date(r.createdAt).toLocaleString() : 'N/A';
+          const isBootcamp = ev.id === 'bootcamp-1' || String(ev.title || '').toLowerCase().includes('bootcamp');
+          const bootcampStatus = isBootcamp
+            ? (ev.isNewBootcampRegistration === true ? 'Newly Registered (Phase 2)' : 'Phase 1 Registration')
+            : 'N/A';
 
           rows.push([
             r.aiId,
@@ -682,6 +716,7 @@ export default function AdminDashboard({ onBack }) {
             r.email,
             `"${(ev.title || ev.cardTitle || '').replace(/"/g, '""')}"`,
             `"${(ev.categoryName || 'TECHNICAL EVENTS').replace(/"/g, '""')}"`,
+            `"${bootcampStatus}"`,
             `"${eventRegTime}"`,
             `"${accountCreatedTime}"`
           ]);
@@ -694,7 +729,7 @@ export default function AdminDashboard({ onBack }) {
       return;
     }
 
-    const headers = ['VUCSE ID', 'Name', 'Registration No', 'Year', 'Gender', 'Phone', 'Email', 'Event Title', 'Category', 'Event Registration Date & Time', 'Account Registration Date & Time'];
+    const headers = ['VUCSE ID', 'Name', 'Registration No', 'Year', 'Gender', 'Phone', 'Email', 'Event Title', 'Category', 'Bootcamp Phase / Status', 'Event Registration Date & Time', 'Account Registration Date & Time'];
     downloadCSV(headers, rows, `Agentic_AI_Day_All_Event_Enrollments_${Date.now()}.csv`);
   };
 
@@ -708,11 +743,15 @@ export default function AdminDashboard({ onBack }) {
       return;
     }
 
-    const headers = ['VUCSE ID', 'Name', 'Registration No', 'Year', 'Gender', 'Phone', 'Email', 'Event Title', 'Event Registration Date & Time', 'Account Registration Date & Time'];
+    const headers = ['VUCSE ID', 'Name', 'Registration No', 'Year', 'Gender', 'Phone', 'Email', 'Event Title', 'Bootcamp Phase / Status', 'Event Registration Date & Time', 'Account Registration Date & Time'];
     const rows = attendees.map(r => {
       const matchingEv = (r.registeredEvents || []).find(e => isEventMatch(e, catalogEvt));
       const eventRegTime = matchingEv?.registeredAt ? new Date(matchingEv.registeredAt).toLocaleString() : (r.createdAt ? new Date(r.createdAt).toLocaleString() : 'N/A');
       const accountCreatedTime = r.createdAt ? new Date(r.createdAt).toLocaleString() : 'N/A';
+      const isBootcamp = catalogEvt.id === 'bootcamp-1' || String(catalogEvt.title || '').toLowerCase().includes('bootcamp');
+      const bootcampStatus = isBootcamp
+        ? (matchingEv?.isNewBootcampRegistration === true ? 'Newly Registered (Phase 2)' : 'Phase 1 Registration')
+        : 'N/A';
 
       return [
         r.aiId,
@@ -723,6 +762,7 @@ export default function AdminDashboard({ onBack }) {
         r.phone,
         r.email,
         `"${(catalogEvt.title || '').replace(/"/g, '""')}"`,
+        `"${bootcampStatus}"`,
         `"${eventRegTime}"`,
         `"${accountCreatedTime}"`
       ];
@@ -1465,13 +1505,21 @@ export default function AdminDashboard({ onBack }) {
                               {user.registeredEvents.map((ev, i) => (
                                 <span key={i} style={{
                                   fontSize: '0.7rem',
-                                  background: 'rgba(0, 242, 254, 0.1)',
-                                  color: '#00f2fe',
-                                  border: '1px solid rgba(0, 242, 254, 0.3)',
+                                  background: ev.isNewBootcampRegistration ? 'rgba(34, 197, 94, 0.15)' : 'rgba(0, 242, 254, 0.1)',
+                                  color: ev.isNewBootcampRegistration ? '#4ade80' : '#00f2fe',
+                                  border: ev.isNewBootcampRegistration ? '1px solid rgba(34, 197, 94, 0.4)' : '1px solid rgba(0, 242, 254, 0.3)',
                                   padding: '0.15rem 0.4rem',
-                                  borderRadius: '4px'
+                                  borderRadius: '4px',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.25rem'
                                 }}>
                                   {ev.title || ev.cardTitle}
+                                  {ev.isNewBootcampRegistration && (
+                                    <span style={{ background: '#22c55e', color: '#000', padding: '0 0.25rem', borderRadius: '3px', fontWeight: 800, fontSize: '0.6rem' }}>
+                                      PHASE 2
+                                    </span>
+                                  )}
                                 </span>
                               ))}
                             </div>
@@ -1633,10 +1681,38 @@ export default function AdminDashboard({ onBack }) {
                     </h2>
                   </div>
 
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Event Enrolled Participants</div>
-                    <div style={{ fontSize: '2.2rem', fontWeight: '900', color: '#00f2fe' }}>
-                      {selectedEventData?.rawCount || 0}
+                  <div style={{ textAlign: 'right', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                    {selectedEventData?.isBootcamp && (
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <div style={{
+                          background: 'rgba(34, 197, 94, 0.15)',
+                          border: '1px solid rgba(34, 197, 94, 0.4)',
+                          borderRadius: '12px',
+                          padding: '0.5rem 0.8rem',
+                          textAlign: 'center'
+                        }}>
+                          <div style={{ fontSize: '0.7rem', color: '#4ade80', fontWeight: 700 }}>🆕 PHASE 2 NEW</div>
+                          <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#22c55e' }}>{selectedEventData?.newCount || 0}</div>
+                        </div>
+
+                        <div style={{
+                          background: 'rgba(56, 189, 248, 0.12)',
+                          border: '1px solid rgba(56, 189, 248, 0.3)',
+                          borderRadius: '12px',
+                          padding: '0.5rem 0.8rem',
+                          textAlign: 'center'
+                        }}>
+                          <div style={{ fontSize: '0.7rem', color: '#38bdf8', fontWeight: 700 }}>PHASE 1 ORIGINAL</div>
+                          <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#38bdf8' }}>{selectedEventData?.originalCount || 0}</div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Total Enrolled</div>
+                      <div style={{ fontSize: '2.2rem', fontWeight: '900', color: '#00f2fe' }}>
+                        {selectedEventData?.rawCount || 0}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1649,10 +1725,29 @@ export default function AdminDashboard({ onBack }) {
                   padding: '1rem',
                   marginBottom: '1.5rem',
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
                   gap: '1rem',
                   alignItems: 'end'
                 }}>
+                  {/* Bootcamp Batch Filter (Only shown for Bootcamp) */}
+                  {selectedEventData?.isBootcamp && (
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.8rem', color: '#22c55e', marginBottom: '0.4rem', fontWeight: 700 }}>
+                        ⚡ Bootcamp Batch
+                      </label>
+                      <select
+                        value={bootcampBatchFilter}
+                        onChange={(e) => setBootcampBatchFilter(e.target.value)}
+                        className="cyber-select"
+                        style={{ width: '100%', borderColor: bootcampBatchFilter === 'new' ? '#22c55e' : 'rgba(0, 242, 254, 0.3)' }}
+                      >
+                        <option value="all">All Enrolled ({selectedEventData.rawCount})</option>
+                        <option value="new">🆕 Newly Registered - Phase 2 ({selectedEventData.newCount})</option>
+                        <option value="original">Phase 1 - Original ({selectedEventData.originalCount})</option>
+                      </select>
+                    </div>
+                  )}
+
                   {/* Year Filter */}
                   <div>
                     <label style={{ display: 'block', fontSize: '0.8rem', color: '#94a3b8', marginBottom: '0.4rem', fontWeight: 600 }}>
@@ -1713,7 +1808,7 @@ export default function AdminDashboard({ onBack }) {
                   <div>
                     <button
                       type="button"
-                      onClick={() => { setEventYearFilter('all'); setEventGenderFilter('all'); setEventSearch(''); }}
+                      onClick={() => { setEventYearFilter('all'); setEventGenderFilter('all'); setBootcampBatchFilter('all'); setEventSearch(''); }}
                       className="btn-secondary"
                       style={{ width: '100%', padding: '0.6rem 1rem', fontSize: '0.85rem' }}
                     >
@@ -1739,12 +1834,17 @@ export default function AdminDashboard({ onBack }) {
                           <th>Gender</th>
                           <th>Phone</th>
                           <th>Email ID</th>
+                          <th>Registration Date & Time</th>
+                          <th>Batch / Phase</th>
                           <th>Submission</th>
                         </tr>
                       </thead>
                       <tbody>
                         {selectedEventData.filteredList.map((user) => {
-                          const evSub = user.registeredEvents?.find(e => isSameEvent(selectedEventData?.event, e))?.submission;
+                          const matchingEv = user.registeredEvents?.find(e => isSameEvent(selectedEventData?.event, e));
+                          const evSub = matchingEv?.submission;
+                          const regTime = matchingEv?.registeredAt ? new Date(matchingEv.registeredAt).toLocaleString() : (user.createdAt ? new Date(user.createdAt).toLocaleString() : 'N/A');
+                          const isNewBootcampReg = matchingEv?.isNewBootcampRegistration === true;
 
                           return (
                             <tr key={user.aiId || user._id}>
@@ -1778,6 +1878,41 @@ export default function AdminDashboard({ onBack }) {
                               </td>
                               <td>{user.phone}</td>
                               <td style={{ color: '#94a3b8' }}>{user.email}</td>
+                              <td style={{ fontSize: '0.78rem', color: '#94a3b8', whiteSpace: 'nowrap' }}>{regTime}</td>
+                              <td style={{ textAlign: 'center' }}>
+                                {selectedEventData?.isBootcamp ? (
+                                  isNewBootcampReg ? (
+                                    <span style={{
+                                      background: 'rgba(34, 197, 94, 0.15)',
+                                      color: '#4ade80',
+                                      border: '1px solid rgba(34, 197, 94, 0.4)',
+                                      padding: '0.2rem 0.55rem',
+                                      borderRadius: '6px',
+                                      fontSize: '0.75rem',
+                                      fontWeight: 800,
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '0.25rem'
+                                    }}>
+                                      🆕 Phase 2 (New)
+                                    </span>
+                                  ) : (
+                                    <span style={{
+                                      background: 'rgba(56, 189, 248, 0.12)',
+                                      color: '#38bdf8',
+                                      border: '1px solid rgba(56, 189, 248, 0.3)',
+                                      padding: '0.2rem 0.55rem',
+                                      borderRadius: '6px',
+                                      fontSize: '0.75rem',
+                                      fontWeight: 600
+                                    }}>
+                                      Phase 1 (Original)
+                                    </span>
+                                  )
+                                ) : (
+                                  <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Enrolled</span>
+                                )}
+                              </td>
                               <td>
                                 {evSub?.reelLink ? (
                                   <a

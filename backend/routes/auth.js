@@ -633,10 +633,30 @@ router.post('/submit-event-content', async (req, res) => {
           submission.posterFile.savedDiskPath = `uploads/posters/${safeFileName}`;
           submission.posterFile.serverUrl = `/uploads/posters/${safeFileName}`;
           submission.posterFile.backupPath = backupFilePath;
+
+          // Strip heavy base64 fileData to avoid exceeding MongoDB 16MB document limit
+          delete submission.posterFile.fileData;
         }
       } catch (diskErr) {
         console.warn('[Disk Save Warning]', diskErr.message);
       }
+    }
+
+    // Sanitize resubmission history array to ensure no heavy base64 strings persist
+    if (submission && Array.isArray(submission.resubmissionHistory)) {
+      submission.resubmissionHistory = submission.resubmissionHistory.map(h => {
+        if (!h) return h;
+        const entry = { ...h };
+        if (entry.posterFile) {
+          entry.posterFile = { ...entry.posterFile };
+          delete entry.posterFile.fileData;
+        }
+        if (entry.paperFile) {
+          entry.paperFile = { ...entry.paperFile };
+          delete entry.paperFile.fileData;
+        }
+        return entry;
+      });
     }
 
     const submissionData = {
@@ -646,6 +666,27 @@ router.post('/submit-event-content', async (req, res) => {
         aiId: user.aiId
       },
       submittedAt: new Date().toISOString()
+    };
+
+    // Helper to sanitize registeredEvents and clear leftover heavy fileData
+    const purgeHeavyFileData = (events) => {
+      if (!Array.isArray(events)) return;
+      events.forEach(e => {
+        if (e && e.submission) {
+          if (e.submission.posterFile && e.submission.posterFile.savedDiskPath) {
+            delete e.submission.posterFile.fileData;
+          }
+          if (e.submission.paperFile && e.submission.paperFile.savedDiskPath) {
+            delete e.submission.paperFile.fileData;
+          }
+          if (Array.isArray(e.submission.resubmissionHistory)) {
+            e.submission.resubmissionHistory.forEach(h => {
+              if (h && h.posterFile) delete h.posterFile.fileData;
+              if (h && h.paperFile) delete h.paperFile.fileData;
+            });
+          }
+        }
+      });
     };
 
     if (eventIdx !== -1) {
@@ -665,6 +706,8 @@ router.post('/submit-event-content', async (req, res) => {
       };
       user.registeredEvents.push(newEventEntry);
     }
+
+    purgeHeavyFileData(user.registeredEvents);
 
     if (mongoose.connection.readyState === 1) {
       user.markModified('registeredEvents');
@@ -686,6 +729,7 @@ router.post('/submit-event-content', async (req, res) => {
             });
             if (idx !== -1) {
               memberUser.registeredEvents[idx].submission = submissionData;
+              purgeHeavyFileData(memberUser.registeredEvents);
               memberUser.markModified('registeredEvents');
               await memberUser.save();
             }
@@ -1079,7 +1123,19 @@ router.post('/review-submission', async (req, res) => {
     };
 
     if (Array.isArray(resubmissionHistory)) {
-      reviewUpdate.resubmissionHistory = resubmissionHistory;
+      reviewUpdate.resubmissionHistory = resubmissionHistory.map(h => {
+        if (!h) return h;
+        const entry = { ...h };
+        if (entry.posterFile) {
+          entry.posterFile = { ...entry.posterFile };
+          delete entry.posterFile.fileData;
+        }
+        if (entry.paperFile) {
+          entry.paperFile = { ...entry.paperFile };
+          delete entry.paperFile.fileData;
+        }
+        return entry;
+      });
     }
 
     // If allowed to resubmit, delete the previous submission files/links so the user starts fresh
@@ -1102,6 +1158,9 @@ router.post('/review-submission', async (req, res) => {
           logMessages.push(`Updated user ${u.name} (${u.aiId}) submission at registeredEvents index ${idx}. New status: ${status}`);
 
           if (mongoose.connection.readyState === 1) {
+            if (typeof purgeHeavyFileData === 'function') {
+              purgeHeavyFileData(u.registeredEvents);
+            }
             u.markModified('registeredEvents');
             await u.save();
             logMessages.push(`Saved user ${u.name} (${u.aiId}) to MongoDB`);

@@ -1571,12 +1571,27 @@ router.get('/submission-file', async (req, res) => {
       return res.status(404).json({ success: false, message: 'No file attachment found in submission.' });
     }
 
+    let fileData = fileObj.fileData;
+    if (!fileData && (fileObj.savedDiskPath || fileObj.serverUrl)) {
+      try {
+        const relPath = fileObj.savedDiskPath || fileObj.serverUrl.replace(/^\//, '');
+        const absPath = path.resolve(__dirname, '..', relPath);
+        if (fs.existsSync(absPath)) {
+          const fileBuf = fs.readFileSync(absPath);
+          const mime = fileObj.fileType || 'application/pdf';
+          fileData = `data:${mime};base64,${fileBuf.toString('base64')}`;
+        }
+      } catch (fErr) {
+        console.warn('[Disk Read Warning]', fErr.message);
+      }
+    }
+
     return res.json({
       success: true,
       fileName: fileObj.fileName,
       fileSize: fileObj.fileSize,
       fileType: fileObj.fileType || 'application/pdf',
-      fileData: fileObj.fileData,
+      fileData: fileData || null,
       serverUrl: fileObj.serverUrl || (fileObj.savedDiskPath ? `/${fileObj.savedDiskPath}` : null)
     });
   } catch (err) {
