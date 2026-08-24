@@ -235,10 +235,12 @@ export default function AdminDashboard({ onBack }) {
     let serialNo = 1;
 
     teams.forEach((t) => {
-      const leader = (t.members || []).find(m => m.isLeader) || t.members?.[0] || {};
-      const members = t.members || [];
+      const allMembers = t.members || [];
+      const leader = allMembers.find(m => m.isLeader) || allMembers[0] || {};
+      const nonLeaders = allMembers.filter(m => m !== leader);
+      const orderedMembers = [leader, ...nonLeaders];
 
-      members.forEach((m) => {
+      orderedMembers.forEach((m) => {
         const isLeader = Boolean(m.isLeader || m.aiId === leader.aiId || (m.regNo && m.regNo === leader.regNo));
         rows.push([
           serialNo++,
@@ -254,7 +256,7 @@ export default function AdminDashboard({ onBack }) {
           formatCSVCell(m.gender),
           formatCSVCell(m.phone, true),
           formatCSVCell(m.email),
-          members.length,
+          allMembers.length,
           formatCSVCell(leader.name),
           formatCSVCell(leader.phone, true),
           t.createdAt ? formatCSVCell(new Date(t.createdAt).toLocaleString()) : 'N/A'
@@ -315,20 +317,19 @@ export default function AdminDashboard({ onBack }) {
     ];
 
     const rows = teams.map((t, index) => {
-      const leader = (t.members || []).find(m => m.isLeader) || t.members?.[0] || {};
-      const nonLeaders = (t.members || []).filter(m => m !== leader && !m.isLeader);
-      if (!nonLeaders.length && t.members && t.members.length > 1) {
-        nonLeaders.push(...t.members.slice(1));
-      }
+      const allMembers = t.members || [];
+      const leader = allMembers.find(m => m.isLeader) || allMembers[0] || {};
+      const nonLeaders = allMembers.filter(m => m !== leader);
+      const orderedMembers = [leader, ...nonLeaders];
 
-      const m2 = nonLeaders[0] || {};
-      const m3 = nonLeaders[1] || {};
-      const m4 = nonLeaders[2] || {};
-      const m5 = nonLeaders[3] || {};
+      const m2 = orderedMembers[1] || {};
+      const m3 = orderedMembers[2] || {};
+      const m4 = orderedMembers[3] || {};
+      const m5 = orderedMembers[4] || {};
 
-      const membersSummary = (t.members || [])
-        .map((m, idx) => `${idx + 1}. ${m.name || 'N/A'} (ID: ${m.aiId || '-'}, Reg: ${m.regNo || '-'}, Yr: ${m.year || '-'}${m.isLeader ? ' [Leader]' : ''})`)
-        .join('\n');
+      const membersSummary = allMembers
+        .map((m, idx) => `${idx + 1}. ${m.name || 'N/A'} (ID: ${m.aiId || '-'}, Reg: ${m.regNo || '-'}, Yr: ${m.year || '-'}${m.isLeader || m.aiId === leader.aiId ? ' [Leader]' : ''})`)
+        .join(' ; ');
 
       return [
         index + 1,
@@ -336,7 +337,7 @@ export default function AdminDashboard({ onBack }) {
         formatCSVCell(t.teamName),
         formatCSVCell(t.eventTitle),
         formatCSVCell(t.eventId),
-        t.members ? t.members.length : 0,
+        allMembers.length,
         formatCSVCell(leader.name),
         formatCSVCell(leader.aiId || t.leaderAiId, true),
         formatCSVCell(leader.regNo, true),
