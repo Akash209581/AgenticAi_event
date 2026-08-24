@@ -216,7 +216,7 @@ export default function AdminDashboard({ onBack }) {
       'Total Team Size',
       'Team Leader Name',
       'Team Leader Phone',
-      'Registered Date'
+      'Registered Date & Time'
     ];
 
     const rows = [];
@@ -245,7 +245,7 @@ export default function AdminDashboard({ onBack }) {
           members.length,
           `"${(leader.name || '').replace(/"/g, '""')}"`,
           leader.phone || '',
-          t.createdAt ? new Date(t.createdAt).toLocaleString() : 'N/A'
+          t.createdAt ? `"${new Date(t.createdAt).toLocaleString()}"` : 'N/A'
         ]);
       });
     });
@@ -299,7 +299,7 @@ export default function AdminDashboard({ onBack }) {
       'Member 5 Phone',
       'Member 5 Email',
       'All Members Summary List',
-      'Registered Date'
+      'Registered Date & Time'
     ];
 
     const rows = teams.map((t, index) => {
@@ -357,7 +357,7 @@ export default function AdminDashboard({ onBack }) {
         m5.phone || '',
         m5.email || '',
         `"${membersSummary}"`,
-        t.createdAt ? new Date(t.createdAt).toLocaleString() : 'N/A'
+        t.createdAt ? `"${new Date(t.createdAt).toLocaleString()}"` : 'N/A'
       ];
     });
 
@@ -612,9 +612,10 @@ export default function AdminDashboard({ onBack }) {
   // Export CSV for overall registrations
   const exportOverallCSV = () => {
     if (!registrations.length) return;
-    const headers = ['VUCSE ID', 'Name', 'Registration No', 'Year', 'Gender', 'DOB (Password)', 'Phone', 'Email', 'Enrolled Events', 'Team Status', 'Team Name', 'Team Event'];
+    const headers = ['VUCSE ID', 'Name', 'Registration No', 'Year', 'Gender', 'DOB (Password)', 'Phone', 'Email', 'Enrolled Events', 'Team Status', 'Team Name', 'Team Event', 'Registration Date & Time'];
     const rows = registrations.map(r => {
       const ts = teamStatusMap[(r.aiId || '').toUpperCase()];
+      const regDateTime = r.createdAt ? new Date(r.createdAt).toLocaleString() : 'N/A';
       return [
         r.aiId,
         `"${(r.name || '').replace(/"/g, '""')}"`,
@@ -627,7 +628,8 @@ export default function AdminDashboard({ onBack }) {
         `"${(r.registeredEvents || []).map(e => e.title).join(' | ').replace(/"/g, '""')}"`,
         ts ? (ts.isLeader ? 'Leader' : 'Member') : 'No Team',
         ts ? `"${(ts.teamName || '').replace(/"/g, '""')}"` : '',
-        ts ? `"${(ts.eventTitle || '').replace(/"/g, '""')}"` : ''
+        ts ? `"${(ts.eventTitle || '').replace(/"/g, '""')}"` : '',
+        `"${regDateTime}"`
       ];
     });
 
@@ -637,17 +639,25 @@ export default function AdminDashboard({ onBack }) {
   // Export CSV for specific event
   const exportEventCSV = () => {
     if (!selectedEventData || !selectedEventData.filteredList.length) return;
-    const headers = ['VUCSE ID', 'Name', 'Registration No', 'Year', 'Gender', 'Phone', 'Email', 'Event Title'];
-    const rows = selectedEventData.filteredList.map(r => [
-      r.aiId,
-      `"${(r.name || '').replace(/"/g, '""')}"`,
-      r.regNo,
-      r.year || '1',
-      r.gender || 'Unspecified',
-      r.phone,
-      r.email,
-      `"${(selectedEventData.event.title || '').replace(/"/g, '""')}"`
-    ]);
+    const headers = ['VUCSE ID', 'Name', 'Registration No', 'Year', 'Gender', 'Phone', 'Email', 'Event Title', 'Event Registration Date & Time', 'Account Registration Date & Time'];
+    const rows = selectedEventData.filteredList.map(r => {
+      const matchingEv = (r.registeredEvents || []).find(e => isEventMatch(e, selectedEventData.event));
+      const eventRegTime = matchingEv?.registeredAt ? new Date(matchingEv.registeredAt).toLocaleString() : (r.createdAt ? new Date(r.createdAt).toLocaleString() : 'N/A');
+      const accountCreatedTime = r.createdAt ? new Date(r.createdAt).toLocaleString() : 'N/A';
+
+      return [
+        r.aiId,
+        `"${(r.name || '').replace(/"/g, '""')}"`,
+        r.regNo,
+        r.year || '1',
+        r.gender || 'Unspecified',
+        r.phone,
+        r.email,
+        `"${(selectedEventData.event.title || '').replace(/"/g, '""')}"`,
+        `"${eventRegTime}"`,
+        `"${accountCreatedTime}"`
+      ];
+    });
 
     const safeTitle = selectedEventData.event.title.replace(/[^a-zA-Z0-9]/g, '_');
     downloadCSV(headers, rows, `${safeTitle}_Participants_${Date.now()}.csv`);
@@ -659,6 +669,9 @@ export default function AdminDashboard({ onBack }) {
     registrations.forEach(r => {
       if (Array.isArray(r.registeredEvents) && r.registeredEvents.length > 0) {
         r.registeredEvents.forEach(ev => {
+          const eventRegTime = ev.registeredAt ? new Date(ev.registeredAt).toLocaleString() : (r.createdAt ? new Date(r.createdAt).toLocaleString() : 'N/A');
+          const accountCreatedTime = r.createdAt ? new Date(r.createdAt).toLocaleString() : 'N/A';
+
           rows.push([
             r.aiId,
             `"${(r.name || '').replace(/"/g, '""')}"`,
@@ -668,7 +681,9 @@ export default function AdminDashboard({ onBack }) {
             r.phone,
             r.email,
             `"${(ev.title || ev.cardTitle || '').replace(/"/g, '""')}"`,
-            `"${(ev.categoryName || 'TECHNICAL EVENTS').replace(/"/g, '""')}"`
+            `"${(ev.categoryName || 'TECHNICAL EVENTS').replace(/"/g, '""')}"`,
+            `"${eventRegTime}"`,
+            `"${accountCreatedTime}"`
           ]);
         });
       }
@@ -679,7 +694,7 @@ export default function AdminDashboard({ onBack }) {
       return;
     }
 
-    const headers = ['VUCSE ID', 'Name', 'Registration No', 'Year', 'Gender', 'Phone', 'Email', 'Event Title', 'Category'];
+    const headers = ['VUCSE ID', 'Name', 'Registration No', 'Year', 'Gender', 'Phone', 'Email', 'Event Title', 'Category', 'Event Registration Date & Time', 'Account Registration Date & Time'];
     downloadCSV(headers, rows, `Agentic_AI_Day_All_Event_Enrollments_${Date.now()}.csv`);
   };
 
@@ -693,17 +708,25 @@ export default function AdminDashboard({ onBack }) {
       return;
     }
 
-    const headers = ['VUCSE ID', 'Name', 'Registration No', 'Year', 'Gender', 'Phone', 'Email', 'Event Title'];
-    const rows = attendees.map(r => [
-      r.aiId,
-      `"${(r.name || '').replace(/"/g, '""')}"`,
-      r.regNo,
-      r.year || '1',
-      r.gender || 'Unspecified',
-      r.phone,
-      r.email,
-      `"${(catalogEvt.title || '').replace(/"/g, '""')}"`
-    ]);
+    const headers = ['VUCSE ID', 'Name', 'Registration No', 'Year', 'Gender', 'Phone', 'Email', 'Event Title', 'Event Registration Date & Time', 'Account Registration Date & Time'];
+    const rows = attendees.map(r => {
+      const matchingEv = (r.registeredEvents || []).find(e => isEventMatch(e, catalogEvt));
+      const eventRegTime = matchingEv?.registeredAt ? new Date(matchingEv.registeredAt).toLocaleString() : (r.createdAt ? new Date(r.createdAt).toLocaleString() : 'N/A');
+      const accountCreatedTime = r.createdAt ? new Date(r.createdAt).toLocaleString() : 'N/A';
+
+      return [
+        r.aiId,
+        `"${(r.name || '').replace(/"/g, '""')}"`,
+        r.regNo,
+        r.year || '1',
+        r.gender || 'Unspecified',
+        r.phone,
+        r.email,
+        `"${(catalogEvt.title || '').replace(/"/g, '""')}"`,
+        `"${eventRegTime}"`,
+        `"${accountCreatedTime}"`
+      ];
+    });
 
     const safeTitle = catalogEvt.title.replace(/[^a-zA-Z0-9]/g, '_');
     downloadCSV(headers, rows, `${safeTitle}_Participants_${Date.now()}.csv`);
