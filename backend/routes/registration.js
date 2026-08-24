@@ -357,7 +357,8 @@ router.get('/registrations', requireAdminAuth, async (req, res) => {
         }
       }
 
-      users = await User.find(query).select('-password').sort({ createdAt: -1 });
+      const HEAVY_FILE_PROJECTION = '-password -registeredEvents.submission.posterFile.fileData -registeredEvents.submission.paperFile.fileData -registeredEvents.submission.resubmissionHistory.posterFile.fileData -registeredEvents.submission.resubmissionHistory.paperFile.fileData';
+      users = await User.find(query).select(HEAVY_FILE_PROJECTION).sort({ createdAt: -1 }).lean();
     } else {
       users = memoryUsers.map(({ password, ...u }) => u);
 
@@ -420,7 +421,7 @@ router.get('/stats', requireAdminAuth, async (req, res) => {
     let allUsers = [];
 
     if (mongoose.connection.readyState === 1) {
-      allUsers = await User.find().select('year gender registeredEvents');
+      allUsers = await User.find().select('year gender registeredEvents.id registeredEvents.title').lean();
     } else {
       allUsers = memoryUsers;
     }
@@ -1443,7 +1444,8 @@ router.get('/reviewer-submissions', async (req, res) => {
     let allTeams = [];
 
     if (mongoose.connection.readyState === 1) {
-      allUsers = await User.find({}).lean();
+      const HEAVY_FILE_PROJECTION = '-password -registeredEvents.submission.posterFile.fileData -registeredEvents.submission.paperFile.fileData -registeredEvents.submission.resubmissionHistory.posterFile.fileData -registeredEvents.submission.resubmissionHistory.paperFile.fileData';
+      allUsers = await User.find({}).select(HEAVY_FILE_PROJECTION).lean();
       allTeams = await Team.find({}).lean();
     } else {
       allUsers = memoryUsers;
@@ -1515,6 +1517,69 @@ router.get('/reviewer-submissions', async (req, res) => {
     });
   } catch (err) {
     console.error('[Reviewer Fetch Error]', err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * GET /cseAI/submission-file
+ * On-demand endpoint to fetch submission file details/Base64 for a specific user and event
+ */
+router.get('/submission-file', async (req, res) => {
+  try {
+    const { identifier, eventId } = req.query;
+    if (!identifier || !eventId) {
+      return res.status(400).json({ success: false, message: 'identifier and eventId query parameters required.' });
+    }
+    const cleanId = String(identifier).trim().toUpperCase();
+    const cleanEventId = String(eventId).trim();
+
+    let user = null;
+    if (mongoose.connection.readyState === 1) {
+      user = await User.findOne({
+        $or: [
+          { aiId: cleanId },
+          { regNo: cleanId },
+          { email: cleanId.toLowerCase() }
+        ]
+      }).lean();
+    } else {
+      user = memoryUsers.find(u =>
+        (u.aiId && u.aiId.toUpperCase() === cleanId) ||
+        (u.regNo && u.regNo.toUpperCase() === cleanId) ||
+        (u.email && u.email.toLowerCase() === cleanId.toLowerCase())
+      );
+    }
+
+    if (!user || !Array.isArray(user.registeredEvents)) {
+      return res.status(404).json({ success: false, message: 'User or submission not found.' });
+    }
+
+    const matchedEvent = user.registeredEvents.find(e =>
+      String(e.id) === cleanEventId ||
+      (e.title && e.title.toLowerCase().includes(cleanEventId.toLowerCase()))
+    );
+
+    if (!matchedEvent || !matchedEvent.submission) {
+      return res.status(404).json({ success: false, message: 'Submission not found for this event.' });
+    }
+
+    const sub = matchedEvent.submission;
+    const fileObj = sub.posterFile || sub.paperFile;
+
+    if (!fileObj) {
+      return res.status(404).json({ success: false, message: 'No file attachment found in submission.' });
+    }
+
+    return res.json({
+      success: true,
+      fileName: fileObj.fileName,
+      fileSize: fileObj.fileSize,
+      fileType: fileObj.fileType || 'application/pdf',
+      fileData: fileObj.fileData,
+      serverUrl: fileObj.serverUrl || (fileObj.savedDiskPath ? `/${fileObj.savedDiskPath}` : null)
+    });
+  } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }
 });

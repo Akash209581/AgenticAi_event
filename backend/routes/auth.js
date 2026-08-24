@@ -888,7 +888,8 @@ router.get('/reviewer-submissions', async (req, res) => {
     let allTeams = [];
 
     if (mongoose.connection.readyState === 1) {
-      allUsers = await User.find({}).lean();
+      const HEAVY_FILE_PROJECTION = '-password -registeredEvents.submission.posterFile.fileData -registeredEvents.submission.paperFile.fileData -registeredEvents.submission.resubmissionHistory.posterFile.fileData -registeredEvents.submission.resubmissionHistory.paperFile.fileData';
+      allUsers = await User.find({}).select(HEAVY_FILE_PROJECTION).lean();
       allTeams = await Team.find({}).lean();
     } else {
       allUsers = memoryUsers;
