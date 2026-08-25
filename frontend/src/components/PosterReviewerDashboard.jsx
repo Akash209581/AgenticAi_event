@@ -391,6 +391,67 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
     (resubHistoryMap[s.submissionId || `${s.studentAiId}_${s.eventId}`]?.length > 0)
   );
 
+  // Export CSV for Resubmission Data (Name, VUID)
+  const exportResubmissionsCSV = () => {
+    const resubItems = submissions.filter(s =>
+      s.reviewStatus === 'RESUBMIT_ALLOWED' ||
+      s.allowResubmit ||
+      s.submission?.reviewStatus === 'RESUBMIT_ALLOWED' ||
+      s.submission?.allowResubmit ||
+      (Array.isArray(s.submission?.resubmissionHistory) && s.submission.resubmissionHistory.length > 0) ||
+      (resubHistoryMap[s.submissionId || `${s.studentAiId}_${s.eventId}`]?.length > 0)
+    );
+
+    if (!resubItems || resubItems.length === 0) {
+      alert('No resubmission data available to export.');
+      return;
+    }
+
+    const rows = [];
+    const seenKeys = new Set();
+
+    resubItems.forEach(item => {
+      if (item.teamMembers && Array.isArray(item.teamMembers) && item.teamMembers.length > 0) {
+        item.teamMembers.forEach(m => {
+          const name = (m.name || m.studentName || '').trim() || 'N/A';
+          const vuid = (m.aiId || m.vuid || m.regNo || m.studentAiId || '').trim() || 'N/A';
+          const key = `${name.toLowerCase()}_${vuid.toLowerCase()}`;
+          if (!seenKeys.has(key)) {
+            seenKeys.add(key);
+            rows.push([
+              `"${name.replace(/"/g, '""')}"`,
+              `"${vuid.replace(/"/g, '""')}"`
+            ]);
+          }
+        });
+      } else {
+        const name = (item.studentName || '').trim() || 'N/A';
+        const vuid = (item.studentAiId || item.vuid || item.studentRegNo || '').trim() || 'N/A';
+        const key = `${name.toLowerCase()}_${vuid.toLowerCase()}`;
+        if (!seenKeys.has(key)) {
+          seenKeys.add(key);
+          rows.push([
+            `"${name.replace(/"/g, '""')}"`,
+            `"${vuid.replace(/"/g, '""')}"`
+          ]);
+        }
+      }
+    });
+
+    const headers = ['Name', 'VUID'];
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const prefix = isReelsMode ? 'Reels' : 'Poster';
+    link.setAttribute('download', `${prefix}_Resubmission_Data_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   // Helper toggle for history accordion
   const toggleHistory = (id) => setExpandedHistory(prev => ({ ...prev, [id]: !prev[id] }));
 
@@ -663,7 +724,28 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={exportResubmissionsCSV}
+            style={{
+              fontSize: '0.88rem',
+              padding: '0.6rem 1rem',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              background: 'rgba(56, 189, 248, 0.15)',
+              border: '1px solid rgba(56, 189, 248, 0.4)',
+              color: '#38bdf8',
+              fontWeight: '700',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <Download size={16} /> Download Resubmission CSV
+          </button>
+
           <button
             type="button"
             onClick={fetchSubmissions}
@@ -878,20 +960,43 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
             /* RE-SUBMISSION HISTORY SECTION */
             <div>
               <div style={{
-                display: 'flex', alignItems: 'center', gap: '0.6rem',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem',
                 marginBottom: '1.25rem', paddingBottom: '0.75rem',
                 borderBottom: '2px solid rgba(56,189,248,0.4)'
               }}>
-                <History size={22} color="#38bdf8" />
-                <span style={{ fontWeight: '800', fontSize: '1.1rem', color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                  Re-Submission History
-                </span>
-                <span style={{
-                  background: 'rgba(56,189,248,0.15)', color: '#38bdf8',
-                  border: '1px solid rgba(56,189,248,0.4)',
-                  borderRadius: '20px', padding: '0.2rem 0.75rem',
-                  fontSize: '0.82rem', fontWeight: '800'
-                }}>{resubmissionItems.length}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <History size={22} color="#38bdf8" />
+                  <span style={{ fontWeight: '800', fontSize: '1.1rem', color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                    Re-Submission History
+                  </span>
+                  <span style={{
+                    background: 'rgba(56,189,248,0.15)', color: '#38bdf8',
+                    border: '1px solid rgba(56,189,248,0.4)',
+                    borderRadius: '20px', padding: '0.2rem 0.75rem',
+                    fontSize: '0.82rem', fontWeight: '800'
+                  }}>{resubmissionItems.length}</span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={exportResubmissionsCSV}
+                  style={{
+                    padding: '0.45rem 0.9rem',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(56, 189, 248, 0.4)',
+                    background: 'rgba(56, 189, 248, 0.18)',
+                    color: '#38bdf8',
+                    fontWeight: '800',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <Download size={14} /> Export CSV (Name, VUID)
+                </button>
               </div>
               {resubmissionItems.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '3rem', background: 'rgba(56,189,248,0.04)', borderRadius: '16px', border: '1px dashed rgba(56,189,248,0.2)' }}>
