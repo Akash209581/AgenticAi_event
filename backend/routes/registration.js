@@ -8,7 +8,7 @@ import { generateAiId, memoryUsers } from '../utils/idGenerator.js';
 import { requireAdminAuth, getAdminSecretToken, generateUserJwt } from '../middleware/adminAuth.js';
 import mongoose from 'mongoose';
 import { BACKUP_DB_DIR, BACKUP_POSTERS_DIR, BACKUP_DIR } from '../config/paths.js';
-import { isEventRegistrationClosed } from '../utils/deadlineValidator.js';
+import { isEventRegistrationClosed, isGeneralRegistrationClosed } from '../utils/deadlineValidator.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -88,6 +88,13 @@ const isValidEmail = (email) => {
  */
 router.post('/register', async (req, res) => {
   try {
+    if (isGeneralRegistrationClosed()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Registrations for Agentic AI Day 2026 have officially closed (deadline passed).'
+      });
+    }
+
     const { name, dob, regNo, year, gender, phone, email } = req.body;
 
     // 1. Mandatory Field Checks

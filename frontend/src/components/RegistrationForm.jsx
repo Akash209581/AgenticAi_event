@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import confetti from 'canvas-confetti';
-import { User, Calendar, Hash, Phone, Mail, Lock, Sparkles, AlertCircle, ArrowRight, ArrowLeft, GraduationCap, Copy, Check, KeyRound } from 'lucide-react';
+import { User, Calendar, Hash, Phone, Mail, Lock, Sparkles, AlertCircle, ArrowRight, ArrowLeft, GraduationCap, Copy, Check, KeyRound, ShieldAlert } from 'lucide-react';
 import { apiFetch } from '../config/api';
 import { secureStorage } from '../utils/secureStorage';
+import { isGeneralRegistrationClosed, GENERAL_REGISTRATION_DEADLINE } from '../data/eventsRulesData';
 
 export default function RegistrationForm({ onSuccess, onProceedToLogin, onBack }) {
   const [formData, setFormData] = useState({
@@ -251,6 +252,64 @@ export default function RegistrationForm({ onSuccess, onProceedToLogin, onBack }
             Register Another Participant
           </button>
         </div>
+      </div>
+    );
+  }
+
+  const isClosed = isGeneralRegistrationClosed();
+
+  if (isClosed) {
+    return (
+      <div className="cyber-card registration-card" style={{ textAlign: 'center', padding: '3rem 2rem' }}>
+        {onBack && (
+          <div className="back-bar" style={{ justifyContent: 'flex-start', marginBottom: '1.5rem' }}>
+            <button onClick={onBack} className="back-link" type="button">
+              <ArrowLeft size={18} /> Back to Dashboard
+            </button>
+          </div>
+        )}
+
+        <div style={{
+          width: '72px',
+          height: '72px',
+          borderRadius: '50%',
+          background: 'rgba(239, 68, 68, 0.12)',
+          border: '2px solid rgba(239, 68, 68, 0.3)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          margin: '0 auto 1.5rem auto',
+          color: '#f87171'
+        }}>
+          <Lock size={36} />
+        </div>
+
+        <h2 style={{ fontSize: '1.6rem', fontWeight: '800', color: '#f87171', marginBottom: '0.75rem' }}>
+          Registrations are Closed
+        </h2>
+
+        <p style={{ color: 'var(--text-dim)', maxWidth: '480px', margin: '0 auto 2rem auto', lineHeight: '1.6', fontSize: '0.95rem' }}>
+          The official registration deadline for Agentic AI Day 2026 ({GENERAL_REGISTRATION_DEADLINE}) has passed. New registrations are no longer being accepted.
+        </p>
+
+        <div className="info-box" style={{ maxWidth: '480px', margin: '0 auto 2rem auto', textAlign: 'left' }}>
+          <AlertCircle size={20} color="#38bdf8" style={{ flexShrink: 0, marginTop: 2 }} />
+          <div>
+            <strong style={{ color: '#0369a1' }}>Already Registered?</strong>
+            <div style={{ fontSize: '0.85rem', marginTop: '0.2rem', color: '#334155' }}>
+              If you have already registered, you can log in with your Registration Number or AI ID to view your Digital Pass and event details.
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => onProceedToLogin && onProceedToLogin()}
+          className="btn-primary"
+          style={{ margin: '0 auto', maxWidth: '320px', width: '100%', justifyContent: 'center' }}
+        >
+          <KeyRound size={20} /> Proceed to Login
+        </button>
       </div>
     );
   }

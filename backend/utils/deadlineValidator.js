@@ -2,6 +2,8 @@
  * Event Registration Deadlines & Auto-Closure Validator
  */
 
+export const GENERAL_REGISTRATION_DEADLINE = '26 August 2026';
+
 export const EVENT_DEADLINES = {
   'technical-1': 'closed',          // AGENTIC AI HACKATHON
   'technical-2': 'closed',          // AI PROMPT COMBAT
@@ -16,6 +18,20 @@ export const EVENT_DEADLINES = {
   'innovative-1': '26 August 2026', // SPARKX
   'bootcamp-1': '18 August 2026'    // AI AGENT BOOTCAMP
 };
+
+/**
+ * Checks if general user registration / signup is closed based on deadline.
+ * @returns {boolean}
+ */
+export function isGeneralRegistrationClosed() {
+  const cleanStr = String(GENERAL_REGISTRATION_DEADLINE).replace(/(\d+)(st|nd|rd|th)/gi, '$1').trim();
+  const parsed = new Date(cleanStr);
+  if (!isNaN(parsed.getTime())) {
+    parsed.setHours(23, 59, 59, 999);
+    return Date.now() > parsed.getTime();
+  }
+  return false;
+}
 
 /**
  * Checks if event registration has closed based on date or explicit status.

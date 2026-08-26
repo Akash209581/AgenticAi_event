@@ -14,7 +14,8 @@ import {
   Crown,
   Info,
   Zap,
-  Award
+  Award,
+  Lock
 } from 'lucide-react';
 import { isSameEvent, isRegistrationClosed } from '../data/eventsRulesData';
 

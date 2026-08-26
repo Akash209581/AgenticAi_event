@@ -523,6 +523,17 @@ export function isRegistrationClosed(deadlineString, eventTitle = '', eventId = 
   return false;
 }
 
+export const GENERAL_REGISTRATION_DEADLINE = '26 August 2026';
+
+// Helper to check if general user registration / signup is closed
+export function isGeneralRegistrationClosed() {
+  const deadlineDate = parseDeadlineDate(GENERAL_REGISTRATION_DEADLINE);
+  if (deadlineDate && Date.now() > deadlineDate.getTime()) {
+    return true;
+  }
+  return false;
+}
+
 export function getEventDetails(categoryId, eventId, fallbackTitle = '') {
   // 1. Direct key match: 'technical-1'
   const key1 = `${categoryId}-${eventId}`;
