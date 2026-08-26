@@ -8,6 +8,7 @@ import { generateAiId, memoryUsers } from '../utils/idGenerator.js';
 import { requireAdminAuth, getAdminSecretToken, generateUserJwt } from '../middleware/adminAuth.js';
 import mongoose from 'mongoose';
 import { BACKUP_DB_DIR, BACKUP_POSTERS_DIR, BACKUP_DIR } from '../config/paths.js';
+import { isEventRegistrationClosed } from '../utils/deadlineValidator.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -634,15 +635,10 @@ router.post('/team-register', async (req, res) => {
     const cleanEventId = eventId.trim();
     const cleanEventTitle = (eventTitle || '').trim() || cleanEventId;
 
-    if (
-      cleanEventId === 'technical-1' ||
-      cleanEventId === 'technical-2' ||
-      cleanEventTitle.toLowerCase().includes('hackathon') ||
-      cleanEventTitle.toLowerCase().includes('prompt')
-    ) {
+    if (isEventRegistrationClosed(cleanEventId, cleanEventTitle)) {
       return res.status(400).json({
         success: false,
-        message: `Registration for ${cleanEventTitle || 'this event'} has been closed.`
+        message: `Registration for ${cleanEventTitle || 'this event'} has closed (deadline passed).`
       });
     }
 

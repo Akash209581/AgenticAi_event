@@ -9,6 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { BACKUP_POSTERS_DIR } from '../config/paths.js';
+import { isEventRegistrationClosed } from '../utils/deadlineValidator.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -203,15 +204,11 @@ router.post('/enroll-event', async (req, res) => {
 
     const checkTitle = String(event.title || '').toLowerCase();
     const checkEvtId = String(event.id || '').toLowerCase();
-    if (
-      checkEvtId === 'technical-1' ||
-      checkEvtId === 'technical-2' ||
-      checkTitle.includes('hackathon') ||
-      checkTitle.includes('prompt')
-    ) {
+    const rawDeadline = event.registrationDeadline || event.deadline || null;
+    if (isEventRegistrationClosed(checkEvtId, checkTitle, rawDeadline)) {
       return res.status(400).json({
         success: false,
-        message: `Registration for ${event.title || 'this event'} has been closed.`
+        message: `Registration for ${event.title || 'this event'} has closed (deadline passed).`
       });
     }
 

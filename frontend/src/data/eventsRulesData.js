@@ -115,7 +115,7 @@ export const eventsRulesData = {
     cardTitle: 'PAPER / POSTER',
     image: '/images/event_paper_poster.png',
     whatsappGroupLink: 'https://chat.whatsapp.com/Fnp1kBsezE88pohkcMkQ02',
-    registrationDeadline: '25 August 2026',
+    registrationDeadline: '26 August 2026',
     rules: [
       'Maximum 3 students per team.',
       'Participants must carry their college ID card.',
@@ -167,7 +167,7 @@ export const eventsRulesData = {
     cardTitle: 'AI PODCAST',
     image: '/images/event_podcast.png',
     whatsappGroupLink: 'https://chat.whatsapp.com/KBmnvLXFihgAEAiDXTvmcL',
-    registrationDeadline: '28 August 2026',
+    registrationDeadline: '26 August 2026',
     eventDate: 'August 2026',
     prizes: null,
     rules: [
@@ -188,7 +188,7 @@ export const eventsRulesData = {
     categoryName: 'INDUSTRY & INNOVATION',
     title: 'AI AGENTS EXPO',
     cardTitle: 'AI AGENTS EXPO',
-    registrationDeadline: '28 August 2026',
+    registrationDeadline: '26 August 2026',
     image: '/images/event_expo.png',
     whatsappGroupLink: 'https://chat.whatsapp.com/FHIm45h2bt560DT2Mt8nVb',
     eventDate: 'August 2026',
@@ -216,7 +216,7 @@ export const eventsRulesData = {
     image: '/images/event_summit.png',
     whatsappGroupLink: 'https://chat.whatsapp.com/BP9ozDg2pno4CZT2KQOfoF',
     eventDate: '29 August 2026',
-    registrationDeadline: '28 August 2026',
+    registrationDeadline: '26 August 2026',
     prizes: null,
     rules: [
       'Keynote presentations and panel sessions featuring tech leaders.',
@@ -239,6 +239,7 @@ export const eventsRulesData = {
     cardTitle: 'REELS COMPETITION',
     image: '/images/event_reels.png',
     whatsappGroupLink: 'https://chat.whatsapp.com/H5k9zmXALxEJmxBCatChv7',
+    registrationDeadline: '26 August 2026',
     rules: [
       'Reel duration must be strictly 30 to 60 seconds.',
       'Theme: "AI for Society" (showing positive impact of AI in education, health, agriculture, sustainability, etc.).',
@@ -276,6 +277,7 @@ export const eventsRulesData = {
     image: '/images/event_musical.png',
     whatsappGroupLink: 'https://chat.whatsapp.com/F5kLamLrx1i8Q2ehFdgWyP',
     eventDate: '29 August 2026',
+    registrationDeadline: '26 August 2026',
     teamSize: '1 to 3 members per team',
     rules: [
       'Eligibility: Open to all B.Tech students from all departments and all academic years.',
@@ -306,6 +308,7 @@ export const eventsRulesData = {
     image: '/images/event_quiz.png',
     whatsappGroupLink: 'https://chat.whatsapp.com/Lp6H85SdIyf9mKFxFV0iDm',
     eventDate: '29 August 2026',
+    registrationDeadline: '26 August 2026',
     topics: [
       'Real-World AI Use Cases & Case Studies',
       'AI Reasoning & Decision-Making',
@@ -364,7 +367,7 @@ export const eventsRulesData = {
     cardTitle: 'QUESTX',
     image: '/images/event_questx.png',
     whatsappGroupLink: 'https://chat.whatsapp.com/GHLd8ixNoPDLHI26cwjnDF',
-    registrationDeadline: '28 August 2026',
+    registrationDeadline: '26 August 2026',
     eventDate: '29 August 2026',
     teamSize: 'Strictly 5 members per team',
     rules: [
@@ -403,7 +406,7 @@ export const eventsRulesData = {
     cardTitle: 'SPARKX',
     image: '/images/event_sparkx.png',
     whatsappGroupLink: 'https://chat.whatsapp.com/E4M6DuwK5800Ir205o25mz',
-    registrationDeadline: '28 August 2026',
+    registrationDeadline: '26 August 2026',
     eventDate: '29 August 2026',
     teamSize: 'Maximum 2-3 members per team',
     rules: [
@@ -457,30 +460,66 @@ export const eventsRulesData = {
 
 
 
+// Helper to parse deadline string into a Date object (set to end of the day 23:59:59.999)
+export function parseDeadlineDate(deadlineStr) {
+  if (!deadlineStr || typeof deadlineStr !== 'string') return null;
+  const lower = deadlineStr.toLowerCase().trim();
+  if (lower.includes('closed')) return null;
+
+  // Strip ordinals: 18th -> 18, 1st -> 1, 2nd -> 2, 3rd -> 3, 21st -> 21
+  const cleanStr = deadlineStr.replace(/(\d+)(st|nd|rd|th)/gi, '$1').trim();
+  const parsed = new Date(cleanStr);
+  if (!isNaN(parsed.getTime())) {
+    parsed.setHours(23, 59, 59, 999);
+    return parsed;
+  }
+  return null;
+}
+
 // Helper lookup to check if event registration is closed
 export function isRegistrationClosed(deadlineString, eventTitle = '', eventId = '', bootcampCount = 0) {
   const t = String(eventTitle || '').toLowerCase();
   const id = String(eventId || '').toLowerCase();
 
-  // Hackathon is ONLY technical-1 or event title containing 'hackathon'
-  const isHackathon = t.includes('hackathon') || id === 'technical-1';
-
-  // Prompt Combat is ONLY technical-2 or event title containing 'prompt'
-  const isPromptCombat = (t.includes('prompt') && (t.includes('combat') || t.includes('ai'))) || id === 'technical-2';
-
-  // Bootcamp is ONLY bootcamp-1 or event title containing 'bootcamp'
+  // 1. Capacity cutoff for Bootcamp
   const isBootcamp = t.includes('bootcamp') || id === 'bootcamp-1';
-
-  // Strictly ONLY Hackathon and AI Prompt Combat registrations are closed.
-  if (isHackathon || isPromptCombat) {
+  if (isBootcamp && bootcampCount >= 120) {
     return true;
   }
 
-  if (isBootcamp) {
-    return bootcampCount >= 120;
+  // 2. Direct string check for "closed"
+  const rawDeadline = String(deadlineString || '').toLowerCase().trim();
+  if (rawDeadline.includes('closed')) {
+    return true;
   }
 
-  // All other events (AI Agents Expo, Reels, AI Musical, Paper/Poster, Quiz, QuestX, SparkX, Podcast, Summit) remain OPEN!
+  // 3. Resolve target deadline string if not provided directly
+  let targetDeadline = deadlineString;
+  if (!targetDeadline) {
+    const eventObj = Object.values(eventsRulesData).find(e => {
+      const fullId = `${e.categoryId}-${e.id}`.toLowerCase();
+      const shortId = String(e.id || '').toLowerCase();
+      const matchId = (id && (fullId === id || shortId === id));
+      const matchTitle = t && ((e.title && e.title.toLowerCase() === t) || (e.cardTitle && e.cardTitle.toLowerCase() === t));
+      return matchId || matchTitle;
+    });
+    if (eventObj && eventObj.registrationDeadline) {
+      targetDeadline = eventObj.registrationDeadline;
+    }
+  }
+
+  // 4. Evaluate deadline
+  if (targetDeadline) {
+    const lowerDeadline = String(targetDeadline).toLowerCase().trim();
+    if (lowerDeadline.includes('closed')) {
+      return true;
+    }
+    const deadlineDate = parseDeadlineDate(targetDeadline);
+    if (deadlineDate && Date.now() > deadlineDate.getTime()) {
+      return true;
+    }
+  }
+
   return false;
 }
 
