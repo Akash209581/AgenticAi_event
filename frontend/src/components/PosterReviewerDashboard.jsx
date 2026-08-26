@@ -391,65 +391,121 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
     (resubHistoryMap[s.submissionId || `${s.studentAiId}_${s.eventId}`]?.length > 0)
   );
 
-  // Export CSV for Resubmission Data (Name, VUID)
-  const exportResubmissionsCSV = () => {
-    const resubItems = submissions.filter(s =>
-      s.reviewStatus === 'RESUBMIT_ALLOWED' ||
-      s.allowResubmit ||
-      s.submission?.reviewStatus === 'RESUBMIT_ALLOWED' ||
-      s.submission?.allowResubmit ||
-      (Array.isArray(s.submission?.resubmissionHistory) && s.submission.resubmissionHistory.length > 0) ||
-      (resubHistoryMap[s.submissionId || `${s.studentAiId}_${s.eventId}`]?.length > 0)
-    );
+  // Comprehensive CSV export (1 row per team/submission, differentiating team members)
+  const exportSubmissionsCSV = (targetStatus = 'ALL') => {
+    let itemsToExport = [];
+    const prefix = isReelsMode ? 'Reels' : 'Poster';
+    let statusLabel = 'All';
 
-    if (!resubItems || resubItems.length === 0) {
-      alert('No resubmission data available to export.');
+    if (targetStatus === 'APPROVED') {
+      itemsToExport = submissions.filter(s => s.reviewStatus === 'APPROVED');
+      statusLabel = 'Accepted_Approved';
+    } else if (targetStatus === 'REJECTED') {
+      itemsToExport = submissions.filter(s => s.reviewStatus === 'REJECTED');
+      statusLabel = 'Rejected';
+    } else if (targetStatus === 'RESUBMIT') {
+      itemsToExport = submissions.filter(s =>
+        s.reviewStatus === 'RESUBMIT_ALLOWED' ||
+        s.allowResubmit ||
+        s.submission?.reviewStatus === 'RESUBMIT_ALLOWED' ||
+        s.submission?.allowResubmit ||
+        (Array.isArray(s.submission?.resubmissionHistory) && s.submission.resubmissionHistory.length > 0) ||
+        (resubHistoryMap[s.submissionId || `${s.studentAiId}_${s.eventId}`]?.length > 0)
+      );
+      statusLabel = 'Resubmissions';
+    } else {
+      itemsToExport = filteredSubmissions.length > 0 ? filteredSubmissions : submissions;
+      statusLabel = 'Filtered_View';
+    }
+
+    if (!itemsToExport || itemsToExport.length === 0) {
+      alert(`No ${statusLabel.replace(/_/g, ' ')} data available to export.`);
       return;
     }
 
     const rows = [];
-    const seenKeys = new Set();
+    const headers = [
+      'S.No',
+      'Team Name',
+      'Event Title',
+      'Submitter / Leader Name',
+      'Submitter VUID',
+      'Reg No',
+      'Email',
+      'Phone',
+      'Team Members (Name & VUID)',
+      'Team Size',
+      'Submitted File / Link',
+      'Review Status',
+      'Rejection / Feedback Reason',
+      'Submission Date'
+    ];
 
-    resubItems.forEach(item => {
+    itemsToExport.forEach((item, index) => {
+      const sub = item.submission || {};
+      const fileUrl = getSubmissionFileUrl(sub) || sub.posterLink || sub.paperLink || sub.reelLink || sub.driveLink || 'N/A';
+
+      let teamMembersStr = '';
+      let teamSize = 1;
+
       if (item.teamMembers && Array.isArray(item.teamMembers) && item.teamMembers.length > 0) {
-        item.teamMembers.forEach(m => {
-          const name = (m.name || m.studentName || '').trim() || 'N/A';
-          const vuid = (m.aiId || m.vuid || m.regNo || m.studentAiId || '').trim() || 'N/A';
-          const key = `${name.toLowerCase()}_${vuid.toLowerCase()}`;
-          if (!seenKeys.has(key)) {
-            seenKeys.add(key);
-            rows.push([
-              `"${name.replace(/"/g, '""')}"`,
-              `"${vuid.replace(/"/g, '""')}"`
-            ]);
-          }
-        });
+        teamSize = item.teamMembers.length;
+        teamMembersStr = item.teamMembers.map((m) => {
+          const mName = (m.name || m.studentName || '').trim() || 'N/A';
+          const mVuid = (m.aiId || m.vuid || m.regNo || m.studentAiId || '').trim() || 'N/A';
+          const leaderFlag = m.isLeader ? ' (Leader)' : '';
+          return `${mName} [${mVuid}]${leaderFlag}`;
+        }).join(' ; ');
       } else {
-        const name = (item.studentName || '').trim() || 'N/A';
-        const vuid = (item.studentAiId || item.vuid || item.studentRegNo || '').trim() || 'N/A';
-        const key = `${name.toLowerCase()}_${vuid.toLowerCase()}`;
-        if (!seenKeys.has(key)) {
-          seenKeys.add(key);
-          rows.push([
-            `"${name.replace(/"/g, '""')}"`,
-            `"${vuid.replace(/"/g, '""')}"`
-          ]);
-        }
+        const sName = (item.studentName || '').trim() || 'N/A';
+        const sVuid = (item.studentAiId || item.studentRegNo || '').trim() || 'N/A';
+        teamMembersStr = `${sName} [${sVuid}]`;
       }
+
+      const teamNameVal = item.teamName ? item.teamName.trim() : 'Individual';
+      const eventTitleVal = item.eventTitle ? item.eventTitle.trim() : 'N/A';
+      const studentNameVal = item.studentName ? item.studentName.trim() : 'N/A';
+      const studentAiIdVal = item.studentAiId ? item.studentAiId.trim() : 'N/A';
+      const studentRegNoVal = item.studentRegNo ? item.studentRegNo.trim() : 'N/A';
+      const studentEmailVal = item.studentEmail ? item.studentEmail.trim() : 'N/A';
+      const studentPhoneVal = item.studentPhone ? item.studentPhone.trim() : 'N/A';
+      const reviewStatusVal = item.reviewStatus || 'PENDING';
+      const rejectionReasonVal = item.rejectionReason || sub.rejectionReason || '';
+      const submittedDateVal = sub.submittedAt ? new Date(sub.submittedAt).toLocaleString() : 'N/A';
+
+      rows.push([
+        index + 1,
+        `"${teamNameVal.replace(/"/g, '""')}"`,
+        `"${eventTitleVal.replace(/"/g, '""')}"`,
+        `"${studentNameVal.replace(/"/g, '""')}"`,
+        `"${studentAiIdVal.replace(/"/g, '""')}"`,
+        `"${studentRegNoVal.replace(/"/g, '""')}"`,
+        `"${studentEmailVal.replace(/"/g, '""')}"`,
+        `"${studentPhoneVal.replace(/"/g, '""')}"`,
+        `"${teamMembersStr.replace(/"/g, '""')}"`,
+        teamSize,
+        `"${String(fileUrl).replace(/"/g, '""')}"`,
+        `"${reviewStatusVal.replace(/"/g, '""')}"`,
+        `"${rejectionReasonVal.replace(/"/g, '""')}"`,
+        `"${submittedDateVal.replace(/"/g, '""')}"`
+      ]);
     });
 
-    const headers = ['Name', 'VUID'];
     const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
     const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    const prefix = isReelsMode ? 'Reels' : 'Poster';
-    link.setAttribute('download', `${prefix}_Resubmission_Data_${Date.now()}.csv`);
+    link.setAttribute('download', `${prefix}_${statusLabel}_Submissions_${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  // Helper alias for resubmission CSV export
+  const exportResubmissionsCSV = () => {
+    exportSubmissionsCSV('RESUBMIT');
   };
 
   // Helper toggle for history accordion
@@ -724,26 +780,93 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
           <button
             type="button"
-            onClick={exportResubmissionsCSV}
+            onClick={() => exportSubmissionsCSV('APPROVED')}
+            title="Download Accepted / Approved Submissions CSV (1 Row / Team)"
             style={{
-              fontSize: '0.88rem',
-              padding: '0.6rem 1rem',
+              fontSize: '0.82rem',
+              padding: '0.55rem 0.85rem',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              background: 'rgba(34, 197, 94, 0.15)',
+              border: '1px solid rgba(34, 197, 94, 0.4)',
+              color: '#4ade80',
+              fontWeight: '800',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <CheckCircle2 size={15} /> Download Accepted CSV
+          </button>
+
+          <button
+            type="button"
+            onClick={() => exportSubmissionsCSV('REJECTED')}
+            title="Download Rejected Submissions CSV (1 Row / Team)"
+            style={{
+              fontSize: '0.82rem',
+              padding: '0.55rem 0.85rem',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              background: 'rgba(239, 68, 68, 0.15)',
+              border: '1px solid rgba(239, 68, 68, 0.4)',
+              color: '#f87171',
+              fontWeight: '800',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <XCircle size={15} /> Download Rejected CSV
+          </button>
+
+          <button
+            type="button"
+            onClick={() => exportSubmissionsCSV('RESUBMIT')}
+            title="Download Resubmission Submissions CSV (1 Row / Team)"
+            style={{
+              fontSize: '0.82rem',
+              padding: '0.55rem 0.85rem',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.4rem',
               background: 'rgba(56, 189, 248, 0.15)',
               border: '1px solid rgba(56, 189, 248, 0.4)',
               color: '#38bdf8',
-              fontWeight: '700',
+              fontWeight: '800',
               borderRadius: '10px',
               cursor: 'pointer',
               transition: 'all 0.2s ease'
             }}
           >
-            <Download size={16} /> Download Resubmission CSV
+            <Download size={15} /> Download Resubmission CSV
+          </button>
+
+          <button
+            type="button"
+            onClick={() => exportSubmissionsCSV('ALL')}
+            title="Download All Submissions CSV (1 Row / Team)"
+            style={{
+              fontSize: '0.82rem',
+              padding: '0.55rem 0.85rem',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              background: 'rgba(0, 242, 254, 0.15)',
+              border: '1px solid rgba(0, 242, 254, 0.4)',
+              color: '#00f2fe',
+              fontWeight: '800',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <Download size={15} /> Download All CSV
           </button>
 
           <button
@@ -751,17 +874,17 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
             onClick={fetchSubmissions}
             className="btn btn-secondary"
             disabled={loading}
-            style={{ fontSize: '0.88rem', padding: '0.6rem 1rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+            style={{ fontSize: '0.82rem', padding: '0.55rem 0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
           >
-            <RefreshCw size={16} className={loading ? 'spin' : ''} /> {loading ? 'Refreshing...' : 'Refresh Data'}
+            <RefreshCw size={15} className={loading ? 'spin' : ''} /> {loading ? 'Refreshing...' : 'Refresh'}
           </button>
 
           <button
             type="button"
             onClick={handleLogout}
-            style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#f87171', padding: '0.6rem 1rem', borderRadius: '10px', cursor: 'pointer', fontWeight: '700', fontSize: '0.88rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+            style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#f87171', padding: '0.55rem 0.85rem', borderRadius: '10px', cursor: 'pointer', fontWeight: '800', fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
           >
-            <LogOut size={16} /> Logout
+            <LogOut size={15} /> Logout
           </button>
         </div>
       </div>
@@ -995,7 +1118,7 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
                     transition: 'all 0.2s ease'
                   }}
                 >
-                  <Download size={14} /> Export CSV (Name, VUID)
+                  <Download size={14} /> Export Resubmission CSV (1 Row / Team)
                 </button>
               </div>
               {resubmissionItems.length === 0 ? (

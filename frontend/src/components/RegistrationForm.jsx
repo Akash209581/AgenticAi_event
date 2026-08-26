@@ -475,4 +475,3 @@ export default function RegistrationForm({ onSuccess, onProceedToLogin, onBack }
     </div>
   );
 }
-
