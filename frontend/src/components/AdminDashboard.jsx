@@ -395,6 +395,77 @@ export default function AdminDashboard({ onBack }) {
     downloadCSV(headers, rows, `Agentic_AI_Day_Team_Overview_${safeEventFilter}_${Date.now()}.csv`);
   };
 
+  // Open Export Modal for a Single Team
+  const openExportSingleTeamModal = (team) => {
+    if (!team) return;
+    setExportModalConfig({
+      isOpen: true,
+      title: `Export Team: ${team.teamName}`,
+      subtitle: `${team.eventTitle} (${team.members ? team.members.length : 0} members)`,
+      recordCount: team.members ? team.members.length : 0,
+      onConfirm: (options) => {
+        setExportModalConfig(prev => ({ ...prev, isOpen: false }));
+        exportSingleTeamCSV(team, options);
+      }
+    });
+  };
+
+  // Export CSV for a Single Team (1 Row per Member)
+  const exportSingleTeamCSV = (t, { includePhone = true, includeEmail = true } = {}) => {
+    if (!t) return;
+    const allMembers = t.members || [];
+    const leader = allMembers.find(m => m.isLeader) || allMembers[0] || {};
+    const nonLeaders = allMembers.filter(m => m !== leader);
+    const orderedMembers = [leader, ...nonLeaders];
+
+    const headers = [
+      'S.No',
+      'Team ID',
+      'Team Name',
+      'Event Title',
+      'Event ID',
+      'Member Role',
+      'Member Name',
+      'VUCSE ID',
+      'Registration No',
+      'Year',
+      'Gender',
+      ...(includePhone ? ['Member Phone'] : []),
+      ...(includeEmail ? ['Member Email'] : []),
+      'Total Team Size',
+      'Team Leader Name',
+      ...(includePhone ? ['Team Leader Phone'] : []),
+      'Registered Date & Time'
+    ];
+
+    let serialNo = 1;
+    const rows = orderedMembers.map((m) => {
+      const isLeader = Boolean(m.isLeader || m.aiId === leader.aiId || (m.regNo && m.regNo === leader.regNo));
+      return [
+        serialNo++,
+        formatCSVCell(t.teamId, true),
+        formatCSVCell(t.teamName),
+        formatCSVCell(t.eventTitle),
+        formatCSVCell(t.eventId),
+        isLeader ? 'Team Leader' : 'Team Member',
+        formatCSVCell(m.name),
+        formatCSVCell(m.aiId, true),
+        formatCSVCell(m.regNo, true),
+        formatCSVCell(m.year),
+        formatCSVCell(m.gender),
+        ...(includePhone ? [formatCSVCell(m.phone, true)] : []),
+        ...(includeEmail ? [formatCSVCell(m.email)] : []),
+        allMembers.length,
+        formatCSVCell(leader.name),
+        ...(includePhone ? [formatCSVCell(leader.phone, true)] : []),
+        t.createdAt ? formatCSVCell(new Date(t.createdAt).toLocaleString()) : 'N/A'
+      ];
+    });
+
+    const safeTeamName = (t.teamName || 'Team').replace(/[^a-zA-Z0-9]/g, '_');
+    downloadCSV(headers, rows, `Team_${safeTeamName}_${t.teamId || ''}_${Date.now()}.csv`);
+  };
+
   // Delete / Remove Team Handler for Admin
   const handleDeleteTeam = async (team) => {
     if (!team || !team.teamId) return;
@@ -2175,7 +2246,7 @@ export default function AdminDashboard({ onBack }) {
               <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                 <button
                   type="button"
-                  onClick={exportTeamsPerMemberCSV}
+                  onClick={openExportTeamsPerMemberModal}
                   className="btn-primary"
                   disabled={!teams.length}
                   style={{ background: 'linear-gradient(135deg, #00f2fe, #3b82f6)', fontSize: '0.85rem', padding: '0.5rem 1.1rem' }}
@@ -2185,7 +2256,7 @@ export default function AdminDashboard({ onBack }) {
 
                 <button
                   type="button"
-                  onClick={exportTeamsCSV}
+                  onClick={openExportTeamsModal}
                   className="btn-primary"
                   disabled={!teams.length}
                   style={{ background: 'linear-gradient(135deg, #c084fc, #6366f1)', fontSize: '0.85rem', padding: '0.5rem 1.1rem' }}
@@ -2386,27 +2457,51 @@ export default function AdminDashboard({ onBack }) {
                             {t.createdAt ? new Date(t.createdAt).toLocaleDateString() : 'N/A'}
                           </td>
                           <td style={{ textAlign: 'center' }}>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteTeam(t)}
-                              style={{
-                                background: 'rgba(239, 68, 68, 0.15)',
-                                border: '1px solid rgba(239, 68, 68, 0.4)',
-                                color: '#ef4444',
-                                padding: '0.4rem 0.8rem',
-                                borderRadius: '6px',
-                                fontSize: '0.8rem',
-                                fontWeight: 700,
-                                cursor: 'pointer',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.4rem',
-                                transition: 'all 0.2s ease'
-                              }}
-                              title="Remove Team"
-                            >
-                              <Trash2 size={14} /> Remove Team
-                            </button>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                              <button
+                                type="button"
+                                onClick={() => openExportSingleTeamModal(t)}
+                                style={{
+                                  background: 'rgba(0, 242, 254, 0.12)',
+                                  border: '1px solid rgba(0, 242, 254, 0.35)',
+                                  color: '#00f2fe',
+                                  padding: '0.35rem 0.65rem',
+                                  borderRadius: '6px',
+                                  fontSize: '0.78rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.35rem',
+                                  transition: 'all 0.2s ease'
+                                }}
+                                title={`Export CSV for ${t.teamName}`}
+                              >
+                                <Download size={13} /> Export CSV
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteTeam(t)}
+                                style={{
+                                  background: 'rgba(239, 68, 68, 0.15)',
+                                  border: '1px solid rgba(239, 68, 68, 0.4)',
+                                  color: '#ef4444',
+                                  padding: '0.35rem 0.65rem',
+                                  borderRadius: '6px',
+                                  fontSize: '0.78rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.35rem',
+                                  transition: 'all 0.2s ease'
+                                }}
+                                title="Remove Team"
+                              >
+                                <Trash2 size={13} /> Remove
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
