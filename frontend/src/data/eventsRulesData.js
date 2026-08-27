@@ -433,6 +433,8 @@ export const eventsRulesData = {
       { name: 'Shaik Nazeema (Faculty)', phone: '+91 96188 96300' },
       { name: 'G. Tejaswi (Faculty)', phone: '+91 93980 46056' },
       { name: 'Aparna (student)', phone: '+91 85238 13227' },
+      { name: 'Dileep (student)', phone: '+91 93939 040030' },
+      { name: 'Janaki Ram(student)', phone: '+91 91820 40905' },
       { name: 'Shanmukha Pavan (student)', phone: '+91 98499 80887' }
     ]
   },
