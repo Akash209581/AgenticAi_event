@@ -60,6 +60,10 @@ export function isEventRegistrationClosed(eventId = '', eventTitle = '', rawDead
       deadlineStr = 'closed';
     } else if (t.includes('bootcamp') || id === 'bootcamp-1') {
       deadlineStr = '18 August 2026';
+    } else if (t.includes('questx') || id === 'creative-4') {
+      deadlineStr = '27 August 2026';
+    } else if (t.includes('sparkx') || id === 'innovative-1') {
+      deadlineStr = '27 August 2026';
     } else {
       // Default fallback deadline for all other events
       deadlineStr = '26 August 2026';
