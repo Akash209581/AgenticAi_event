@@ -299,6 +299,22 @@ export default function App() {
     return <AdminDashboard onBack={leaveAdmin} />;
   }
 
+  // Full Screen Dedicated Showcase Portal View (/showcase)
+  if (activeTab === 'showcase') {
+    return (
+      <div>
+        <ToastContainer toasts={toasts} onRemove={removeToast} />
+        <AgentShowcaseDashboard
+          currentUser={currentUser}
+          onBack={() => changeTab('home', '/')}
+          onNavigateToTeamRegister={(evt) => {
+            handleOpenTeamRegister(evt);
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div>
       {/* Global Toast Notifications */}
@@ -364,18 +380,6 @@ export default function App() {
             <Sparkles size={18} /> Events
           </button>
 
-          {/* AI Agent Expo & Hackathon Presentation Showcase Tab */}
-          <button
-            className={`nav-btn ${activeTab === 'showcase' ? 'active' : ''}`}
-            onClick={() => changeTab('showcase', '/showcase')}
-            style={{
-              color: activeTab === 'showcase' ? '#00f2fe' : undefined,
-              borderColor: activeTab === 'showcase' ? 'rgba(0, 242, 254, 0.5)' : undefined
-            }}
-          >
-            <Bot size={18} /> Agent Showcase
-          </button>
-
           {currentUser && (
             <button
               className={`nav-btn ${activeTab === 'team-register' ? 'active' : ''}`}
@@ -410,13 +414,6 @@ export default function App() {
           <EventCountdown onExploreEvents={() => changeTab('events', '/events')} />
         )}
 
-        {/* AI AGENT EXPO & HACKATHON PRESENTATION SHOWCASE VIEW */}
-        {activeTab === 'showcase' && (
-          <AgentShowcaseDashboard
-            currentUser={currentUser}
-            onNavigateToTeamRegister={handleOpenTeamRegister}
-          />
-        )}
 
 
         {/* EVENTS PAGE VIEW: 9 EVENT CARDS ONLY */}

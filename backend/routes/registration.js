@@ -1609,99 +1609,6 @@ router.get('/submission-file', async (req, res) => {
  */
 
 /**
- * Sample / Fallback curated showcase projects for AI Agent Expo and Agentic AI Hackathon
- * Ensures judges and visitors immediately have a rich, interactive showcase experience.
- */
-const SAMPLE_SHOWCASE_PROJECTS = [
-  {
-    teamId: 'DEMO-HACK-01',
-    teamName: 'Neural Sentinels',
-    eventId: 'technical-1',
-    eventTitle: 'AGENTIC AI HACKATHON',
-    eventType: 'Agentic AI Hackathon',
-    members: [
-      { name: 'Aarav Sharma', regNo: '231FA04001', year: '3', section: 'CSE-A', isLeader: true, aiId: 'CSEAI26001' },
-      { name: 'Priya Varma', regNo: '231FA04045', year: '3', section: 'CSE-A', isLeader: false, aiId: 'CSEAI26002' },
-      { name: 'Karthik Raju', regNo: '231FA04112', year: '3', section: 'CSE-B', isLeader: false, aiId: 'CSEAI26003' },
-      { name: 'Sneha Reddy', regNo: '231FA04189', year: '3', section: 'CSE-C', isLeader: false, aiId: 'CSEAI26004' }
-    ],
-    projectDetails: {
-      agentName: 'PulseGuard AI — Autonomous Clinical Triage & EHR Analysis Agent',
-      problemStatement: 'Emergency departments face massive triage delays and error-prone patient prioritization during sudden patient surges, risking critical lives.',
-      targetUsers: 'Hospital ER doctors, triage nurses, emergency medical technicians, and hospital administrators.',
-      userInput: 'Patient vital signs, natural language voice memos from ER staff, scanned lab reports, ECG images, and triage symptom descriptions.',
-      informationUsed: 'ICD-10 clinical guidelines, emergency severity index (ESI) protocols, live ICU bed availability feeds, and historical patient EHR data.',
-      decisionsMade: 'Calculates dynamic ESI priority scores (1-5), flags high-risk cardiac/sepsis deterioration early, routes emergency alerts to specialized on-call doctors, and drafts clinical discharge summaries.',
-      toolsNeeded: 'Gemini 1.5 Pro multimodal API, LangChain Agent Executor, OpenFDA Drug Interaction API, Hospital FHIR EHR connector, Twilio emergency SMS webhook.',
-      stepByStepWorkflow: '1. Ingests raw patient intake vitals & audio notes.\n2. Normalizes vitals and extracts clinical symptom entities.\n3. Cross-checks contraindications against FDA database.\n4. Computes emergency severity index with confidence scoring.\n5. Dispatches real-time alerts to the on-duty physician pager if risk score > 80.\n6. Synchronizes continuous monitoring updates with hospital central dashboard.',
-      finalResult: 'Live real-time clinical triage dashboard with automated ESI stratification, instant physician dispatch triggers, and structured HL7/FHIR EHR notes.',
-      successMetrics: 'Reduced average triage wait time by 42% and achieved 96.4% alignment with board-certified emergency physician decisions in simulated trials.',
-      failureModesAndChecks: 'Hallucinated drug interactions or abnormal vital sensor readings. Human check: All critical recommendations require 1-click MD verification before medication dispatch.',
-      githubLink: 'https://github.com/vucse-ai/pulseguard-agent',
-      demoLink: 'https://pulseguard-agent.vercel.app',
-      updatedAt: new Date('2026-08-27T10:00:00Z')
-    }
-  },
-  {
-    teamId: 'DEMO-EXPO-02',
-    teamName: 'CyberNexus Labs',
-    eventId: 'industry-2',
-    eventTitle: 'AI AGENTS EXPO',
-    eventType: 'AI Agent Expo',
-    members: [
-      { name: 'Rohan Gupta', regNo: '221FA04022', year: '4', section: 'CSE-AI', isLeader: true, aiId: 'CSEAI26010' },
-      { name: 'Ananya Deshmukh', regNo: '221FA04088', year: '4', section: 'CSE-AI', isLeader: false, aiId: 'CSEAI26011' },
-      { name: 'Vikram Joshi', regNo: '221FA04156', year: '4', section: 'CSE-B', isLeader: false, aiId: 'CSEAI26012' }
-    ],
-    projectDetails: {
-      agentName: 'SecurX Agent — Autonomous Cloud Infrastructure Incident Responder',
-      problemStatement: 'DevOps and security operations teams get overwhelmed by thousands of noisy cloud alerts, taking hours to investigate and remediate DDoS or unauthorized IAM privilege escalation.',
-      targetUsers: 'Cloud security engineers, DevOps architects, and enterprise SOC analysts.',
-      userInput: 'AWS CloudWatch / Kubernetes audit log streams, VPC flow logs, SIEM webhook alerts, and security compliance policies.',
-      informationUsed: 'AWS CloudTrail telemetry, MITRE ATT&CK knowledge base, historical remediation playbooks, and IAM role topology graphs.',
-      decisionsMade: 'Identifies attack vectors, isolates compromised EC2/K8s pods autonomously, revokes anomalous IAM session tokens, and executes zero-downtime traffic rerouting.',
-      toolsNeeded: 'AWS SDK (Boto3), Prometheus metrics scraper, OpenAI Function Calling, Terraform automation API, Slack Incident Channel bot.',
-      stepByStepWorkflow: '1. Scans incoming SIEM alert payload.\n2. Queries graph database to construct attack timeline.\n3. Evaluates severity against MITRE ATT&CK framework.\n4. Simulates quarantine plan in sandbox.\n5. Executes automated IAM revocation & security group lockdown.\n6. Posts full post-mortem RCA report directly into Slack #devsecops.',
-      finalResult: 'An autonomous 24/7 security agent reducing Mean Time to Remediate (MTTR) from 45 minutes to under 30 seconds.',
-      successMetrics: '99.2% true-positive isolation rate on simulated brute-force and credential leak attacks with zero false-positive service disruptions.',
-      failureModesAndChecks: 'Accidental quarantine of mission-critical production database clusters. Human check: Production tier-1 shutdowns require multi-factor Slack interactive approval.',
-      githubLink: 'https://github.com/vucse-ai/securx-cloud-agent',
-      demoLink: 'https://securx-agent-demo.netlify.app',
-      updatedAt: new Date('2026-08-27T14:30:00Z')
-    }
-  },
-  {
-    teamId: 'DEMO-HACK-03',
-    teamName: 'AgroVisionaries',
-    eventId: 'technical-1',
-    eventTitle: 'AGENTIC AI HACKATHON',
-    eventType: 'Agentic AI Hackathon',
-    members: [
-      { name: 'Meera Nair', regNo: '241FA04015', year: '2', section: 'CSE-DS', isLeader: true, aiId: 'CSEAI26020' },
-      { name: 'Devendra Patel', regNo: '241FA04077', year: '2', section: 'CSE-DS', isLeader: false, aiId: 'CSEAI26021' },
-      { name: 'Kavya S', regNo: '241FA04130', year: '2', section: 'CSE-A', isLeader: false, aiId: 'CSEAI26022' },
-      { name: 'Ritesh Singh', regNo: '241FA04190', year: '2', section: 'CSE-B', isLeader: false, aiId: 'CSEAI26023' }
-    ],
-    projectDetails: {
-      agentName: 'AgriSense Agent — Multi-Agent Crop Health & Yield Maximizer',
-      problemStatement: 'Smallholder farmers lose 30-40% of their crop yields to undetected early-stage pest infestations, erratic weather shocks, and suboptimal fertilizer application.',
-      targetUsers: 'Farmers, agricultural cooperative extension officers, and agritech field advisers.',
-      userInput: 'Smartphone leaf photos, GPS crop coordinates, local weather sensor feeds, soil NPK readings, and farmer voice queries in regional languages.',
-      informationUsed: 'ICAR crop pathology database, ISRO Bhuvan satellite soil moisture indices, open-meteo hyperlocal weather forecast APIs, and mandi market price tickers.',
-      decisionsMade: 'Diagnoses specific crop diseases from images, calculates optimal organic pesticide dosage, schedules drip irrigation timing based on rainfall forecasts, and recommends best mandi selling windows.',
-      toolsNeeded: 'YOLOv11 custom crop disease vision model, Google Gemini Multimodal API, Whisper multilingual voice transcription, WhatsApp Business API bot, OpenMeteo API.',
-      stepByStepWorkflow: '1. Farmer sends leaf photo via WhatsApp.\n2. Vision agent classifies pest/fungal disease with confidence score.\n3. Hyperlocal weather agent checks 48-hour rain likelihood.\n4. Formulates tailored spray schedule in Telugu/Hindi voice note.\n5. Sends follow-up reminder after 5 days to assess recovery.',
-      finalResult: 'An accessible WhatsApp-based autonomous agritech advisor serving farmers in regional vernacular languages with actionable farming prescriptions.',
-      successMetrics: 'Tested with 50+ local farm test plots; demonstrated 28% fertilizer cost reduction and 94% crop disease detection accuracy.',
-      failureModesAndChecks: 'Mislabelling rare weed types or unusual leaf bleaching. Human check: Low-confidence diagnoses (<80%) automatically route to verified agricultural university experts.',
-      githubLink: 'https://github.com/vucse-ai/agrisense-agent',
-      demoLink: 'https://agrisense-farm-agent.vercel.app',
-      updatedAt: new Date('2026-08-27T16:00:00Z')
-    }
-  }
-];
-
-/**
  * POST /cseAI/submit-project-details
  * Submits or updates detailed presentation metadata for AI Agent Expo / Hackathon
  */
@@ -1728,27 +1635,38 @@ router.post('/submit-project-details', async (req, res) => {
     const cleanEventId = String(eventId || '').trim().toLowerCase();
     const cleanEventTitle = String(eventTitle || '').trim();
 
-    // 1. Locate the submitting user
-    let user = null;
-    if (cleanIdentifier) {
-      user = await User.findOne({
-        $or: [
-          { aiId: cleanIdentifier },
-          { regNo: cleanIdentifier },
-          { email: cleanIdentifier.toLowerCase() },
-          { phone: cleanIdentifier }
-        ]
+    if (!cleanIdentifier) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication Required: Please provide Leader ID to submit or update team project details.'
       });
     }
 
-    // Determine target team
+    // 1. Locate the submitting user / leader
+    const user = await User.findOne({
+      $or: [
+        { aiId: cleanIdentifier },
+        { regNo: cleanIdentifier },
+        { email: cleanIdentifier.toLowerCase() },
+        { phone: cleanIdentifier }
+      ]
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: `User '${cleanIdentifier}' not found. Please ensure you are using a registered ID.`
+      });
+    }
+
+    // Determine target team: user MUST be in a registered team
     let team = null;
     if (teamId) {
       team = await Team.findOne({ teamId: String(teamId).trim() });
     }
 
-    if (!team && user) {
-      // Find team where this user is a member for this event
+    if (!team) {
+      // Find team where this user is a registered member or leader for this event
       team = await Team.findOne({
         eventId: cleanEventId,
         'members.aiId': user.aiId
@@ -1765,6 +1683,20 @@ router.post('/submit-project-details', async (req, res) => {
       }
     }
 
+    // Check if user has an enrolled team in registeredEvents
+    const enrolledTeamEvent = user.registeredEvents?.find(e => 
+      (e.id === cleanEventId || (cleanEventTitle && (e.title || '').toLowerCase() === cleanEventTitle.toLowerCase())) &&
+      (e.isTeam || e.teamId)
+    );
+
+    // STRICT ACCESS CONTROL: Only registered teams are allowed to enter details
+    if (!team && !enrolledTeamEvent) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access Denied: Only officially registered teams for AI Agent Expo or Agentic AI Hackathon can submit project presentation details. Please register your team first under "Team Registrations".'
+      });
+    }
+
     const updatedProjectData = {
       agentName: String(projectDetails.agentName || '').trim(),
       problemStatement: String(projectDetails.problemStatement || '').trim(),
@@ -1779,45 +1711,50 @@ router.post('/submit-project-details', async (req, res) => {
       failureModesAndChecks: String(projectDetails.failureModesAndChecks || '').trim(),
       githubLink: String(projectDetails.githubLink || '').trim(),
       demoLink: String(projectDetails.demoLink || '').trim(),
-      updatedBy: user?.name ? `${user.name} (${user.aiId})` : (cleanIdentifier || 'Team Member'),
+      updatedBy: user.name ? `${user.name} (${user.aiId})` : cleanIdentifier,
       updatedAt: new Date()
     };
 
     if (team) {
-      // Update team project details
-      team.projectDetails = updatedProjectData;
-      if (teamName && String(teamName).trim()) {
-        team.teamName = String(teamName).trim();
-      }
-
-      // Update member section / year if provided
-      if (Array.isArray(members) && members.length > 0) {
-        members.forEach(incomingMem => {
-          const matched = team.members.find(
-            m => m.aiId === incomingMem.aiId || (incomingMem.regNo && m.regNo === incomingMem.regNo.toUpperCase())
-          );
-          if (matched) {
-            if (incomingMem.section) matched.section = String(incomingMem.section).trim();
-            if (incomingMem.year) matched.year = String(incomingMem.year).trim();
-            if (incomingMem.name) matched.name = String(incomingMem.name).trim();
-          }
+      // Verify submitting user is actually a member or leader of this team
+      const isMember = team.members.some(m => m.aiId === user.aiId || m.regNo === user.regNo);
+      if (!isMember && team.leaderAiId !== user.aiId) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access Denied: You are not authorized to edit project details for this team.'
         });
       }
 
+      team.projectDetails = updatedProjectData;
+      if (teamName && teamName.trim()) {
+        team.teamName = teamName.trim();
+      }
+      if (Array.isArray(members) && members.length > 0) {
+        // Update member roster sections
+        members.forEach(mem => {
+          const existingMem = team.members.find(m => (mem.regNo && m.regNo === mem.regNo) || (mem.aiId && m.aiId === mem.aiId));
+          if (existingMem) {
+            if (mem.section) existingMem.section = mem.section;
+            if (mem.year) existingMem.year = mem.year;
+          }
+        });
+      }
+      team.markModified('projectDetails');
+      team.markModified('members');
       await team.save();
 
-      // Sync submission.projectDetails to all team members' registeredEvents in User collection
-      const teamAiIds = team.members.map(m => m.aiId).filter(Boolean);
-      if (teamAiIds.length > 0) {
+      // Synchronize projectDetails to User registeredEvents
+      const memberAiIds = team.members.map(m => m.aiId).filter(Boolean);
+      if (memberAiIds.length > 0) {
         await User.updateMany(
-          {
-            aiId: { $in: teamAiIds },
-            'registeredEvents.id': { $in: [team.eventId, cleanEventId] }
+          { 
+            aiId: { $in: memberAiIds },
+            'registeredEvents.id': team.eventId
           },
           {
             $set: {
               'registeredEvents.$.submission.projectDetails': updatedProjectData,
-              'registeredEvents.$.submission.updatedAt': new Date()
+              'registeredEvents.$.teamName': team.teamName
             }
           }
         );
@@ -1825,70 +1762,37 @@ router.post('/submit-project-details', async (req, res) => {
 
       return res.json({
         success: true,
-        message: 'Project presentation details updated successfully!',
+        message: 'Project presentation details updated successfully for registered team!',
         team,
         projectDetails: updatedProjectData
       });
     }
 
-    // If no team document existed yet, but user is registered for the event:
-    if (user) {
-      // Find event in registeredEvents
-      const eventIdx = user.registeredEvents.findIndex(
-        e => e.id === cleanEventId || (cleanEventTitle && (e.title || '').toLowerCase() === cleanEventTitle.toLowerCase())
-      );
+    // If user has enrolledTeamEvent
+    const eventIdx = user.registeredEvents.findIndex(
+      e => (e.id === cleanEventId || (cleanEventTitle && (e.title || '').toLowerCase() === cleanEventTitle.toLowerCase()))
+    );
 
-      if (eventIdx !== -1) {
-        if (!user.registeredEvents[eventIdx].submission) {
-          user.registeredEvents[eventIdx].submission = {};
-        }
-        user.registeredEvents[eventIdx].submission.projectDetails = updatedProjectData;
-        user.markModified('registeredEvents');
-        await user.save();
+    if (eventIdx !== -1) {
+      if (!user.registeredEvents[eventIdx].submission) {
+        user.registeredEvents[eventIdx].submission = {};
       }
-
-      // Auto-create Team if teamName and members provided
-      if (teamName && Array.isArray(members) && members.length > 0) {
-        const newTeamId = `TEAM-${Date.now().toString(36).toUpperCase()}`;
-        const newTeam = new Team({
-          teamId: newTeamId,
-          teamName: String(teamName).trim(),
-          eventId: cleanEventId || 'technical-1',
-          eventTitle: cleanEventTitle || 'AGENTIC AI HACKATHON',
-          leaderAiId: user.aiId,
-          members: members.map(m => ({
-            aiId: m.aiId || user.aiId,
-            name: m.name || user.name,
-            regNo: (m.regNo || user.regNo).toUpperCase(),
-            year: m.year || user.year,
-            section: m.section || '',
-            email: m.email || user.email,
-            phone: m.phone || user.phone,
-            isLeader: Boolean(m.isLeader)
-          })),
-          projectDetails: updatedProjectData
-        });
-        await newTeam.save();
-
-        return res.json({
-          success: true,
-          message: 'Project presentation details saved successfully!',
-          team: newTeam,
-          projectDetails: updatedProjectData
-        });
-      }
+      user.registeredEvents[eventIdx].submission.projectDetails = updatedProjectData;
+      user.markModified('registeredEvents');
+      await user.save();
 
       return res.json({
         success: true,
-        message: 'Project presentation details saved to user profile!',
+        message: 'Project presentation details saved for your registered team!',
         projectDetails: updatedProjectData
       });
     }
 
-    return res.status(404).json({
+    return res.status(403).json({
       success: false,
-      message: 'Team or User not found. Please log in first to submit your project details.'
+      message: 'Access Denied: Only registered teams are permitted to submit project details.'
     });
+
   } catch (err) {
     console.error('Error submitting project details:', err);
     return res.status(500).json({
@@ -1976,17 +1880,6 @@ router.get('/showcase-projects', async (req, res) => {
       });
     });
 
-    // Merge sample curated showcase projects if total user entries is small
-    // so visitors and judges always experience a populated, impressive showcase
-    SAMPLE_SHOWCASE_PROJECTS.forEach(sample => {
-      const alreadyPresent = formattedList.some(
-        item => item.projectDetails?.agentName?.toLowerCase() === sample.projectDetails.agentName.toLowerCase()
-      );
-      if (!alreadyPresent) {
-        formattedList.push(sample);
-      }
-    });
-
     // Apply Filters if query params present
     let filtered = formattedList;
     if (eventType && eventType !== 'ALL') {
@@ -2042,11 +1935,11 @@ router.get('/showcase-projects', async (req, res) => {
 
 /**
  * GET /cseAI/project-details
- * Fetches project details for a specific team or user
+ * Fetches project details and verifies registered team for a specific team or Leader ID + Event
  */
 router.get('/project-details', async (req, res) => {
   try {
-    const { teamId, identifier, eventId } = req.query;
+    const { teamId, identifier, eventId, eventTitle } = req.query;
 
     if (teamId) {
       const team = await Team.findOne({ teamId: String(teamId).trim() });
@@ -2061,37 +1954,56 @@ router.get('/project-details', async (req, res) => {
 
     if (identifier) {
       const cleanIdentifier = String(identifier).trim().toUpperCase();
+      const cleanEventId = eventId ? String(eventId).trim().toLowerCase() : '';
+      const cleanEventTitle = eventTitle ? String(eventTitle).trim() : '';
+
+      // 1. Locate user by AI ID, Reg No, Email or Phone
       const user = await User.findOne({
         $or: [
           { aiId: cleanIdentifier },
           { regNo: cleanIdentifier },
-          { email: cleanIdentifier.toLowerCase() }
+          { email: cleanIdentifier.toLowerCase() },
+          { phone: cleanIdentifier }
         ]
       });
 
-      if (user) {
-        // Try finding team first
-        const team = await Team.findOne({
-          eventId: eventId ? String(eventId).trim() : { $exists: true },
-          'members.aiId': user.aiId
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: `User '${cleanIdentifier}' not found in the database. Please verify the Leader ID or Registration Number.`
         });
+      }
 
-        if (team) {
-          return res.json({
-            success: true,
-            team,
-            projectDetails: team.projectDetails || {}
-          });
-        }
+      // 2. Query Team matching user and event
+      const eventQueries = [];
+      if (cleanEventId) eventQueries.push({ eventId: cleanEventId });
+      if (cleanEventTitle) eventQueries.push({ eventTitle: new RegExp(cleanEventTitle, 'i') });
+      if (cleanEventId.includes('hack') || cleanEventId === 'technical-1' || cleanEventId === '1') {
+        eventQueries.push({ eventId: 'technical-1' }, { eventTitle: /hackathon/i });
+      }
+      if (cleanEventId.includes('expo') || cleanEventId === 'industry-2' || cleanEventId === '2') {
+        eventQueries.push({ eventId: 'industry-2' }, { eventTitle: /expo/i });
+      }
 
-        // Fall back to registered event submission
-        const matched = user.registeredEvents?.find(
-          e => !eventId || e.id === eventId || (e.title || '').toLowerCase().includes('hackathon') || (e.title || '').toLowerCase().includes('expo')
-        );
+      let teamQuery = {
+        $or: [
+          { leaderAiId: user.aiId },
+          { 'members.aiId': user.aiId },
+          { 'members.regNo': user.regNo }
+        ]
+      };
 
+      if (eventQueries.length > 0) {
+        teamQuery.$and = [{ $or: eventQueries }];
+      }
+
+      let team = await Team.findOne(teamQuery);
+
+      if (team) {
         return res.json({
           success: true,
-          projectDetails: matched?.submission?.projectDetails || {},
+          team,
+          projectDetails: team.projectDetails || {},
           user: {
             name: user.name,
             regNo: user.regNo,
@@ -2100,11 +2012,54 @@ router.get('/project-details', async (req, res) => {
           }
         });
       }
+
+      // 3. Fall back to user's registeredEvents if enrolled in a team
+      const matchedEvent = user.registeredEvents?.find(e => {
+        const titleMatch = cleanEventTitle ? (e.title || '').toLowerCase().includes(cleanEventTitle.toLowerCase()) : true;
+        const idMatch = cleanEventId ? (e.id === cleanEventId || (cleanEventId === 'technical-1' && (e.title || '').toLowerCase().includes('hackathon')) || (cleanEventId === 'industry-2' && (e.title || '').toLowerCase().includes('expo'))) : true;
+        return (titleMatch || idMatch) && (e.isTeam || e.teamId);
+      });
+
+      if (matchedEvent) {
+        return res.json({
+          success: true,
+          team: {
+            teamId: matchedEvent.teamId || `TEAM-${user.aiId}`,
+            teamName: matchedEvent.teamName || `${user.name}'s Team`,
+            eventId: matchedEvent.id || cleanEventId,
+            eventTitle: matchedEvent.title || cleanEventTitle,
+            leaderAiId: user.aiId,
+            members: [
+              {
+                name: user.name,
+                regNo: user.regNo,
+                year: user.year,
+                section: '',
+                isLeader: true,
+                aiId: user.aiId
+              }
+            ]
+          },
+          projectDetails: matchedEvent.submission?.projectDetails || {},
+          user: {
+            name: user.name,
+            regNo: user.regNo,
+            year: user.year,
+            aiId: user.aiId
+          }
+        });
+      }
+
+      const eventLabel = cleanEventTitle || (cleanEventId.includes('expo') ? 'AI Agent Expo' : 'Agentic AI Hackathon');
+      return res.status(404).json({
+        success: false,
+        message: `No registered team found for '${user.name}' (${user.aiId}) in '${eventLabel}'. Please ensure your team is registered first under Team Registrations.`
+      });
     }
 
-    return res.status(404).json({
+    return res.status(400).json({
       success: false,
-      message: 'No project details found for the provided identifier'
+      message: 'Please provide Team Leader Registration ID (VU ID) and select the event.'
     });
   } catch (err) {
     return res.status(500).json({
@@ -2113,6 +2068,7 @@ router.get('/project-details', async (req, res) => {
     });
   }
 });
+
 
 export default router;
 

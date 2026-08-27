@@ -9,7 +9,7 @@ import {
 import { apiFetch } from '../config/api';
 import ProjectSubmissionModal from './ProjectSubmissionModal';
 
-export default function AgentShowcaseDashboard({ currentUser, onNavigateToTeamRegister }) {
+export default function AgentShowcaseDashboard({ currentUser, onNavigateToTeamRegister, onBack }) {
   const [projects, setProjects] = useState([]);
   const [stats, setStats] = useState({
     totalProjects: 0,
@@ -31,6 +31,7 @@ export default function AgentShowcaseDashboard({ currentUser, onNavigateToTeamRe
   const [isSlideDeckMode, setIsSlideDeckMode] = useState(false);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [isSubmissionModalOpen, setIsSubmissionModalOpen] = useState(false);
+  const [teamAccessAlert, setTeamAccessAlert] = useState({ isOpen: false, title: '', message: '', type: 'login' });
 
   // Fetch Projects Data
   const loadShowcaseProjects = async () => {
@@ -55,6 +56,10 @@ export default function AgentShowcaseDashboard({ currentUser, onNavigateToTeamRe
   useEffect(() => {
     loadShowcaseProjects();
   }, []);
+
+  const handleOpenProjectSubmission = () => {
+    setIsSubmissionModalOpen(true);
+  };
 
   // Filter Projects Locally
   const filteredProjects = projects.filter(p => {
@@ -116,9 +121,92 @@ export default function AgentShowcaseDashboard({ currentUser, onNavigateToTeamRe
   };
 
   return (
-    <div className="showcase-container" style={{ maxWidth: '1350px', margin: '0 auto', padding: '1.5rem 1rem 4rem' }}>
+    <div className="showcase-standalone-portal" style={{ minHeight: '100vh', background: '#050a18', color: '#fff' }}>
       
-      {/* Top Banner & Header */}
+      {/* Standalone Showcase Top Navigation */}
+      <header style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
+        background: 'rgba(11, 19, 41, 0.92)',
+        backdropFilter: 'blur(12px)',
+        borderBottom: '1px solid rgba(0, 242, 254, 0.25)',
+        padding: '0.75rem 1.5rem',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+          <img
+            src="/images/cse logo.png"
+            alt="CSE Logo"
+            style={{
+              height: '42px',
+              width: 'auto',
+              objectFit: 'contain',
+              mixBlendMode: 'screen',
+              filter: 'drop-shadow(0 0 8px rgba(0, 240, 255, 0.4))'
+            }}
+          />
+          <div>
+            <div style={{ fontSize: '1rem', fontWeight: 800, color: '#fff', letterSpacing: '0.05em' }}>
+              AGENTIC AI DAY 2026
+            </div>
+            <div style={{ fontSize: '0.75rem', color: '#00f2fe', fontWeight: 600 }}>
+              AI Agent Expo & Hackathon Presentation Portal
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {onBack && (
+            <button
+              onClick={onBack}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.5rem 1rem',
+                borderRadius: '10px',
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                color: '#cbd5e1',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              ← Back to Main Site
+            </button>
+          )}
+
+          <button
+            onClick={handleOpenProjectSubmission}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              padding: '0.5rem 1rem',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #00f2fe, #4facfe)',
+              border: 'none',
+              color: '#050a18',
+              fontSize: '0.85rem',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              boxShadow: '0 0 15px rgba(0, 242, 254, 0.3)'
+            }}
+          >
+            <Edit3 size={15} /> Submit My Project
+          </button>
+        </div>
+      </header>
+
+      <div className="showcase-container" style={{ maxWidth: '1350px', margin: '0 auto', padding: '1.5rem 1rem 4rem' }}>
+        
+        {/* Top Banner & Header */}
+
       <div style={{
         background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.9))',
         border: '1px solid rgba(0, 242, 254, 0.35)',
@@ -166,7 +254,7 @@ export default function AgentShowcaseDashboard({ currentUser, onNavigateToTeamRe
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
               <button
-                onClick={() => setIsSubmissionModalOpen(true)}
+                onClick={handleOpenProjectSubmission}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -209,6 +297,7 @@ export default function AgentShowcaseDashboard({ currentUser, onNavigateToTeamRe
               )}
             </div>
           </div>
+
 
           {/* Quick Metrics Bar */}
           <div style={{
@@ -389,34 +478,75 @@ export default function AgentShowcaseDashboard({ currentUser, onNavigateToTeamRe
           {filteredProjects.length === 0 ? (
             <div style={{
               textAlign: 'center',
-              padding: '4rem 2rem',
+              padding: '4.5rem 2rem',
               background: 'rgba(15, 23, 42, 0.6)',
-              borderRadius: '20px',
-              border: '1px dashed rgba(255, 255, 255, 0.15)'
+              borderRadius: '24px',
+              border: '1px dashed rgba(0, 242, 254, 0.25)',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
             }}>
-              <Bot size={48} style={{ color: '#64748b', marginBottom: '1rem' }} />
-              <h3 style={{ color: '#fff', fontSize: '1.2rem', marginBottom: '0.5rem' }}>No AI Agents Found</h3>
-              <p style={{ color: '#94a3b8', fontSize: '0.9rem', maxWidth: '450px', margin: '0 auto 1.5rem' }}>
-                No projects matched your search criteria. Try clearing your filters or submit a new project presentation!
+              <div style={{
+                width: '64px',
+                height: '64px',
+                borderRadius: '50%',
+                background: 'rgba(0, 242, 254, 0.1)',
+                border: '1px solid rgba(0, 242, 254, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 1.25rem',
+                color: '#00f2fe'
+              }}>
+                <Bot size={32} />
+              </div>
+              <h3 style={{ color: '#fff', fontSize: '1.35rem', fontWeight: 700, marginBottom: '0.6rem' }}>
+                {projects.length === 0 ? 'No AI Agent Presentations Published Yet' : 'No AI Agents Match Your Filter'}
+              </h3>
+              <p style={{ color: '#94a3b8', fontSize: '0.92rem', maxWidth: '520px', margin: '0 auto 1.75rem', lineHeight: 1.6 }}>
+                {projects.length === 0 
+                  ? 'Registered student teams for AI Agent Expo and Agentic AI Hackathon can publish their project presentation details using the button below.'
+                  : 'No projects matched your search criteria. Try clearing your filters or submit a new project presentation!'}
               </p>
-              <button
-                onClick={() => {
-                  setActiveEventTab('ALL');
-                  setSelectedYear('ALL');
-                  setSearchQuery('');
-                }}
-                style={{
-                  padding: '0.6rem 1.25rem',
-                  borderRadius: '10px',
-                  background: 'rgba(0, 242, 254, 0.15)',
-                  border: '1px solid rgba(0, 242, 254, 0.3)',
-                  color: '#00f2fe',
-                  fontWeight: 600,
-                  cursor: 'pointer'
-                }}
-              >
-                Clear Filters
-              </button>
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                {projects.length > 0 && (
+                  <button
+                    onClick={() => {
+                      setActiveEventTab('ALL');
+                      setSelectedYear('ALL');
+                      setSearchQuery('');
+                    }}
+                    style={{
+                      padding: '0.65rem 1.25rem',
+                      borderRadius: '10px',
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      color: '#cbd5e1',
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Clear Filters
+                  </button>
+                )}
+                <button
+                  onClick={handleOpenProjectSubmission}
+                  style={{
+                    padding: '0.65rem 1.4rem',
+                    borderRadius: '10px',
+                    background: 'linear-gradient(135deg, #00f2fe, #4facfe)',
+                    border: 'none',
+                    color: '#050a18',
+                    fontWeight: 'bold',
+                    fontSize: '0.9rem',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.45rem',
+                    boxShadow: '0 0 20px rgba(0, 242, 254, 0.35)'
+                  }}
+                >
+                  <Edit3 size={16} /> Submit My Project Details
+                </button>
+              </div>
             </div>
           ) : (
             <div style={{
@@ -1136,6 +1266,106 @@ export default function AgentShowcaseDashboard({ currentUser, onNavigateToTeamRe
           loadShowcaseProjects();
         }}
       />
+
+      {/* Access Restriction Alert Modal */}
+      {teamAccessAlert.isOpen && (
+        <div
+          className="modal-backdrop show"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(5, 10, 24, 0.85)',
+            backdropFilter: 'blur(8px)',
+            zIndex: 10000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem'
+          }}
+        >
+          <div
+            className="cyber-modal-card"
+            style={{
+              background: 'linear-gradient(145deg, #0b1329, #0f1c3f)',
+              border: '1px solid rgba(239, 68, 68, 0.4)',
+              borderRadius: '20px',
+              width: '100%',
+              maxWidth: '480px',
+              padding: '2rem',
+              textAlign: 'center',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(239, 68, 68, 0.2)'
+            }}
+          >
+            <div style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '50%',
+              background: 'rgba(239, 68, 68, 0.15)',
+              border: '1px solid rgba(239, 68, 68, 0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1.25rem',
+              color: '#f87171'
+            }}>
+              <ShieldAlert size={28} />
+            </div>
+
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff', margin: '0 0 0.6rem 0' }}>
+              {teamAccessAlert.title}
+            </h3>
+
+            <p style={{ color: '#cbd5e1', fontSize: '0.9rem', lineHeight: 1.6, margin: '0 0 1.5rem 0' }}>
+              {teamAccessAlert.message}
+            </p>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+              <button
+                onClick={() => setTeamAccessAlert({ isOpen: false, title: '', message: '', type: 'login' })}
+                style={{
+                  padding: '0.65rem 1.25rem',
+                  borderRadius: '10px',
+                  background: 'transparent',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  color: '#94a3b8',
+                  fontSize: '0.88rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Close
+              </button>
+
+              {teamAccessAlert.type === 'register' && onNavigateToTeamRegister && (
+                <button
+                  onClick={() => {
+                    setTeamAccessAlert({ isOpen: false, title: '', message: '', type: 'login' });
+                    onNavigateToTeamRegister({ id: 'technical-1', title: 'AGENTIC AI HACKATHON', categoryId: 'technical' });
+                  }}
+                  style={{
+                    padding: '0.65rem 1.25rem',
+                    borderRadius: '10px',
+                    background: 'linear-gradient(135deg, #00f2fe, #4facfe)',
+                    border: 'none',
+                    color: '#050a18',
+                    fontWeight: 'bold',
+                    fontSize: '0.88rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Go to Team Registration →
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      </div>
     </div>
   );
 }
+
+

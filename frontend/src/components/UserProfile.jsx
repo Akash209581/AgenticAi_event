@@ -517,10 +517,34 @@ export default function UserProfile({ user, onLogout, onExploreEvents, onUnenrol
                       // AI Agent Expo and Agentic AI Hackathon Project Presentation Details Button
                       const isHackathonOrExpo = item.id === 'tech-1' || item.id === 'technical-1' || item.id === 'ind-2' || item.id === 'industry-2' || (item.title && (item.title.toLowerCase().includes('hackathon') || item.title.toLowerCase().includes('expo')));
                       if (isHackathonOrExpo) {
+                        const isTeamRegistered = Boolean(item.teamId || item.isTeam);
                         const hasProjectPd = Boolean(
                           item.submission?.projectDetails?.agentName || 
                           (item.teamId && teamsData[item.teamId]?.projectDetails?.agentName)
                         );
+
+                        if (!isTeamRegistered) {
+                          return (
+                            <div style={{ marginTop: '0.6rem', marginBottom: '0.2rem' }}>
+                              <div style={{
+                                padding: '0.5rem 0.75rem',
+                                borderRadius: '8px',
+                                background: 'rgba(239, 68, 68, 0.1)',
+                                border: '1px dashed rgba(239, 68, 68, 0.35)',
+                                color: '#fca5a5',
+                                fontSize: '0.75rem',
+                                textAlign: 'center',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '0.35rem'
+                              }}>
+                                <Users size={13} />
+                                <span>Team Registration Required to Submit Project</span>
+                              </div>
+                            </div>
+                          );
+                        }
 
                         return (
                           <div style={{ marginTop: '0.6rem', marginBottom: '0.2rem' }}>

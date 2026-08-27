@@ -2,29 +2,36 @@ import React, { useState, useEffect } from 'react';
 import { 
   X, Sparkles, Bot, Users, CheckCircle2, AlertCircle, 
   ExternalLink, Github, Globe, Layers, Cpu, ShieldAlert, 
-  ListOrdered, HelpCircle, Save, Plus, Trash2, Edit3 
+  ListOrdered, HelpCircle, Save, Plus, Trash2, Edit3, Search, 
+  Check, Lock, Unlock, ArrowRight
 } from 'lucide-react';
 import { apiFetch } from '../config/api';
 
 export default function ProjectSubmissionModal({ 
   isOpen, 
   onClose, 
-  currentUser, 
+  currentUser = null, 
   initialEvent = null, 
   initialTeam = null,
   onSuccess 
 }) {
-  const [activeTab, setActiveTab] = useState('team'); // 'team' | 'specs' | 'workflow' | 'links'
+  const [activeTab, setActiveTab] = useState('verification'); // 'verification' | 'specs' | 'workflow' | 'safety' | 'links'
   const [submitting, setSubmitting] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const [statusMsg, setStatusMsg] = useState({ type: '', text: '' });
 
-  // Event & Team State
-  const [eventType, setEventType] = useState('Agentic AI Hackathon');
+  // Verification & Event State
+  const [selectedEventId, setSelectedEventId] = useState('technical-1'); // 'technical-1' | 'industry-2'
+  const [leaderIdentifier, setLeaderIdentifier] = useState('');
+  const [isVerified, setIsVerified] = useState(false);
+  const [verifiedTeam, setVerifiedTeam] = useState(null);
+
+  // Team & Members State
   const [teamName, setTeamName] = useState('');
   const [teamId, setTeamId] = useState('');
   const [members, setMembers] = useState([]);
 
-  // Project Details State (Matching the 11 Questions + Links)
+  // 11 Project Specification Questions + Links State
   const [agentName, setAgentName] = useState('');
   const [problemStatement, setProblemStatement] = useState('');
   const [targetUsers, setTargetUsers] = useState('');
@@ -44,130 +51,112 @@ export default function ProjectSubmissionModal({
     if (!isOpen) return;
 
     setStatusMsg({ type: '', text: '' });
-    setActiveTab('team');
-
-    // 1. Resolve Event Type
+    
+    // Resolve initial event
     const eTitle = String(initialEvent?.title || initialTeam?.eventTitle || '').toLowerCase();
     const isExpo = eTitle.includes('expo') || initialEvent?.id === 'industry-2' || initialEvent?.id === '2';
-    setEventType(isExpo ? 'AI Agent Expo' : 'Agentic AI Hackathon');
+    const initEventId = isExpo ? 'industry-2' : 'technical-1';
+    setSelectedEventId(initEventId);
 
-    // 2. Resolve Team Name & ID
+    // If initialTeam provided directly
     if (initialTeam) {
-      setTeamId(initialTeam.teamId || '');
-      setTeamName(initialTeam.teamName || '');
-      if (Array.isArray(initialTeam.members) && initialTeam.members.length > 0) {
-        setMembers(initialTeam.members.map(m => ({
-          name: m.name || '',
-          regNo: (m.regNo || '').toUpperCase(),
-          year: m.year || '',
-          section: m.section || '',
-          aiId: m.aiId || '',
-          isLeader: Boolean(m.isLeader)
-        })));
-      }
-      if (initialTeam.projectDetails) {
-        const pd = initialTeam.projectDetails;
-        if (pd.agentName) setAgentName(pd.agentName);
-        if (pd.problemStatement) setProblemStatement(pd.problemStatement);
-        if (pd.targetUsers) setTargetUsers(pd.targetUsers);
-        if (pd.userInput) setUserInput(pd.userInput);
-        if (pd.informationUsed) setInformationUsed(pd.informationUsed);
-        if (pd.decisionsMade) setDecisionsMade(pd.decisionsMade);
-        if (pd.toolsNeeded) setToolsNeeded(pd.toolsNeeded);
-        if (pd.stepByStepWorkflow) setStepByStepWorkflow(pd.stepByStepWorkflow);
-        if (pd.finalResult) setFinalResult(pd.finalResult);
-        if (pd.successMetrics) setSuccessMetrics(pd.successMetrics);
-        if (pd.failureModesAndChecks) setFailureModesAndChecks(pd.failureModesAndChecks);
-        if (pd.githubLink) setGithubLink(pd.githubLink);
-        if (pd.demoLink) setDemoLink(pd.demoLink);
-      }
+      applyVerifiedTeamData(initialTeam, initialTeam.projectDetails);
+      setIsVerified(true);
+      setActiveTab('specs');
+      setLeaderIdentifier(initialTeam.leaderAiId || '');
     } else if (currentUser) {
-      // Find registered event
-      const regEvt = currentUser.registeredEvents?.find(e => {
-        const t = (e.title || '').toLowerCase();
-        return t.includes('hackathon') || t.includes('expo');
-      });
-
-      if (regEvt) {
-        setTeamId(regEvt.teamId || '');
-        setTeamName(regEvt.teamName || '');
-        if (regEvt.submission?.projectDetails) {
-          const pd = regEvt.submission.projectDetails;
-          if (pd.agentName) setAgentName(pd.agentName);
-          if (pd.problemStatement) setProblemStatement(pd.problemStatement);
-          if (pd.targetUsers) setTargetUsers(pd.targetUsers);
-          if (pd.userInput) setUserInput(pd.userInput);
-          if (pd.informationUsed) setInformationUsed(pd.informationUsed);
-          if (pd.decisionsMade) setDecisionsMade(pd.decisionsMade);
-          if (pd.toolsNeeded) setToolsNeeded(pd.toolsNeeded);
-          if (pd.stepByStepWorkflow) setStepByStepWorkflow(pd.stepByStepWorkflow);
-          if (pd.finalResult) setFinalResult(pd.finalResult);
-          if (pd.successMetrics) setSuccessMetrics(pd.successMetrics);
-          if (pd.failureModesAndChecks) setFailureModesAndChecks(pd.failureModesAndChecks);
-          if (pd.githubLink) setGithubLink(pd.githubLink);
-          if (pd.demoLink) setDemoLink(pd.demoLink);
-        }
-      }
-
-      // Fetch from API to get newest team/project details
-      const idToFetch = currentUser.aiId || currentUser.regNo;
-      if (idToFetch) {
-        apiFetch(`/project-details?identifier=${encodeURIComponent(idToFetch)}`)
-          .then(({ data }) => {
-            if (data && data.success) {
-              if (data.team) {
-                setTeamId(data.team.teamId || '');
-                setTeamName(data.team.teamName || '');
-                if (Array.isArray(data.team.members) && data.team.members.length > 0) {
-                  setMembers(data.team.members.map(m => ({
-                    name: m.name || '',
-                    regNo: (m.regNo || '').toUpperCase(),
-                    year: m.year || '',
-                    section: m.section || '',
-                    aiId: m.aiId || '',
-                    isLeader: Boolean(m.isLeader)
-                  })));
-                }
-              }
-              const pd = data.projectDetails || data.team?.projectDetails;
-              if (pd) {
-                if (pd.agentName) setAgentName(pd.agentName);
-                if (pd.problemStatement) setProblemStatement(pd.problemStatement);
-                if (pd.targetUsers) setTargetUsers(pd.targetUsers);
-                if (pd.userInput) setUserInput(pd.userInput);
-                if (pd.informationUsed) setInformationUsed(pd.informationUsed);
-                if (pd.decisionsMade) setDecisionsMade(pd.decisionsMade);
-                if (pd.toolsNeeded) setToolsNeeded(pd.toolsNeeded);
-                if (pd.stepByStepWorkflow) setStepByStepWorkflow(pd.stepByStepWorkflow);
-                if (pd.finalResult) setFinalResult(pd.finalResult);
-                if (pd.successMetrics) setSuccessMetrics(pd.successMetrics);
-                if (pd.failureModesAndChecks) setFailureModesAndChecks(pd.failureModesAndChecks);
-                if (pd.githubLink) setGithubLink(pd.githubLink);
-                if (pd.demoLink) setDemoLink(pd.demoLink);
-              }
-            }
-          })
-          .catch(() => {});
-      }
-
-      // Fallback default members if empty
-      setMembers(prev => {
-        if (prev.length > 0) return prev;
-        return [
-          {
-            name: currentUser.name || '',
-            regNo: (currentUser.regNo || '').toUpperCase(),
-            year: currentUser.year || '3',
-            section: 'CSE-A',
-            aiId: currentUser.aiId || '',
-            isLeader: true
-          }
-        ];
-      });
+      // Pre-fill leader ID from current user if logged in
+      const defaultId = currentUser.aiId || currentUser.regNo || '';
+      setLeaderIdentifier(defaultId);
+      setIsVerified(false);
+      setActiveTab('verification');
+    } else {
+      setLeaderIdentifier('');
+      setIsVerified(false);
+      setActiveTab('verification');
     }
-  }, [isOpen, currentUser, initialEvent, initialTeam]);
+  }, [isOpen, initialTeam, initialEvent, currentUser]);
 
-  if (!isOpen) return null;
+  const applyVerifiedTeamData = (team, projectDetails) => {
+    setVerifiedTeam(team);
+    setTeamId(team.teamId || '');
+    setTeamName(team.teamName || '');
+
+    if (Array.isArray(team.members) && team.members.length > 0) {
+      setMembers(team.members.map(m => ({
+        name: m.name || '',
+        regNo: (m.regNo || '').toUpperCase(),
+        year: m.year || '3',
+        section: m.section || '',
+        aiId: m.aiId || '',
+        isLeader: Boolean(m.isLeader)
+      })));
+    } else {
+      setMembers([]);
+    }
+
+    if (projectDetails) {
+      if (projectDetails.agentName) setAgentName(projectDetails.agentName);
+      if (projectDetails.problemStatement) setProblemStatement(projectDetails.problemStatement);
+      if (projectDetails.targetUsers) setTargetUsers(projectDetails.targetUsers);
+      if (projectDetails.userInput) setUserInput(projectDetails.userInput);
+      if (projectDetails.informationUsed) setInformationUsed(projectDetails.informationUsed);
+      if (projectDetails.decisionsMade) setDecisionsMade(projectDetails.decisionsMade);
+      if (projectDetails.toolsNeeded) setToolsNeeded(projectDetails.toolsNeeded);
+      if (projectDetails.stepByStepWorkflow) setStepByStepWorkflow(projectDetails.stepByStepWorkflow);
+      if (projectDetails.finalResult) setFinalResult(projectDetails.finalResult);
+      if (projectDetails.successMetrics) setSuccessMetrics(projectDetails.successMetrics);
+      if (projectDetails.failureModesAndChecks) setFailureModesAndChecks(projectDetails.failureModesAndChecks);
+      if (projectDetails.githubLink) setGithubLink(projectDetails.githubLink);
+      if (projectDetails.demoLink) setDemoLink(projectDetails.demoLink);
+    }
+  };
+
+  // Verify Leader ID and Event
+  const handleVerifyLeader = async (e) => {
+    if (e) e.preventDefault();
+    setStatusMsg({ type: '', text: '' });
+
+    const cleanId = leaderIdentifier.trim().toUpperCase();
+    if (!cleanId) {
+      setStatusMsg({
+        type: 'error',
+        text: 'Please enter Team Leader Registration ID (VU ID) or AI ID.'
+      });
+      return;
+    }
+
+    setVerifying(true);
+    try {
+      const eventTitle = selectedEventId === 'industry-2' ? 'AI AGENTS EXPO' : 'AGENTIC AI HACKATHON';
+      const { data } = await apiFetch(`/project-details?identifier=${encodeURIComponent(cleanId)}&eventId=${selectedEventId}&eventTitle=${encodeURIComponent(eventTitle)}`);
+
+      if (data && data.success && data.team) {
+        setIsVerified(true);
+        applyVerifiedTeamData(data.team, data.projectDetails);
+        setStatusMsg({
+          type: 'success',
+          text: `✅ Verified! Found registered team "${data.team.teamName}". You can now enter the 11 presentation details.`
+        });
+      } else {
+        setIsVerified(false);
+        setVerifiedTeam(null);
+        setStatusMsg({
+          type: 'error',
+          text: data?.message || `No registered team found for "${cleanId}" in ${eventTitle}. Please check the Leader ID or register your team first.`
+        });
+      }
+    } catch (err) {
+      console.error('Error verifying team leader:', err);
+      setIsVerified(false);
+      setStatusMsg({
+        type: 'error',
+        text: err.message || 'Unable to verify team registration. Please check the Leader ID and selected event.'
+      });
+    } finally {
+      setVerifying(false);
+    }
+  };
 
   const handleMemberChange = (idx, field, value) => {
     setMembers(prev => {
@@ -201,8 +190,17 @@ export default function ProjectSubmissionModal({
     if (e) e.preventDefault();
     setStatusMsg({ type: '', text: '' });
 
+    if (!isVerified || !verifiedTeam) {
+      setStatusMsg({
+        type: 'error',
+        text: 'Please verify your registered Team Leader ID before submitting project details.'
+      });
+      setActiveTab('verification');
+      return;
+    }
+
     if (!agentName.trim()) {
-      setStatusMsg({ type: 'error', text: 'Agent Name / Problem Title is required.' });
+      setStatusMsg({ type: 'error', text: 'Agent Name / Problem Statement Title is required.' });
       setActiveTab('specs');
       return;
     }
@@ -214,19 +212,18 @@ export default function ProjectSubmissionModal({
 
     setSubmitting(true);
     try {
-      const eventId = eventType === 'AI Agent Expo' ? 'industry-2' : 'technical-1';
-      const eventTitle = eventType === 'AI Agent Expo' ? 'AI AGENTS EXPO' : 'AGENTIC AI HACKATHON';
+      const eventTitle = selectedEventId === 'industry-2' ? 'AI AGENTS EXPO' : 'AGENTIC AI HACKATHON';
 
       const payload = {
-        identifier: currentUser?.aiId || currentUser?.regNo || currentUser?.email,
-        teamId: teamId || undefined,
-        eventId,
+        identifier: leaderIdentifier.trim().toUpperCase(),
+        teamId: teamId || verifiedTeam.teamId,
+        eventId: selectedEventId,
         eventTitle,
-        teamName: teamName.trim() || `${currentUser?.name || 'Agent'} Team`,
+        teamName: teamName.trim() || verifiedTeam.teamName,
         members: members.map(m => ({
           ...m,
-          regNo: m.regNo.toUpperCase().trim(),
-          name: m.name.trim(),
+          regNo: (m.regNo || '').toUpperCase().trim(),
+          name: (m.name || '').trim(),
           section: (m.section || '').trim().toUpperCase()
         })),
         projectDetails: {
@@ -253,13 +250,13 @@ export default function ProjectSubmissionModal({
       });
 
       if (data && data.success) {
-        setStatusMsg({ type: 'success', text: '🎉 Project Presentation Details Saved Successfully!' });
+        setStatusMsg({ type: 'success', text: '🎉 Project Presentation Details Saved & Published Successfully!' });
         if (onSuccess) {
           onSuccess(data.projectDetails || payload.projectDetails);
         }
         setTimeout(() => {
           onClose();
-        }, 1500);
+        }, 1600);
       } else {
         setStatusMsg({ type: 'error', text: data.message || 'Failed to save project presentation details.' });
       }
@@ -271,6 +268,8 @@ export default function ProjectSubmissionModal({
     }
   };
 
+  if (!isOpen) return null;
+
   return (
     <div 
       className="modal-backdrop show"
@@ -280,7 +279,7 @@ export default function ProjectSubmissionModal({
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(5, 10, 24, 0.85)',
+        backgroundColor: 'rgba(5, 10, 24, 0.88)',
         backdropFilter: 'blur(10px)',
         zIndex: 9999,
         display: 'flex',
@@ -296,7 +295,7 @@ export default function ProjectSubmissionModal({
           border: '1px solid rgba(0, 242, 254, 0.4)',
           borderRadius: '24px',
           width: '100%',
-          maxWidth: '900px',
+          maxWidth: '920px',
           maxHeight: '92vh',
           display: 'flex',
           flexDirection: 'column',
@@ -312,12 +311,12 @@ export default function ProjectSubmissionModal({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          background: 'rgba(11, 19, 41, 0.8)'
+          background: 'rgba(11, 19, 41, 0.85)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div style={{
-              width: '40px',
-              height: '40px',
+              width: '42px',
+              height: '42px',
               borderRadius: '12px',
               background: 'linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(168, 85, 247, 0.2))',
               border: '1px solid rgba(0, 242, 254, 0.4)',
@@ -326,14 +325,14 @@ export default function ProjectSubmissionModal({
               justifyContent: 'center',
               color: '#00f2fe'
             }}>
-              <Bot size={22} />
+              <Bot size={24} />
             </div>
             <div>
               <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#fff', margin: 0 }}>
-                AI Project Presentation & Showcase Form
+                AI Agent Project Presentation Submission
               </h2>
               <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: 0 }}>
-                Fill out the 11 agent specifications for Expo & Hackathon department presentation
+                Select event, verify team leader ID, and submit the 11 agent specifications
               </p>
             </div>
           </div>
@@ -365,17 +364,20 @@ export default function ProjectSubmissionModal({
           overflowX: 'auto'
         }}>
           {[
-            { id: 'team', label: '1. Event & Team', icon: Users },
-            { id: 'specs', label: '2. Problem & Core Specs', icon: Bot },
-            { id: 'workflow', label: '3. Workflow & Tools', icon: ListOrdered },
-            { id: 'safety', label: '4. Metrics & Human Checks', icon: ShieldAlert },
-            { id: 'links', label: '5. Repos & Live Demos', icon: Globe }
+            { id: 'verification', label: '1. Event & Team Verification', icon: isVerified ? Check : Lock },
+            { id: 'specs', label: '2. Problem & Core Specs', icon: Bot, disabled: !isVerified },
+            { id: 'workflow', label: '3. Workflow & Tools', icon: ListOrdered, disabled: !isVerified },
+            { id: 'safety', label: '4. Metrics & Safety Checks', icon: ShieldAlert, disabled: !isVerified },
+            { id: 'links', label: '5. Repos & Live Demos', icon: Globe, disabled: !isVerified }
           ].map(tab => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
+            const isDisabled = tab.disabled;
+
             return (
               <button
                 key={tab.id}
+                disabled={isDisabled}
                 onClick={() => setActiveTab(tab.id)}
                 style={{
                   display: 'flex',
@@ -385,12 +387,13 @@ export default function ProjectSubmissionModal({
                   background: isActive ? 'rgba(0, 242, 254, 0.12)' : 'transparent',
                   border: 'none',
                   borderBottom: isActive ? '2px solid #00f2fe' : '2px solid transparent',
-                  color: isActive ? '#00f2fe' : '#94a3b8',
+                  color: isActive ? '#00f2fe' : isDisabled ? '#475569' : '#94a3b8',
                   fontSize: '0.85rem',
                   fontWeight: isActive ? 600 : 500,
-                  cursor: 'pointer',
+                  cursor: isDisabled ? 'not-allowed' : 'pointer',
                   borderRadius: '6px 6px 0 0',
                   whiteSpace: 'nowrap',
+                  opacity: isDisabled ? 0.6 : 1,
                   transition: 'all 0.2s'
                 }}
               >
@@ -420,7 +423,7 @@ export default function ProjectSubmissionModal({
           </div>
         )}
 
-        {/* Modal Body - Tab Contents */}
+        {/* Modal Body */}
         <div style={{
           padding: '1.5rem 1.75rem',
           overflowY: 'auto',
@@ -430,222 +433,211 @@ export default function ProjectSubmissionModal({
           gap: '1.25rem'
         }}>
 
-          {/* TAB 1: EVENT & TEAM INFO */}
-          {activeTab === 'team' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
-                <div>
-                  <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.85rem', marginBottom: '0.4rem', fontWeight: 500 }}>
-                    Event Track *
-                  </label>
-                  <div style={{ display: 'flex', gap: '0.75rem' }}>
-                    {['AI Agent Expo', 'Agentic AI Hackathon'].map(evt => (
-                      <button
-                        key={evt}
-                        type="button"
-                        onClick={() => setEventType(evt)}
-                        style={{
-                          flex: 1,
-                          padding: '0.7rem',
-                          borderRadius: '10px',
-                          border: eventType === evt ? '1px solid #00f2fe' : '1px solid rgba(255,255,255,0.1)',
-                          background: eventType === evt ? 'rgba(0, 242, 254, 0.15)' : 'rgba(15, 23, 42, 0.6)',
-                          color: eventType === evt ? '#00f2fe' : '#cbd5e1',
-                          fontWeight: 600,
-                          fontSize: '0.85rem',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        {evt}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.85rem', marginBottom: '0.4rem', fontWeight: 500 }}>
-                    Team Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={teamName}
-                    onChange={(e) => setTeamName(e.target.value)}
-                    placeholder="e.g. Neural Sentinels"
-                    style={{
-                      width: '100%',
-                      padding: '0.7rem 1rem',
-                      borderRadius: '10px',
-                      background: 'rgba(15, 23, 42, 0.8)',
-                      border: '1px solid rgba(255, 255, 255, 0.15)',
-                      color: '#fff',
-                      fontSize: '0.9rem',
-                      outline: 'none'
+          {/* TAB 1: EVENT SELECTION & TEAM LEADER VERIFICATION */}
+          {activeTab === 'verification' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              
+              {/* Step A: Select Event */}
+              <div>
+                <label style={{ display: 'block', color: '#00f2fe', fontSize: '0.9rem', marginBottom: '0.5rem', fontWeight: 600 }}>
+                  Select Event Competition *
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedEventId('technical-1');
+                      setIsVerified(false);
+                      setVerifiedTeam(null);
                     }}
-                  />
+                    style={{
+                      padding: '1rem',
+                      borderRadius: '12px',
+                      border: selectedEventId === 'technical-1' ? '2px solid #00f2fe' : '1px solid rgba(255,255,255,0.1)',
+                      background: selectedEventId === 'technical-1' ? 'rgba(0, 242, 254, 0.15)' : 'rgba(15, 23, 42, 0.6)',
+                      color: selectedEventId === 'technical-1' ? '#00f2fe' : '#cbd5e1',
+                      fontWeight: 700,
+                      fontSize: '0.95rem',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem'
+                    }}
+                  >
+                    <Cpu size={22} color={selectedEventId === 'technical-1' ? '#00f2fe' : '#94a3b8'} />
+                    <div>
+                      <div>⚡ AGENTIC AI HACKATHON</div>
+                      <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 400 }}>Technical Event Track (4 to 5 Members)</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedEventId('industry-2');
+                      setIsVerified(false);
+                      setVerifiedTeam(null);
+                    }}
+                    style={{
+                      padding: '1rem',
+                      borderRadius: '12px',
+                      border: selectedEventId === 'industry-2' ? '2px solid #a855f7' : '1px solid rgba(255,255,255,0.1)',
+                      background: selectedEventId === 'industry-2' ? 'rgba(168, 85, 247, 0.15)' : 'rgba(15, 23, 42, 0.6)',
+                      color: selectedEventId === 'industry-2' ? '#c084fc' : '#cbd5e1',
+                      fontWeight: 700,
+                      fontSize: '0.95rem',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem'
+                    }}
+                  >
+                    <Bot size={22} color={selectedEventId === 'industry-2' ? '#c084fc' : '#94a3b8'} />
+                    <div>
+                      <div>🤖 AI AGENTS EXPO</div>
+                      <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 400 }}>Industry Innovation Track (2 to 4 Members)</span>
+                    </div>
+                  </button>
                 </div>
               </div>
 
-              {/* Team Members List */}
+              {/* Step B: Enter Leader VU ID / AI ID */}
               <div style={{
-                background: 'rgba(15, 23, 42, 0.6)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                borderRadius: '14px',
+                background: 'rgba(15, 23, 42, 0.7)',
+                border: '1px solid rgba(0, 242, 254, 0.25)',
+                borderRadius: '16px',
                 padding: '1.25rem'
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                  <div>
-                    <h3 style={{ fontSize: '0.95rem', fontWeight: 'bold', color: '#fff', margin: 0 }}>
-                      Team Members Details (For Showcase & Certificate)
-                    </h3>
-                    <p style={{ fontSize: '0.78rem', color: '#94a3b8', margin: 0 }}>
-                      Please provide Reg No, Name, Year, and Section for each member
-                    </p>
-                  </div>
-                  {members.length < 5 && (
-                    <button
-                      type="button"
-                      onClick={handleAddMember}
+                <label style={{ display: 'block', color: '#fff', fontSize: '0.9rem', marginBottom: '0.4rem', fontWeight: 600 }}>
+                  Enter Team Leader Registration ID (VU ID / AI ID) *
+                </label>
+                <p style={{ color: '#94a3b8', fontSize: '0.8rem', margin: '0 0 0.85rem 0' }}>
+                  The system will search the registered team database for this leader under the selected event.
+                </p>
+
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <div style={{ position: 'relative', flex: 1 }}>
+                    <Search size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
+                    <input
+                      type="text"
+                      value={leaderIdentifier}
+                      onChange={(e) => {
+                        setLeaderIdentifier(e.target.value);
+                        if (isVerified) setIsVerified(false);
+                      }}
+                      placeholder="e.g. CSEAI26001 or 231FA04001"
                       style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.35rem',
-                        padding: '0.4rem 0.75rem',
-                        borderRadius: '8px',
-                        background: 'rgba(0, 242, 254, 0.15)',
+                        width: '100%',
+                        padding: '0.75rem 1rem 0.75rem 2.6rem',
+                        borderRadius: '10px',
+                        background: 'rgba(11, 19, 41, 0.9)',
                         border: '1px solid rgba(0, 242, 254, 0.3)',
                         color: '#00f2fe',
-                        fontSize: '0.8rem',
-                        cursor: 'pointer'
+                        fontSize: '0.95rem',
+                        fontWeight: 600,
+                        letterSpacing: '0.05em',
+                        outline: 'none'
                       }}
-                    >
-                      <Plus size={14} /> Add Member
-                    </button>
-                  )}
-                </div>
+                    />
+                  </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {members.map((mem, idx) => (
-                    <div 
-                      key={idx}
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'minmax(120px, 1fr) minmax(140px, 1.2fr) minmax(90px, 0.8fr) minmax(90px, 0.8fr) auto',
-                        gap: '0.6rem',
-                        alignItems: 'center',
-                        background: 'rgba(11, 19, 41, 0.7)',
-                        padding: '0.65rem 0.85rem',
-                        borderRadius: '10px',
-                        border: '1px solid rgba(255, 255, 255, 0.06)'
-                      }}
-                    >
-                      <div>
-                        <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block' }}>Reg No *</span>
-                        <input
-                          type="text"
-                          value={mem.regNo}
-                          onChange={(e) => handleMemberChange(idx, 'regNo', e.target.value)}
-                          placeholder="e.g. 231FA04001"
-                          style={{
-                            width: '100%',
-                            background: 'transparent',
-                            border: 'none',
-                            borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
-                            color: '#00f2fe',
-                            fontSize: '0.85rem',
-                            fontWeight: 600,
-                            padding: '0.2rem 0',
-                            outline: 'none'
-                          }}
-                        />
-                      </div>
-
-                      <div>
-                        <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block' }}>Full Name *</span>
-                        <input
-                          type="text"
-                          value={mem.name}
-                          onChange={(e) => handleMemberChange(idx, 'name', e.target.value)}
-                          placeholder="Full Name"
-                          style={{
-                            width: '100%',
-                            background: 'transparent',
-                            border: 'none',
-                            borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
-                            color: '#fff',
-                            fontSize: '0.85rem',
-                            padding: '0.2rem 0',
-                            outline: 'none'
-                          }}
-                        />
-                      </div>
-
-                      <div>
-                        <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block' }}>Year</span>
-                        <select
-                          value={mem.year}
-                          onChange={(e) => handleMemberChange(idx, 'year', e.target.value)}
-                          style={{
-                            width: '100%',
-                            background: '#0f172a',
-                            border: '1px solid rgba(255, 255, 255, 0.2)',
-                            borderRadius: '6px',
-                            color: '#cbd5e1',
-                            fontSize: '0.8rem',
-                            padding: '0.25rem',
-                            outline: 'none'
-                          }}
-                        >
-                          <option value="1">1st Year</option>
-                          <option value="2">2nd Year</option>
-                          <option value="3">3rd Year</option>
-                          <option value="4">4th Year</option>
-                          <option value="M.Tech (1st year)">M.Tech 1</option>
-                          <option value="M.Tech (2nd year)">M.Tech 2</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block' }}>Section</span>
-                        <input
-                          type="text"
-                          value={mem.section}
-                          onChange={(e) => handleMemberChange(idx, 'section', e.target.value)}
-                          placeholder="e.g. CSE-A"
-                          style={{
-                            width: '100%',
-                            background: 'transparent',
-                            border: 'none',
-                            borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
-                            color: '#cbd5e1',
-                            fontSize: '0.85rem',
-                            padding: '0.2rem 0',
-                            outline: 'none'
-                          }}
-                        />
-                      </div>
-
-                      <div>
-                        {members.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveMember(idx)}
-                            style={{
-                              background: 'transparent',
-                              border: 'none',
-                              color: '#ef4444',
-                              cursor: 'pointer',
-                              padding: '0.3rem',
-                              marginTop: '0.8rem'
-                            }}
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                  <button
+                    type="button"
+                    onClick={handleVerifyLeader}
+                    disabled={verifying || !leaderIdentifier.trim()}
+                    style={{
+                      padding: '0.75rem 1.5rem',
+                      borderRadius: '10px',
+                      background: 'linear-gradient(135deg, #00f2fe, #4facfe)',
+                      border: 'none',
+                      color: '#050a18',
+                      fontWeight: 'bold',
+                      fontSize: '0.9rem',
+                      cursor: (verifying || !leaderIdentifier.trim()) ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      boxShadow: '0 0 15px rgba(0, 242, 254, 0.3)'
+                    }}
+                  >
+                    {verifying ? 'Searching...' : 'Verify Team 🔍'}
+                  </button>
                 </div>
               </div>
+
+              {/* Step C: Verified Team Details Card */}
+              {isVerified && verifiedTeam && (
+                <div style={{
+                  background: 'rgba(34, 197, 94, 0.08)',
+                  border: '1px solid rgba(34, 197, 94, 0.35)',
+                  borderRadius: '16px',
+                  padding: '1.25rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '1rem',
+                  animation: 'fadeIn 0.3s ease'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <span style={{ fontSize: '0.75rem', color: '#4ade80', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        ● Verified Registered Team
+                      </span>
+                      <h3 style={{ fontSize: '1.15rem', color: '#fff', margin: '0.2rem 0 0 0', fontWeight: 700 }}>
+                        {verifiedTeam.teamName}
+                      </h3>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('specs')}
+                      style={{
+                        padding: '0.5rem 1.25rem',
+                        borderRadius: '10px',
+                        background: 'linear-gradient(135deg, #00f2fe, #4facfe)',
+                        border: 'none',
+                        color: '#050a18',
+                        fontWeight: 'bold',
+                        fontSize: '0.85rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.35rem'
+                      }}
+                    >
+                      Fill 11 Agent Specifications <ArrowRight size={15} />
+                    </button>
+                  </div>
+
+                  {/* Members Grid */}
+                  <div>
+                    <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: '0.5rem', fontWeight: 600 }}>
+                      Registered Team Engineers ({members.length}):
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.6rem' }}>
+                      {members.map((mem, idx) => (
+                        <div
+                          key={idx}
+                          style={{
+                            background: 'rgba(11, 19, 41, 0.8)',
+                            padding: '0.6rem 0.85rem',
+                            borderRadius: '10px',
+                            border: '1px solid rgba(255, 255, 255, 0.08)'
+                          }}
+                        >
+                          <div style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 600 }}>
+                            {mem.name} {mem.isLeader && <span style={{ color: '#fbbf24', fontSize: '0.72rem' }}>(Lead)</span>}
+                          </div>
+                          <div style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '0.2rem' }}>
+                            <strong style={{ color: '#00f2fe' }}>{mem.regNo}</strong> | Year {mem.year} {mem.section ? `(${mem.section})` : ''}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -866,7 +858,7 @@ export default function ProjectSubmissionModal({
             </div>
           )}
 
-          {/* TAB 4: METRICS & HUMAN CHECKS */}
+          {/* TAB 4: METRICS & SAFETY CHECKS */}
           {activeTab === 'safety' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
               <div>
@@ -973,7 +965,7 @@ export default function ProjectSubmissionModal({
                 color: '#94a3b8',
                 lineHeight: 1.5
               }}>
-                💡 <strong style={{ color: '#fff' }}>Presentation Tip:</strong> Providing a working deployment link and GitHub repository will allow judges, faculty, and peer visitors to interactively test your AI Agent directly from the Department Presentation Showcase!
+                💡 <strong style={{ color: '#fff' }}>Presentation Ready:</strong> Once published, your presentation slide will appear in the <strong>AI Agent Showcase</strong> for jury members, evaluators, faculty, and student peers to review.
               </div>
             </div>
           )}
@@ -990,11 +982,11 @@ export default function ProjectSubmissionModal({
           gap: '1rem'
         }}>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
-            {activeTab !== 'team' && (
+            {activeTab !== 'verification' && (
               <button
                 type="button"
                 onClick={() => {
-                  const tabs = ['team', 'specs', 'workflow', 'safety', 'links'];
+                  const tabs = ['verification', 'specs', 'workflow', 'safety', 'links'];
                   const prevIdx = tabs.indexOf(activeTab) - 1;
                   if (prevIdx >= 0) setActiveTab(tabs[prevIdx]);
                 }}
@@ -1011,11 +1003,11 @@ export default function ProjectSubmissionModal({
                 Back
               </button>
             )}
-            {activeTab !== 'links' && (
+            {activeTab !== 'links' && isVerified && (
               <button
                 type="button"
                 onClick={() => {
-                  const tabs = ['team', 'specs', 'workflow', 'safety', 'links'];
+                  const tabs = ['verification', 'specs', 'workflow', 'safety', 'links'];
                   const nextIdx = tabs.indexOf(activeTab) + 1;
                   if (nextIdx < tabs.length) setActiveTab(tabs[nextIdx]);
                 }}
@@ -1054,20 +1046,20 @@ export default function ProjectSubmissionModal({
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={submitting}
+              disabled={submitting || !isVerified}
               style={{
                 padding: '0.65rem 1.5rem',
                 borderRadius: '10px',
-                background: 'linear-gradient(135deg, #00f2fe, #4facfe)',
+                background: isVerified ? 'linear-gradient(135deg, #00f2fe, #4facfe)' : 'rgba(255, 255, 255, 0.1)',
                 border: 'none',
-                color: '#050a18',
+                color: isVerified ? '#050a18' : '#64748b',
                 fontWeight: 'bold',
                 fontSize: '0.9rem',
-                cursor: submitting ? 'not-allowed' : 'pointer',
+                cursor: (submitting || !isVerified) ? 'not-allowed' : 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
-                boxShadow: '0 0 20px rgba(0, 242, 254, 0.4)'
+                boxShadow: isVerified ? '0 0 20px rgba(0, 242, 254, 0.4)' : 'none'
               }}
             >
               <Save size={16} />
