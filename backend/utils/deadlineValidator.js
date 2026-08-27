@@ -2,15 +2,15 @@
  * Event Registration Deadlines & Auto-Closure Validator
  */
 
-export const GENERAL_REGISTRATION_DEADLINE = '26 August 2026';
+export const GENERAL_REGISTRATION_DEADLINE = '29 August 2026';
 
 export const EVENT_DEADLINES = {
   'technical-1': 'closed',          // AGENTIC AI HACKATHON
   'technical-2': 'closed',          // AI PROMPT COMBAT
   'technical-3': '26 August 2026',  // PAPER / POSTER PRESENTATION
-  'industry-1': '26 August 2026',   // PODCAST WITH INDUSTRY PROFESSIONALS
+  'industry-1': '28 August 2026',   // PODCAST WITH INDUSTRY PROFESSIONALS
   'industry-2': '26 August 2026',   // AI AGENTS EXPO
-  'industry-3': '26 August 2026',   // AI SUMMIT - INDUSTRY INTERACTION
+  'industry-3': '28 August 2026',   // AI SUMMIT - INDUSTRY INTERACTION
   'creative-1': '26 August 2026',   // REELS COMPETITION (AI FOR SOCIETY)
   'creative-2': '26 August 2026',   // AI MUSICAL COMPETITION
   'creative-3': '26 August 2026',   // AGENTIC DAY QUIZ CHALLENGE 2026
@@ -64,6 +64,10 @@ export function isEventRegistrationClosed(eventId = '', eventTitle = '', rawDead
       deadlineStr = '27 August 2026';
     } else if (t.includes('sparkx') || id === 'innovative-1') {
       deadlineStr = '27 August 2026';
+    } else if (t.includes('podcast') || id === 'industry-1') {
+      deadlineStr = '28 August 2026';
+    } else if (t.includes('summit') || id === 'industry-3') {
+      deadlineStr = '28 August 2026';
     } else {
       // Default fallback deadline for all other events
       deadlineStr = '26 August 2026';

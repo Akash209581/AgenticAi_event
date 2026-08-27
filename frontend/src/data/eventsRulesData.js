@@ -167,7 +167,7 @@ export const eventsRulesData = {
     cardTitle: 'AI PODCAST',
     image: '/images/event_podcast.png',
     whatsappGroupLink: 'https://chat.whatsapp.com/KBmnvLXFihgAEAiDXTvmcL',
-    registrationDeadline: '26 August 2026',
+    registrationDeadline: '28 August 2026',
     eventDate: 'August 2026',
     prizes: null,
     rules: [
@@ -216,7 +216,7 @@ export const eventsRulesData = {
     image: '/images/event_summit.png',
     whatsappGroupLink: 'https://chat.whatsapp.com/BP9ozDg2pno4CZT2KQOfoF',
     eventDate: '29 August 2026',
-    registrationDeadline: '26 August 2026',
+    registrationDeadline: '28 August 2026',
     prizes: null,
     rules: [
       'Keynote presentations and panel sessions featuring tech leaders.',
@@ -525,7 +525,7 @@ export function isRegistrationClosed(deadlineString, eventTitle = '', eventId = 
   return false;
 }
 
-export const GENERAL_REGISTRATION_DEADLINE = '26 August 2026';
+export const GENERAL_REGISTRATION_DEADLINE = '29 August 2026';
 
 // Helper to check if general user registration / signup is closed
 export function isGeneralRegistrationClosed() {
