@@ -367,7 +367,7 @@ export const eventsRulesData = {
     cardTitle: 'QUESTX',
     image: '/images/event_questx.png',
     whatsappGroupLink: 'https://chat.whatsapp.com/GHLd8ixNoPDLHI26cwjnDF',
-    registrationDeadline: '26 August 2026',
+    registrationDeadline: '27 August 2026',
     eventDate: '29 August 2026',
     teamSize: 'Strictly 5 members per team',
     rules: [
@@ -406,7 +406,7 @@ export const eventsRulesData = {
     cardTitle: 'SPARKX',
     image: '/images/event_sparkx.png',
     whatsappGroupLink: 'https://chat.whatsapp.com/E4M6DuwK5800Ir205o25mz',
-    registrationDeadline: '26 August 2026',
+    registrationDeadline: '27 August 2026',
     eventDate: '29 August 2026',
     teamSize: 'Maximum 2-3 members per team',
     rules: [

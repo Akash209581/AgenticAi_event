@@ -14,8 +14,8 @@ export const EVENT_DEADLINES = {
   'creative-1': '26 August 2026',   // REELS COMPETITION (AI FOR SOCIETY)
   'creative-2': '26 August 2026',   // AI MUSICAL COMPETITION
   'creative-3': '26 August 2026',   // AGENTIC DAY QUIZ CHALLENGE 2026
-  'creative-4': '26 August 2026',   // QUESTX
-  'innovative-1': '26 August 2026', // SPARKX
+  'creative-4': '27 August 2026',   // QUESTX
+  'innovative-1': '27 August 2026', // SPARKX
   'bootcamp-1': '18 August 2026'    // AI AGENT BOOTCAMP
 };
 
