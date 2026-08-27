@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 
 import { eventsRulesData, isSameEvent } from '../data/eventsRulesData';
+import ExportOptionsModal from './ExportOptionsModal';
 
 export default function AdminDashboard({ onBack }) {
   // Authentication State
@@ -69,6 +70,15 @@ export default function AdminDashboard({ onBack }) {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Export Options Modal State
+  const [exportModalConfig, setExportModalConfig] = useState({
+    isOpen: false,
+    title: 'Export CSV Data',
+    subtitle: '',
+    recordCount: null,
+    onConfirm: null
+  });
 
 
   // Handle Admin Login submission
@@ -204,8 +214,28 @@ export default function AdminDashboard({ onBack }) {
     return `"${str.replace(/"/g, '""')}"`;
   };
 
+  // Open Export Modal for Team Member Roster
+  const openExportTeamsPerMemberModal = () => {
+    if (!teams || !teams.length) {
+      alert('No team registrations available to export.');
+      return;
+    }
+    const safeEventFilter = teamEventFilter === 'all' ? 'All Teams' : teamEventFilter;
+    const totalMembersCount = teams.reduce((acc, t) => acc + (t.members ? t.members.length : 0), 0);
+    setExportModalConfig({
+      isOpen: true,
+      title: 'Export Team Member Roster',
+      subtitle: `${safeEventFilter} (1 Row / Member)`,
+      recordCount: totalMembersCount,
+      onConfirm: (options) => {
+        setExportModalConfig(prev => ({ ...prev, isOpen: false }));
+        exportTeamsPerMemberCSV(options);
+      }
+    });
+  };
+
   // Export CSV for Team Registrations (Flattened Roster: 1 Row per Team Member)
-  const exportTeamsPerMemberCSV = () => {
+  const exportTeamsPerMemberCSV = ({ includePhone = true, includeEmail = true } = {}) => {
     if (!teams || !teams.length) {
       alert('No team registrations available to export.');
       return;
@@ -223,11 +253,11 @@ export default function AdminDashboard({ onBack }) {
       'Registration No',
       'Year',
       'Gender',
-      'Phone',
-      'Email',
+      ...(includePhone ? ['Member Phone'] : []),
+      ...(includeEmail ? ['Member Email'] : []),
       'Total Team Size',
       'Team Leader Name',
-      'Team Leader Phone',
+      ...(includePhone ? ['Team Leader Phone'] : []),
       'Registered Date & Time'
     ];
 
@@ -242,7 +272,7 @@ export default function AdminDashboard({ onBack }) {
 
       orderedMembers.forEach((m) => {
         const isLeader = Boolean(m.isLeader || m.aiId === leader.aiId || (m.regNo && m.regNo === leader.regNo));
-        rows.push([
+        const rowData = [
           serialNo++,
           formatCSVCell(t.teamId, true),
           formatCSVCell(t.teamName),
@@ -254,13 +284,14 @@ export default function AdminDashboard({ onBack }) {
           formatCSVCell(m.regNo, true),
           formatCSVCell(m.year),
           formatCSVCell(m.gender),
-          formatCSVCell(m.phone, true),
-          formatCSVCell(m.email),
+          ...(includePhone ? [formatCSVCell(m.phone, true)] : []),
+          ...(includeEmail ? [formatCSVCell(m.email)] : []),
           allMembers.length,
           formatCSVCell(leader.name),
-          formatCSVCell(leader.phone, true),
+          ...(includePhone ? [formatCSVCell(leader.phone, true)] : []),
           t.createdAt ? formatCSVCell(new Date(t.createdAt).toLocaleString()) : 'N/A'
-        ]);
+        ];
+        rows.push(rowData);
       });
     });
 
@@ -268,12 +299,40 @@ export default function AdminDashboard({ onBack }) {
     downloadCSV(headers, rows, `Agentic_AI_Day_Team_Member_Roster_${safeEventFilter}_${Date.now()}.csv`);
   };
 
-  // Export CSV for Team Registrations (Overview: 1 Row per Team)
-  const exportTeamsCSV = () => {
+  // Open Export Modal for Team Overview
+  const openExportTeamsModal = () => {
     if (!teams || !teams.length) {
       alert('No team registrations available to export.');
       return;
     }
+    const safeEventFilter = teamEventFilter === 'all' ? 'All Teams' : teamEventFilter;
+    setExportModalConfig({
+      isOpen: true,
+      title: 'Export Team Overview',
+      subtitle: `${safeEventFilter} (1 Row / Team)`,
+      recordCount: teams.length,
+      onConfirm: (options) => {
+        setExportModalConfig(prev => ({ ...prev, isOpen: false }));
+        exportTeamsCSV(options);
+      }
+    });
+  };
+
+  // Export CSV for Team Registrations (Overview: 1 Row per Team)
+  const exportTeamsCSV = ({ includePhone = true, includeEmail = true } = {}) => {
+    if (!teams || !teams.length) {
+      alert('No team registrations available to export.');
+      return;
+    }
+
+    const buildMemberHeaders = (roleLabel) => [
+      `${roleLabel} Name`,
+      `${roleLabel} AI ID`,
+      `${roleLabel} Reg No`,
+      `${roleLabel} Year`,
+      ...(includePhone ? [`${roleLabel} Phone`] : []),
+      ...(includeEmail ? [`${roleLabel} Email`] : [])
+    ];
 
     const headers = [
       'S.No',
@@ -282,36 +341,11 @@ export default function AdminDashboard({ onBack }) {
       'Event Title',
       'Event ID',
       'Total Members',
-      'Leader Name',
-      'Leader AI ID',
-      'Leader Reg No',
-      'Leader Year',
-      'Leader Phone',
-      'Leader Email',
-      'Member 2 Name',
-      'Member 2 AI ID',
-      'Member 2 Reg No',
-      'Member 2 Year',
-      'Member 2 Phone',
-      'Member 2 Email',
-      'Member 3 Name',
-      'Member 3 AI ID',
-      'Member 3 Reg No',
-      'Member 3 Year',
-      'Member 3 Phone',
-      'Member 3 Email',
-      'Member 4 Name',
-      'Member 4 AI ID',
-      'Member 4 Reg No',
-      'Member 4 Year',
-      'Member 4 Phone',
-      'Member 4 Email',
-      'Member 5 Name',
-      'Member 5 AI ID',
-      'Member 5 Reg No',
-      'Member 5 Year',
-      'Member 5 Phone',
-      'Member 5 Email',
+      ...buildMemberHeaders('Leader'),
+      ...buildMemberHeaders('Member 2'),
+      ...buildMemberHeaders('Member 3'),
+      ...buildMemberHeaders('Member 4'),
+      ...buildMemberHeaders('Member 5'),
       'All Members Summary List',
       'Registered Date & Time'
     ];
@@ -331,6 +365,15 @@ export default function AdminDashboard({ onBack }) {
         .map((m, idx) => `${idx + 1}. ${m.name || 'N/A'} (ID: ${m.aiId || '-'}, Reg: ${m.regNo || '-'}, Yr: ${m.year || '-'}${m.isLeader || m.aiId === leader.aiId ? ' [Leader]' : ''})`)
         .join(' ; ');
 
+      const buildMemberCells = (m) => [
+        formatCSVCell(m.name),
+        formatCSVCell(m.aiId, true),
+        formatCSVCell(m.regNo, true),
+        formatCSVCell(m.year),
+        ...(includePhone ? [formatCSVCell(m.phone, true)] : []),
+        ...(includeEmail ? [formatCSVCell(m.email)] : [])
+      ];
+
       return [
         index + 1,
         formatCSVCell(t.teamId, true),
@@ -338,36 +381,11 @@ export default function AdminDashboard({ onBack }) {
         formatCSVCell(t.eventTitle),
         formatCSVCell(t.eventId),
         allMembers.length,
-        formatCSVCell(leader.name),
-        formatCSVCell(leader.aiId || t.leaderAiId, true),
-        formatCSVCell(leader.regNo, true),
-        formatCSVCell(leader.year),
-        formatCSVCell(leader.phone, true),
-        formatCSVCell(leader.email),
-        formatCSVCell(m2.name),
-        formatCSVCell(m2.aiId, true),
-        formatCSVCell(m2.regNo, true),
-        formatCSVCell(m2.year),
-        formatCSVCell(m2.phone, true),
-        formatCSVCell(m2.email),
-        formatCSVCell(m3.name),
-        formatCSVCell(m3.aiId, true),
-        formatCSVCell(m3.regNo, true),
-        formatCSVCell(m3.year),
-        formatCSVCell(m3.phone, true),
-        formatCSVCell(m3.email),
-        formatCSVCell(m4.name),
-        formatCSVCell(m4.aiId, true),
-        formatCSVCell(m4.regNo, true),
-        formatCSVCell(m4.year),
-        formatCSVCell(m4.phone, true),
-        formatCSVCell(m4.email),
-        formatCSVCell(m5.name),
-        formatCSVCell(m5.aiId, true),
-        formatCSVCell(m5.regNo, true),
-        formatCSVCell(m5.year),
-        formatCSVCell(m5.phone, true),
-        formatCSVCell(m5.email),
+        ...buildMemberCells(leader),
+        ...buildMemberCells(m2),
+        ...buildMemberCells(m3),
+        ...buildMemberCells(m4),
+        ...buildMemberCells(m5),
         formatCSVCell(membersSummary),
         t.createdAt ? formatCSVCell(new Date(t.createdAt).toLocaleString()) : 'N/A'
       ];
@@ -645,10 +663,42 @@ export default function AdminDashboard({ onBack }) {
     };
   }, [selectedEventId, eventParticipantsMap, officialEventsList, eventYearFilter, eventGenderFilter, bootcampBatchFilter, eventSearch]);
 
+  // Open Export Modal for Overall Registrations
+  const openExportOverallModal = () => {
+    if (!registrations.length) {
+      alert('No registrations available to export.');
+      return;
+    }
+    setExportModalConfig({
+      isOpen: true,
+      title: 'Export All Registrations',
+      subtitle: 'Master participant database',
+      recordCount: registrations.length,
+      onConfirm: (options) => {
+        setExportModalConfig(prev => ({ ...prev, isOpen: false }));
+        exportOverallCSV(options);
+      }
+    });
+  };
+
   // Export CSV for overall registrations
-  const exportOverallCSV = () => {
+  const exportOverallCSV = ({ includePhone = true, includeEmail = true } = {}) => {
     if (!registrations.length) return;
-    const headers = ['VUCSE ID', 'Name', 'Registration No', 'Year', 'Gender', 'DOB (Password)', 'Phone', 'Email', 'Enrolled Events', 'Team Status', 'Team Name', 'Team Event', 'Registration Date & Time'];
+    const headers = [
+      'VUCSE ID',
+      'Name',
+      'Registration No',
+      'Year',
+      'Gender',
+      'DOB (Password)',
+      ...(includePhone ? ['Phone'] : []),
+      ...(includeEmail ? ['Email'] : []),
+      'Enrolled Events',
+      'Team Status',
+      'Team Name',
+      'Team Event',
+      'Registration Date & Time'
+    ];
     const rows = registrations.map(r => {
       const ts = teamStatusMap[(r.aiId || '').toUpperCase()];
       const regDateTime = r.createdAt ? new Date(r.createdAt).toLocaleString() : 'N/A';
@@ -659,8 +709,8 @@ export default function AdminDashboard({ onBack }) {
         formatCSVCell(r.year || '1'),
         formatCSVCell(r.gender || 'Unspecified'),
         formatCSVCell(r.dob, true),
-        formatCSVCell(r.phone, true),
-        formatCSVCell(r.email),
+        ...(includePhone ? [formatCSVCell(r.phone, true)] : []),
+        ...(includeEmail ? [formatCSVCell(r.email)] : []),
         formatCSVCell((r.registeredEvents || []).map(e => e.title).join(' | ')),
         ts ? (ts.isLeader ? 'Leader' : 'Member') : 'No Team',
         ts ? formatCSVCell(ts.teamName) : '""',
@@ -672,10 +722,40 @@ export default function AdminDashboard({ onBack }) {
     downloadCSV(headers, rows, `Agentic_AI_Day_All_Registrations_${Date.now()}.csv`);
   };
 
+  // Open Export Modal for Specific Event
+  const openExportEventModal = () => {
+    if (!selectedEventData || !selectedEventData.filteredList.length) {
+      alert('No participants found in current event view.');
+      return;
+    }
+    setExportModalConfig({
+      isOpen: true,
+      title: `Export ${selectedEventData.event.title} Roster`,
+      subtitle: `${selectedEventData.event.categoryName || 'Event'} Participants`,
+      recordCount: selectedEventData.filteredList.length,
+      onConfirm: (options) => {
+        setExportModalConfig(prev => ({ ...prev, isOpen: false }));
+        exportEventCSV(options);
+      }
+    });
+  };
+
   // Export CSV for specific event
-  const exportEventCSV = () => {
+  const exportEventCSV = ({ includePhone = true, includeEmail = true } = {}) => {
     if (!selectedEventData || !selectedEventData.filteredList.length) return;
-    const headers = ['VUCSE ID', 'Name', 'Registration No', 'Year', 'Gender', 'Phone', 'Email', 'Event Title', 'Bootcamp Phase / Status', 'Event Registration Date & Time', 'Account Registration Date & Time'];
+    const headers = [
+      'VUCSE ID',
+      'Name',
+      'Registration No',
+      'Year',
+      'Gender',
+      ...(includePhone ? ['Phone'] : []),
+      ...(includeEmail ? ['Email'] : []),
+      'Event Title',
+      'Bootcamp Phase / Status',
+      'Event Registration Date & Time',
+      'Account Registration Date & Time'
+    ];
     const rows = selectedEventData.filteredList.map(r => {
       const matchingEv = (r.registeredEvents || []).find(e => isEventMatch(e, selectedEventData.event));
       const eventRegTime = matchingEv?.registeredAt ? new Date(matchingEv.registeredAt).toLocaleString() : (r.createdAt ? new Date(r.createdAt).toLocaleString() : 'N/A');
@@ -691,8 +771,8 @@ export default function AdminDashboard({ onBack }) {
         formatCSVCell(r.regNo, true),
         formatCSVCell(r.year || '1'),
         formatCSVCell(r.gender || 'Unspecified'),
-        formatCSVCell(r.phone, true),
-        formatCSVCell(r.email),
+        ...(includePhone ? [formatCSVCell(r.phone, true)] : []),
+        ...(includeEmail ? [formatCSVCell(r.email)] : []),
         formatCSVCell(selectedEventData.event.title),
         formatCSVCell(bootcampStatus),
         formatCSVCell(eventRegTime),
@@ -704,8 +784,27 @@ export default function AdminDashboard({ onBack }) {
     downloadCSV(headers, rows, `${safeTitle}_Participants_${Date.now()}.csv`);
   };
 
+  // Open Export Modal for All Events CSV
+  const openExportAllEventsModal = () => {
+    const totalEnrollments = registrations.reduce((acc, r) => acc + (Array.isArray(r.registeredEvents) ? r.registeredEvents.length : 0), 0);
+    if (!totalEnrollments) {
+      alert('No event registrations found to export.');
+      return;
+    }
+    setExportModalConfig({
+      isOpen: true,
+      title: 'Export All Event Enrollments',
+      subtitle: 'Consolidated enrollment entries for all events',
+      recordCount: totalEnrollments,
+      onConfirm: (options) => {
+        setExportModalConfig(prev => ({ ...prev, isOpen: false }));
+        exportAllEventsCSV(options);
+      }
+    });
+  };
+
   // Export CSV for All Event Enrollments (flattened list of every event registration)
-  const exportAllEventsCSV = () => {
+  const exportAllEventsCSV = ({ includePhone = true, includeEmail = true } = {}) => {
     const rows = [];
     registrations.forEach(r => {
       if (Array.isArray(r.registeredEvents) && r.registeredEvents.length > 0) {
@@ -723,8 +822,8 @@ export default function AdminDashboard({ onBack }) {
             formatCSVCell(r.regNo, true),
             formatCSVCell(r.year || '1'),
             formatCSVCell(r.gender || 'Unspecified'),
-            formatCSVCell(r.phone, true),
-            formatCSVCell(r.email),
+            ...(includePhone ? [formatCSVCell(r.phone, true)] : []),
+            ...(includeEmail ? [formatCSVCell(r.email)] : []),
             formatCSVCell(ev.title || ev.cardTitle),
             formatCSVCell(ev.categoryName || 'TECHNICAL EVENTS'),
             formatCSVCell(bootcampStatus),
@@ -740,12 +839,25 @@ export default function AdminDashboard({ onBack }) {
       return;
     }
 
-    const headers = ['VUCSE ID', 'Name', 'Registration No', 'Year', 'Gender', 'Phone', 'Email', 'Event Title', 'Category', 'Bootcamp Phase / Status', 'Event Registration Date & Time', 'Account Registration Date & Time'];
+    const headers = [
+      'VUCSE ID',
+      'Name',
+      'Registration No',
+      'Year',
+      'Gender',
+      ...(includePhone ? ['Phone'] : []),
+      ...(includeEmail ? ['Email'] : []),
+      'Event Title',
+      'Category',
+      'Bootcamp Phase / Status',
+      'Event Registration Date & Time',
+      'Account Registration Date & Time'
+    ];
     downloadCSV(headers, rows, `Agentic_AI_Day_All_Event_Enrollments_${Date.now()}.csv`);
   };
 
-  // Export CSV directly for a catalog event
-  const exportSpecificEventCSV = (catalogEvt) => {
+  // Open Export Modal for specific catalog event
+  const openExportSpecificEventModal = (catalogEvt) => {
     const key = `${catalogEvt.categoryId}-${catalogEvt.id}`;
     const attendees = eventParticipantsMap[key] || eventParticipantsMap[catalogEvt.title] || [];
 
@@ -754,7 +866,41 @@ export default function AdminDashboard({ onBack }) {
       return;
     }
 
-    const headers = ['VUCSE ID', 'Name', 'Registration No', 'Year', 'Gender', 'Phone', 'Email', 'Event Title', 'Bootcamp Phase / Status', 'Event Registration Date & Time', 'Account Registration Date & Time'];
+    setExportModalConfig({
+      isOpen: true,
+      title: `Export ${catalogEvt.title}`,
+      subtitle: `${catalogEvt.categoryName || 'Event'} Enrolled Roster`,
+      recordCount: attendees.length,
+      onConfirm: (options) => {
+        setExportModalConfig(prev => ({ ...prev, isOpen: false }));
+        exportSpecificEventCSV(catalogEvt, options);
+      }
+    });
+  };
+
+  // Export CSV directly for a catalog event
+  const exportSpecificEventCSV = (catalogEvt, { includePhone = true, includeEmail = true } = {}) => {
+    const key = `${catalogEvt.categoryId}-${catalogEvt.id}`;
+    const attendees = eventParticipantsMap[key] || eventParticipantsMap[catalogEvt.title] || [];
+
+    if (!attendees.length) {
+      alert(`No participants enrolled in ${catalogEvt.title} yet.`);
+      return;
+    }
+
+    const headers = [
+      'VUCSE ID',
+      'Name',
+      'Registration No',
+      'Year',
+      'Gender',
+      ...(includePhone ? ['Phone'] : []),
+      ...(includeEmail ? ['Email'] : []),
+      'Event Title',
+      'Bootcamp Phase / Status',
+      'Event Registration Date & Time',
+      'Account Registration Date & Time'
+    ];
     const rows = attendees.map(r => {
       const matchingEv = (r.registeredEvents || []).find(e => isEventMatch(e, catalogEvt));
       const eventRegTime = matchingEv?.registeredAt ? new Date(matchingEv.registeredAt).toLocaleString() : (r.createdAt ? new Date(r.createdAt).toLocaleString() : 'N/A');
@@ -770,8 +916,8 @@ export default function AdminDashboard({ onBack }) {
         formatCSVCell(r.regNo, true),
         formatCSVCell(r.year || '1'),
         formatCSVCell(r.gender || 'Unspecified'),
-        formatCSVCell(r.phone, true),
-        formatCSVCell(r.email),
+        ...(includePhone ? [formatCSVCell(r.phone, true)] : []),
+        ...(includeEmail ? [formatCSVCell(r.email)] : []),
         formatCSVCell(catalogEvt.title),
         formatCSVCell(bootcampStatus),
         formatCSVCell(eventRegTime),
@@ -1080,24 +1226,24 @@ export default function AdminDashboard({ onBack }) {
             <RefreshCw size={16} /> Refresh Data
           </button>
 
-          <button onClick={exportOverallCSV} className="btn-primary" disabled={!registrations.length} style={{ padding: '0.45rem 1rem', fontSize: '0.85rem' }}>
+          <button onClick={openExportOverallModal} className="btn-primary" disabled={!registrations.length} style={{ padding: '0.45rem 1rem', fontSize: '0.85rem' }}>
             <Download size={16} /> Export All Registrations ({registrations.length})
           </button>
 
-          <button onClick={exportAllEventsCSV} className="btn-primary" style={{ padding: '0.45rem 1rem', fontSize: '0.85rem', background: 'linear-gradient(135deg, #a855f7, #6366f1)' }}>
+          <button onClick={openExportAllEventsModal} className="btn-primary" style={{ padding: '0.45rem 1rem', fontSize: '0.85rem', background: 'linear-gradient(135deg, #a855f7, #6366f1)' }}>
             <Download size={16} /> Export All Events CSV
           </button>
 
-          <button onClick={exportTeamsPerMemberCSV} className="btn-primary" disabled={!teams.length} title="Export CSV with 1 row per team member" style={{ padding: '0.45rem 1rem', fontSize: '0.85rem', background: 'linear-gradient(135deg, #00f2fe, #3b82f6)' }}>
+          <button onClick={openExportTeamsPerMemberModal} className="btn-primary" disabled={!teams.length} title="Export CSV with 1 row per team member" style={{ padding: '0.45rem 1rem', fontSize: '0.85rem', background: 'linear-gradient(135deg, #00f2fe, #3b82f6)' }}>
             <Download size={16} /> Export Team Roster (1 Row/Member)
           </button>
 
-          <button onClick={exportTeamsCSV} className="btn-primary" disabled={!teams.length} title="Export summary CSV with 1 row per team" style={{ padding: '0.45rem 1rem', fontSize: '0.85rem', background: 'linear-gradient(135deg, #0284c7, #2563eb)' }}>
+          <button onClick={openExportTeamsModal} className="btn-primary" disabled={!teams.length} title="Export summary CSV with 1 row per team" style={{ padding: '0.45rem 1rem', fontSize: '0.85rem', background: 'linear-gradient(135deg, #0284c7, #2563eb)' }}>
             <Download size={16} /> Export Team Overview (1 Row/Team)
           </button>
 
           {selectedEventData && (
-            <button onClick={exportEventCSV} className="btn-primary" disabled={!selectedEventData.filteredList.length} style={{ padding: '0.45rem 1rem', fontSize: '0.85rem', background: 'linear-gradient(135deg, #10b981, #059669)' }}>
+            <button onClick={openExportEventModal} className="btn-primary" disabled={!selectedEventData.filteredList.length} style={{ padding: '0.45rem 1rem', fontSize: '0.85rem', background: 'linear-gradient(135deg, #10b981, #059669)' }}>
               <Download size={16} /> Export Event Roster ({selectedEventData.filteredList.length})
             </button>
           )}
@@ -1628,7 +1774,7 @@ export default function AdminDashboard({ onBack }) {
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                exportSpecificEventCSV(evt);
+                                openExportSpecificEventModal(evt);
                               }}
                               disabled={!count}
                               style={{
@@ -2350,6 +2496,16 @@ export default function AdminDashboard({ onBack }) {
           </div>
         </div>
       )}
+
+      {/* Export Contact Options Modal */}
+      <ExportOptionsModal
+        isOpen={exportModalConfig.isOpen}
+        title={exportModalConfig.title}
+        subtitle={exportModalConfig.subtitle}
+        recordCount={exportModalConfig.recordCount}
+        onClose={() => setExportModalConfig(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={exportModalConfig.onConfirm}
+      />
     </div>
   );
 }

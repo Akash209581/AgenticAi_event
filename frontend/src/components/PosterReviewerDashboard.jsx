@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Lock, FileText, CheckCircle2, XCircle, Clock, Search, RefreshCw, Filter, ExternalLink, MessageSquare, AlertTriangle, User, Users, Sparkles, ArrowLeft, LogOut, Download, Video, History, BookOpen, Image as ImageIcon } from 'lucide-react';
 import { apiFetch, getAssetUrl, getUploadUrl } from '../config/api';
+import ExportOptionsModal from './ExportOptionsModal';
 
 export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
   const isReelsMode = mode === 'reels' || mode === 'reels-reviewer' || (typeof window !== 'undefined' && window.location.pathname.includes('/reels'));
@@ -32,6 +33,15 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
   // Resubmission History: keyed by submissionId
   const [resubHistoryMap, setResubHistoryMap] = useState({});
   const [expandedHistory, setExpandedHistory] = useState({});
+
+  // Export Options Modal State
+  const [exportModalConfig, setExportModalConfig] = useState({
+    isOpen: false,
+    title: 'Export Submissions Data',
+    subtitle: '',
+    recordCount: null,
+    onConfirm: null
+  });
 
   // Helper to extract previewable URL from any submission structure
   const getSubmissionFileUrl = (sub) => {
@@ -391,8 +401,52 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
     (resubHistoryMap[s.submissionId || `${s.studentAiId}_${s.eventId}`]?.length > 0)
   );
 
+  // Open Modal for Submissions CSV export
+  const openExportSubmissionsModal = (targetStatus = 'ALL') => {
+    let itemsToExport = [];
+    const prefix = isReelsMode ? 'Reels' : 'Poster';
+    let statusLabel = 'All Submissions';
+
+    if (targetStatus === 'APPROVED') {
+      itemsToExport = submissions.filter(s => s.reviewStatus === 'APPROVED');
+      statusLabel = 'Accepted / Approved Submissions';
+    } else if (targetStatus === 'REJECTED') {
+      itemsToExport = submissions.filter(s => s.reviewStatus === 'REJECTED');
+      statusLabel = 'Rejected Submissions';
+    } else if (targetStatus === 'RESUBMIT') {
+      itemsToExport = submissions.filter(s =>
+        s.reviewStatus === 'RESUBMIT_ALLOWED' ||
+        s.allowResubmit ||
+        s.submission?.reviewStatus === 'RESUBMIT_ALLOWED' ||
+        s.submission?.allowResubmit ||
+        (Array.isArray(s.submission?.resubmissionHistory) && s.submission.resubmissionHistory.length > 0) ||
+        (resubHistoryMap[s.submissionId || `${s.studentAiId}_${s.eventId}`]?.length > 0)
+      );
+      statusLabel = 'Resubmission Records';
+    } else {
+      itemsToExport = filteredSubmissions.length > 0 ? filteredSubmissions : submissions;
+      statusLabel = 'All Submissions (Current View)';
+    }
+
+    if (!itemsToExport || itemsToExport.length === 0) {
+      alert(`No ${statusLabel} data available to export.`);
+      return;
+    }
+
+    setExportModalConfig({
+      isOpen: true,
+      title: `Export ${statusLabel}`,
+      subtitle: `${prefix} review panel submissions`,
+      recordCount: itemsToExport.length,
+      onConfirm: (options) => {
+        setExportModalConfig(prev => ({ ...prev, isOpen: false }));
+        exportSubmissionsCSV(targetStatus, options);
+      }
+    });
+  };
+
   // Comprehensive CSV export (1 row per team/submission, differentiating team members)
-  const exportSubmissionsCSV = (targetStatus = 'ALL') => {
+  const exportSubmissionsCSV = (targetStatus = 'ALL', { includePhone = true, includeEmail = true } = {}) => {
     let itemsToExport = [];
     const prefix = isReelsMode ? 'Reels' : 'Poster';
     let statusLabel = 'All';
@@ -431,8 +485,8 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
       'Submitter / Leader Name',
       'Submitter VUID',
       'Reg No',
-      'Email',
-      'Phone',
+      ...(includeEmail ? ['Email'] : []),
+      ...(includePhone ? ['Phone'] : []),
       'Team Members (Name & VUID)',
       'Team Size',
       'Submitted File / Link',
@@ -480,8 +534,8 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
         `"${studentNameVal.replace(/"/g, '""')}"`,
         `"${studentAiIdVal.replace(/"/g, '""')}"`,
         `"${studentRegNoVal.replace(/"/g, '""')}"`,
-        `"${studentEmailVal.replace(/"/g, '""')}"`,
-        `"${studentPhoneVal.replace(/"/g, '""')}"`,
+        ...(includeEmail ? [`"${studentEmailVal.replace(/"/g, '""')}"`] : []),
+        ...(includePhone ? [`"${studentPhoneVal.replace(/"/g, '""')}"`] : []),
         `"${teamMembersStr.replace(/"/g, '""')}"`,
         teamSize,
         `"${String(fileUrl).replace(/"/g, '""')}"`,
@@ -505,7 +559,7 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
 
   // Helper alias for resubmission CSV export
   const exportResubmissionsCSV = () => {
-    exportSubmissionsCSV('RESUBMIT');
+    openExportSubmissionsModal('RESUBMIT');
   };
 
   // Helper toggle for history accordion
@@ -783,7 +837,7 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
         <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
           <button
             type="button"
-            onClick={() => exportSubmissionsCSV('APPROVED')}
+            onClick={() => openExportSubmissionsModal('APPROVED')}
             title="Download Accepted / Approved Submissions CSV (1 Row / Team)"
             style={{
               fontSize: '0.82rem',
@@ -805,7 +859,7 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
 
           <button
             type="button"
-            onClick={() => exportSubmissionsCSV('REJECTED')}
+            onClick={() => openExportSubmissionsModal('REJECTED')}
             title="Download Rejected Submissions CSV (1 Row / Team)"
             style={{
               fontSize: '0.82rem',
@@ -827,7 +881,7 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
 
           <button
             type="button"
-            onClick={() => exportSubmissionsCSV('RESUBMIT')}
+            onClick={() => openExportSubmissionsModal('RESUBMIT')}
             title="Download Resubmission Submissions CSV (1 Row / Team)"
             style={{
               fontSize: '0.82rem',
@@ -849,7 +903,7 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
 
           <button
             type="button"
-            onClick={() => exportSubmissionsCSV('ALL')}
+            onClick={() => openExportSubmissionsModal('ALL')}
             title="Download All Submissions CSV (1 Row / Team)"
             style={{
               fontSize: '0.82rem',
@@ -1410,6 +1464,16 @@ export default function PosterReviewerDashboard({ onBack, mode = 'poster' }) {
           </div>
         </div>
       )}
+
+      {/* Export Contact Options Modal */}
+      <ExportOptionsModal
+        isOpen={exportModalConfig.isOpen}
+        title={exportModalConfig.title}
+        subtitle={exportModalConfig.subtitle}
+        recordCount={exportModalConfig.recordCount}
+        onClose={() => setExportModalConfig(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={exportModalConfig.onConfirm}
+      />
     </div>
   );
 }
