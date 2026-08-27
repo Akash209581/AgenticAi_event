@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Cpu, UserPlus, KeyRound, Sparkles, Home, ShieldCheck, Menu, X, Users } from 'lucide-react';
+import { Cpu, UserPlus, KeyRound, Sparkles, Home, ShieldCheck, Menu, X, Users, Bot } from 'lucide-react';
 import { apiFetch, getAssetUrl } from './config/api';
 import RegistrationForm from './components/RegistrationForm';
 import TeamRegistrationForm from './components/TeamRegistrationForm';
@@ -7,6 +7,7 @@ import UserProfile from './components/UserProfile';
 import LoginPortal from './components/LoginPortal';
 import AdminDashboard from './components/AdminDashboard';
 import PosterReviewerDashboard from './components/PosterReviewerDashboard';
+import AgentShowcaseDashboard from './components/AgentShowcaseDashboard';
 import LoadingScreen from './components/LoadingScreen';
 import EventCountdown from './components/EventCountdown';
 import EventsGrid from './components/EventsGrid';
@@ -37,6 +38,7 @@ export default function App() {
     if (path === '/iamadmin') return 'admin';
     if (path.startsWith('/poster-reviewer') || path.startsWith('/reviewer')) return 'poster-reviewer';
     if (path.startsWith('/reels-review') || path.startsWith('/reels-reviewer')) return 'reels-reviewer';
+    if (path.startsWith('/showcase') || path.startsWith('/projects') || path.startsWith('/agents')) return 'showcase';
     if (path.startsWith('/events')) return 'events';
     if (path.startsWith('/register')) return 'register';
     if (path.startsWith('/team-register') || path.startsWith('/teams')) return 'team-register';
@@ -44,6 +46,7 @@ export default function App() {
     if (path.startsWith('/profile')) return 'pass';
     return 'home';
   });
+
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       return secureStorage.getJSON('vucse_current_user');
@@ -164,6 +167,7 @@ export default function App() {
       const path = getNormalizedPath(rawPath);
       if (path.startsWith('/poster-reviewer') || path.startsWith('/reviewer')) setActiveTab('poster-reviewer');
       else if (path.startsWith('/reels-review') || path.startsWith('/reels-reviewer')) setActiveTab('reels-reviewer');
+      else if (path.startsWith('/showcase') || path.startsWith('/projects') || path.startsWith('/agents')) setActiveTab('showcase');
       else if (path.startsWith('/events')) setActiveTab('events');
       else if (path.startsWith('/register')) setActiveTab('register');
       else if (path.startsWith('/team-register') || path.startsWith('/teams')) setActiveTab('team-register');
@@ -360,6 +364,18 @@ export default function App() {
             <Sparkles size={18} /> Events
           </button>
 
+          {/* AI Agent Expo & Hackathon Presentation Showcase Tab */}
+          <button
+            className={`nav-btn ${activeTab === 'showcase' ? 'active' : ''}`}
+            onClick={() => changeTab('showcase', '/showcase')}
+            style={{
+              color: activeTab === 'showcase' ? '#00f2fe' : undefined,
+              borderColor: activeTab === 'showcase' ? 'rgba(0, 242, 254, 0.5)' : undefined
+            }}
+          >
+            <Bot size={18} /> Agent Showcase
+          </button>
+
           {currentUser && (
             <button
               className={`nav-btn ${activeTab === 'team-register' ? 'active' : ''}`}
@@ -393,6 +409,15 @@ export default function App() {
         {activeTab === 'home' && (
           <EventCountdown onExploreEvents={() => changeTab('events', '/events')} />
         )}
+
+        {/* AI AGENT EXPO & HACKATHON PRESENTATION SHOWCASE VIEW */}
+        {activeTab === 'showcase' && (
+          <AgentShowcaseDashboard
+            currentUser={currentUser}
+            onNavigateToTeamRegister={handleOpenTeamRegister}
+          />
+        )}
+
 
         {/* EVENTS PAGE VIEW: 9 EVENT CARDS ONLY */}
         {activeTab === 'events' && (

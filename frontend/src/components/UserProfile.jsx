@@ -5,6 +5,7 @@ import {
   Mic, Bot, Users, Video, Music, HelpCircle, ArrowRight, Trash2, Lock, Upload, ExternalLink, MessageCircle, Compass
 } from 'lucide-react';
 import SubmissionModal from './SubmissionModal';
+import ProjectSubmissionModal from './ProjectSubmissionModal';
 import { getEventDetails, isRegistrationClosed } from '../data/eventsRulesData';
 import { apiFetch } from '../config/api';
 
@@ -35,7 +36,10 @@ const registeredEventsList = [
 export default function UserProfile({ user, onLogout, onExploreEvents, onUnenrollEvent, onSubmissionUpdate }) {
   const [copied, setCopied] = useState(false);
   const [activeSubmissionModalEvent, setActiveSubmissionModalEvent] = useState(null);
+  const [activeProjectModalEvent, setActiveProjectModalEvent] = useState(null);
+  const [activeProjectTeam, setActiveProjectTeam] = useState(null);
   const [teamsData, setTeamsData] = useState({});
+
 
   useEffect(() => {
     if (!user?.registeredEvents) return;
@@ -510,6 +514,51 @@ export default function UserProfile({ user, onLogout, onExploreEvents, onUnenrol
                         );
                       }
 
+                      // AI Agent Expo and Agentic AI Hackathon Project Presentation Details Button
+                      const isHackathonOrExpo = item.id === 'tech-1' || item.id === 'technical-1' || item.id === 'ind-2' || item.id === 'industry-2' || (item.title && (item.title.toLowerCase().includes('hackathon') || item.title.toLowerCase().includes('expo')));
+                      if (isHackathonOrExpo) {
+                        const hasProjectPd = Boolean(
+                          item.submission?.projectDetails?.agentName || 
+                          (item.teamId && teamsData[item.teamId]?.projectDetails?.agentName)
+                        );
+
+                        return (
+                          <div style={{ marginTop: '0.6rem', marginBottom: '0.2rem' }}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setActiveProjectModalEvent({ id: item.id, title: item.title, categoryId: item.categoryId || item.catId });
+                                if (item.teamId && teamsData[item.teamId]) {
+                                  setActiveProjectTeam(teamsData[item.teamId]);
+                                } else {
+                                  setActiveProjectTeam(null);
+                                }
+                              }}
+                              style={{
+                                width: '100%',
+                                padding: '0.55rem 0.8rem',
+                                borderRadius: '8px',
+                                border: hasProjectPd ? '1px solid #10b981' : '1px solid #00f2fe',
+                                background: hasProjectPd ? 'rgba(16, 185, 129, 0.15)' : 'linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(168, 85, 247, 0.2))',
+                                color: hasProjectPd ? '#34d399' : '#00f2fe',
+                                fontSize: '0.8rem',
+                                fontWeight: '700',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '0.4rem',
+                                transition: 'all 0.2s ease',
+                                boxShadow: hasProjectPd ? 'none' : '0 0 15px rgba(0, 242, 254, 0.25)'
+                              }}
+                            >
+                              <Bot size={15} />
+                              <span>{hasProjectPd ? '📝 Edit Project Presentation Details ✓' : '🚀 Fill Project Presentation Details'}</span>
+                            </button>
+                          </div>
+                        );
+                      }
+
                       return null;
                     })()}
                   </div>
@@ -653,7 +702,7 @@ export default function UserProfile({ user, onLogout, onExploreEvents, onUnenrol
         )}
       </div>
 
-      {/* Submission Modal for UserProfile */}
+      {/* Submission Modal for UserProfile (Reels/Posters) */}
       <SubmissionModal
         isOpen={Boolean(activeSubmissionModalEvent)}
         onClose={() => setActiveSubmissionModalEvent(null)}
@@ -665,7 +714,40 @@ export default function UserProfile({ user, onLogout, onExploreEvents, onUnenrol
           }
         }}
       />
+
+      {/* Project Presentation Details Modal for Expo & Hackathon */}
+      <ProjectSubmissionModal
+        isOpen={Boolean(activeProjectModalEvent)}
+        onClose={() => {
+          setActiveProjectModalEvent(null);
+          setActiveProjectTeam(null);
+        }}
+        currentUser={user}
+        initialEvent={activeProjectModalEvent}
+        initialTeam={activeProjectTeam}
+        onSuccess={(projectDetails) => {
+          // Re-fetch user details or trigger update
+          if (activeProjectModalEvent && user?.registeredEvents) {
+            const updated = user.registeredEvents.map(e => {
+              if (e.id === activeProjectModalEvent.id || (e.title && activeProjectModalEvent.title && e.title.toLowerCase() === activeProjectModalEvent.title.toLowerCase())) {
+                return {
+                  ...e,
+                  submission: {
+                    ...(e.submission || {}),
+                    projectDetails
+                  }
+                };
+              }
+              return e;
+            });
+            if (onSubmissionUpdate) {
+              onSubmissionUpdate(updated);
+            }
+          }
+        }}
+      />
     </div>
   );
 }
+
 
