@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 import { User } from '../models/User.js';
 import { Team } from '../models/Team.js';
 import { generateAiId, memoryUsers } from '../utils/idGenerator.js';
-import { requireAdminAuth, getAdminSecretToken, generateUserJwt } from '../middleware/adminAuth.js';
+import { requireAdminAuth, getAdminSecretToken, generateUserJwt, verifyJwtToken } from '../middleware/adminAuth.js';
 import mongoose from 'mongoose';
 import { BACKUP_DB_DIR, BACKUP_POSTERS_DIR, BACKUP_DIR } from '../config/paths.js';
 import { isEventRegistrationClosed, isGeneralRegistrationClosed } from '../utils/deadlineValidator.js';
@@ -608,6 +608,22 @@ router.get('/student/:identifier', async (req, res) => {
 });
 
 
+// Helper to verify if an incoming request has valid admin credentials
+const checkIsAdminRequest = (req) => {
+  try {
+    const rawHeader = req.headers['x-admin-token'] || req.headers['authorization'] || req.query?.adminToken;
+    if (!rawHeader) return false;
+    const token = rawHeader.startsWith('Bearer ') ? rawHeader.substring(7) : rawHeader;
+    const decoded = verifyJwtToken(token);
+    if (decoded && decoded.role === 'SUPER_ADMIN') return true;
+    const legacyToken = getAdminSecretToken();
+    if (token === legacyToken) return true;
+    return false;
+  } catch (_) {
+    return false;
+  }
+};
+
 /**
  * POST /cseAI/team-register
  * Handles team registration for event with strict team size & single-team constraints
@@ -615,6 +631,7 @@ router.get('/student/:identifier', async (req, res) => {
 router.post('/team-register', async (req, res) => {
   try {
     const { teamName, eventId, eventTitle, members, currentUserAiId } = req.body;
+    const isAdmin = checkIsAdminRequest(req);
 
     if (!teamName || !teamName.trim()) {
       return res.status(400).json({ success: false, message: 'Team Name is a mandatory field.' });
@@ -626,8 +643,8 @@ router.post('/team-register', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Team must have at least 1 member.' });
     }
 
-    // Ensure Member #1 (Team Leader) is the registering user's own AI ID if currentUserAiId is supplied
-    if (currentUserAiId && currentUserAiId.trim()) {
+    // Ensure Member #1 (Team Leader) is the registering user's own AI ID if currentUserAiId is supplied and not admin
+    if (!isAdmin && currentUserAiId && currentUserAiId.trim()) {
       const leaderId = (members[0]?.aiId || '').trim().toUpperCase();
       const expectedId = currentUserAiId.trim().toUpperCase();
       if (leaderId !== expectedId) {
@@ -642,7 +659,7 @@ router.post('/team-register', async (req, res) => {
     const cleanEventId = eventId.trim();
     const cleanEventTitle = (eventTitle || '').trim() || cleanEventId;
 
-    if (isEventRegistrationClosed(cleanEventId, cleanEventTitle)) {
+    if (!isAdmin && isEventRegistrationClosed(cleanEventId, cleanEventTitle)) {
       return res.status(400).json({
         success: false,
         message: `Registration for ${cleanEventTitle || 'this event'} has closed (deadline passed).`
@@ -652,7 +669,7 @@ router.post('/team-register', async (req, res) => {
 
     // 1. Verify Event Constraint (Min and Max team size)
     const constraint = EVENT_CONSTRAINTS[cleanEventId] || { min: 1, max: 5, name: cleanEventTitle };
-    if (members.length < constraint.min || members.length > constraint.max) {
+    if (!isAdmin && (members.length < constraint.min || members.length > constraint.max)) {
       return res.status(400).json({
         success: false,
         message: `Team size violation for '${constraint.name}': Required ${constraint.min === constraint.max ? constraint.min : `${constraint.min} to ${constraint.max}`} members, but ${members.length} members provided.`
@@ -847,6 +864,276 @@ router.post('/team-register', async (req, res) => {
     return res.status(500).json({
       success: false,
       message: error.message || 'Server error occurred during team registration.'
+    });
+  }
+});
+
+/**
+ * POST /cseAI/admin/register-team
+ * Dedicated administrative team registration endpoint.
+ * Bypasses event deadlines and leader constraints, and automatically enrolls members in the event.
+ */
+router.post('/admin/register-team', requireAdminAuth, async (req, res) => {
+  try {
+    const { teamName, eventId, eventTitle, members, projectDetails, autoEnrollMembers = true } = req.body;
+
+    if (!teamName || !teamName.trim()) {
+      return res.status(400).json({ success: false, message: 'Team Name is a mandatory field.' });
+    }
+    if (!eventId || !eventId.trim()) {
+      return res.status(400).json({ success: false, message: 'Event selection is required.' });
+    }
+    if (!Array.isArray(members) || members.length === 0) {
+      return res.status(400).json({ success: false, message: 'Team must contain at least 1 member.' });
+    }
+
+    const cleanTeamName = teamName.trim();
+    const cleanEventId = eventId.trim();
+    const constraint = EVENT_CONSTRAINTS[cleanEventId] || { min: 1, max: 10, name: cleanEventId };
+    const cleanEventTitle = (eventTitle || '').trim() || constraint.name || cleanEventId;
+
+    // Process and resolve all members
+    const processedMembers = [];
+    const seenAiIds = new Set();
+
+    for (let i = 0; i < members.length; i++) {
+      const m = members[i];
+      const identifier = (m.aiId || m.regNo || m.email || '').trim();
+      let userRecord = null;
+
+      if (identifier) {
+        const cleanUpper = identifier.toUpperCase();
+        const cleanLower = identifier.toLowerCase();
+        if (mongoose.connection.readyState === 1) {
+          userRecord = await User.findOne({
+            $or: [
+              { aiId: cleanUpper },
+              { regNo: cleanUpper },
+              { email: cleanLower }
+            ]
+          });
+        } else {
+          userRecord = memoryUsers.find(
+            u => (u.aiId && u.aiId.toUpperCase() === cleanUpper) ||
+                 (u.regNo && u.regNo.toUpperCase() === cleanUpper) ||
+                 (u.email && u.email.toLowerCase() === cleanLower)
+          );
+        }
+      }
+
+      // If student not found in DB but details provided, auto-create participant account
+      if (!userRecord && (m.name || m.regNo)) {
+        const generatedId = generateAiId();
+        const newRegNo = (m.regNo || `TEMP-${Date.now()}-${i + 1}`).trim().toUpperCase();
+        const newEmail = (m.email || `${newRegNo.toLowerCase()}@vignan.ac.in`).trim().toLowerCase();
+        const newPhone = (m.phone || '9999999999').trim();
+        const newName = (m.name || `Student ${i + 1}`).trim();
+        const newYear = String(m.year || '3').trim();
+        const newGender = m.gender || 'Unspecified';
+
+        if (mongoose.connection.readyState === 1) {
+          try {
+            userRecord = new User({
+              aiId: generatedId,
+              name: newName,
+              regNo: newRegNo,
+              dob: '2004-01-01',
+              year: ['1', '2', '3', '4', 'M.Tech (1st year)', 'M.Tech (2nd year)'].includes(newYear) ? newYear : '3',
+              gender: newGender,
+              phone: /^\d{10}$/.test(newPhone) ? newPhone : `${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+              email: isValidEmail(newEmail) ? newEmail : `user_${Date.now()}_${i}@vignan.ac.in`,
+              password: newRegNo.toLowerCase(),
+              registeredEvents: []
+            });
+            await userRecord.save();
+          } catch (createErr) {
+            console.warn('[Admin Team Auto-User Create Warning]', createErr.message);
+          }
+        } else {
+          userRecord = {
+            aiId: generatedId,
+            name: newName,
+            regNo: newRegNo,
+            dob: '2004-01-01',
+            year: newYear,
+            gender: newGender,
+            phone: newPhone,
+            email: newEmail,
+            password: newRegNo.toLowerCase(),
+            registeredEvents: []
+          };
+          memoryUsers.push(userRecord);
+        }
+      }
+
+      const finalAiId = (userRecord?.aiId || m.aiId || `AI-${Date.now()}-${i}`).toUpperCase().trim();
+      const finalRegNo = (userRecord?.regNo || m.regNo || '').toUpperCase().trim();
+      const finalName = (userRecord?.name || m.name || `Member ${i + 1}`).trim();
+      const finalYear = String(userRecord?.year || m.year || '3').trim();
+      const finalSection = (m.section || userRecord?.section || '').trim();
+      const finalEmail = (userRecord?.email || m.email || '').trim().toLowerCase();
+      const finalPhone = (userRecord?.phone || m.phone || '').trim();
+      const isLeader = Boolean(m.isLeader !== undefined ? m.isLeader : (i === 0));
+
+      if (seenAiIds.has(finalAiId)) {
+        return res.status(400).json({
+          success: false,
+          message: `Duplicate student (${finalAiId}) found in member list. A student cannot be repeated.`
+        });
+      }
+      seenAiIds.add(finalAiId);
+
+      // Auto-enroll student into event if autoEnrollMembers is true
+      if (userRecord && autoEnrollMembers) {
+        const isEnrolled = isUserRegisteredForEvent(userRecord, cleanEventId, cleanEventTitle);
+        if (!isEnrolled) {
+          const newEventEntry = {
+            id: cleanEventId,
+            title: cleanEventTitle,
+            categoryName: constraint.name || 'TEAM EVENT',
+            categoryId: cleanEventId.includes('-') ? cleanEventId.split('-')[0] : 'team',
+            registeredAt: new Date().toISOString()
+          };
+          if (mongoose.connection.readyState === 1) {
+            await User.updateOne(
+              { aiId: userRecord.aiId },
+              { $push: { registeredEvents: newEventEntry } }
+            );
+          } else {
+            if (!userRecord.registeredEvents) userRecord.registeredEvents = [];
+            userRecord.registeredEvents.push(newEventEntry);
+          }
+        }
+      }
+
+      processedMembers.push({
+        aiId: finalAiId,
+        name: finalName,
+        regNo: finalRegNo,
+        year: finalYear,
+        section: finalSection,
+        email: finalEmail,
+        phone: finalPhone,
+        isLeader
+      });
+    }
+
+    if (!processedMembers.some(m => m.isLeader)) {
+      processedMembers[0].isLeader = true;
+    }
+    const leader = processedMembers.find(m => m.isLeader) || processedMembers[0];
+
+    // Generate unique Team ID
+    const randomCode = Math.floor(1000 + Math.random() * 9000);
+    const teamId = `TEAM-${cleanEventId.toUpperCase()}-${randomCode}`;
+
+    // Clean projectDetails if supplied
+    let cleanProjectDetails = {};
+    if (projectDetails && typeof projectDetails === 'object') {
+      cleanProjectDetails = {
+        agentName: (projectDetails.agentName || '').trim(),
+        problemStatement: (projectDetails.problemStatement || '').trim(),
+        targetUsers: (projectDetails.targetUsers || '').trim(),
+        userInput: (projectDetails.userInput || '').trim(),
+        informationUsed: (projectDetails.informationUsed || '').trim(),
+        decisionsMade: (projectDetails.decisionsMade || '').trim(),
+        toolsNeeded: (projectDetails.toolsNeeded || '').trim(),
+        stepByStepWorkflow: (projectDetails.stepByStepWorkflow || '').trim(),
+        finalResult: (projectDetails.finalResult || '').trim(),
+        successMetrics: (projectDetails.successMetrics || '').trim(),
+        failureModesAndChecks: (projectDetails.failureModesAndChecks || '').trim(),
+        githubLink: (projectDetails.githubLink || '').trim(),
+        demoLink: (projectDetails.demoLink || '').trim(),
+        updatedBy: 'ADMIN_OVERRIDE',
+        updatedAt: new Date()
+      };
+    }
+
+    let savedTeam = null;
+    if (mongoose.connection.readyState === 1) {
+      savedTeam = new Team({
+        teamId,
+        teamName: cleanTeamName,
+        eventId: cleanEventId,
+        eventTitle: cleanEventTitle,
+        leaderAiId: leader.aiId,
+        members: processedMembers,
+        projectDetails: cleanProjectDetails
+      });
+      await savedTeam.save();
+    } else {
+      savedTeam = {
+        teamId,
+        teamName: cleanTeamName,
+        eventId: cleanEventId,
+        eventTitle: cleanEventTitle,
+        leaderAiId: leader.aiId,
+        members: processedMembers,
+        projectDetails: cleanProjectDetails,
+        createdAt: new Date()
+      };
+      memoryTeams.push(savedTeam);
+    }
+
+    // Sync member registeredEvents
+    for (const m of processedMembers) {
+      try {
+        if (mongoose.connection.readyState === 1) {
+          await User.updateOne(
+            { aiId: m.aiId },
+            { $pull: { registeredEvents: { id: cleanEventId } } }
+          );
+          await User.updateOne(
+            { aiId: m.aiId },
+            {
+              $push: {
+                registeredEvents: {
+                  id: cleanEventId,
+                  title: cleanEventTitle,
+                  categoryName: constraint.name || 'TEAM EVENT',
+                  categoryId: cleanEventId.includes('-') ? cleanEventId.split('-')[0] : 'team',
+                  teamId: teamId,
+                  teamName: cleanTeamName,
+                  isTeam: true,
+                  isLeader: m.isLeader,
+                  registeredAt: new Date().toISOString()
+                }
+              }
+            }
+          );
+        } else {
+          const userMem = memoryUsers.find(u => u.aiId && u.aiId.toUpperCase() === m.aiId);
+          if (userMem) {
+            if (!userMem.registeredEvents) userMem.registeredEvents = [];
+            userMem.registeredEvents = userMem.registeredEvents.filter(e => e.id !== cleanEventId && e.title !== cleanEventTitle);
+            userMem.registeredEvents.push({
+              id: cleanEventId,
+              title: cleanEventTitle,
+              categoryName: constraint.name || 'TEAM EVENT',
+              categoryId: cleanEventId.includes('-') ? cleanEventId.split('-')[0] : 'team',
+              teamId: teamId,
+              teamName: cleanTeamName,
+              isTeam: true,
+              isLeader: m.isLeader,
+              registeredAt: new Date().toISOString()
+            });
+          }
+        }
+      } catch (syncErr) {
+        console.warn(`[Admin Team Sync Warning] Could not update user ${m.aiId}:`, syncErr.message);
+      }
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: `Team '${cleanTeamName}' successfully registered by Admin for '${cleanEventTitle}'!`,
+      team: savedTeam
+    });
+  } catch (error) {
+    console.error('[Admin Team Registration Error]', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Server error occurred during admin team registration.'
     });
   }
 });

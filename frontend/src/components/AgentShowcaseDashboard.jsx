@@ -4,9 +4,10 @@ import {
   Github, Globe, Users, ArrowRight, Layers, ShieldAlert, 
   CheckCircle2, ListOrdered, ChevronLeft, ChevronRight, 
   Maximize2, Minimize2, Plus, Edit3, Award, Zap, Code, 
-  HelpCircle, AlertTriangle, RefreshCw
+  HelpCircle, AlertTriangle, RefreshCw, ShieldCheck
 } from 'lucide-react';
 import { apiFetch } from '../config/api';
+import { secureStorage } from '../utils/secureStorage';
 import ProjectSubmissionModal from './ProjectSubmissionModal';
 
 export default function AgentShowcaseDashboard({ currentUser, onNavigateToTeamRegister, onBack }) {
@@ -179,6 +180,27 @@ export default function AgentShowcaseDashboard({ currentUser, onNavigateToTeamRe
             >
               ← Back to Main Site
             </button>
+          )}
+
+          {secureStorage.getItem('vucse_admin_auth', true) === 'true' && (
+            <a
+              href="/iamadmin"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.5rem 1rem',
+                borderRadius: '10px',
+                background: 'linear-gradient(135deg, #10b981, #059669)',
+                color: '#ffffff',
+                fontSize: '0.85rem',
+                fontWeight: 'bold',
+                textDecoration: 'none',
+                boxShadow: '0 0 15px rgba(16, 185, 129, 0.4)'
+              }}
+            >
+              <ShieldCheck size={16} /> Admin Portal
+            </a>
           )}
 
           <button

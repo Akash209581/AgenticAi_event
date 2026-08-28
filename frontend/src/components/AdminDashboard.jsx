@@ -23,11 +23,32 @@ import {
   Home,
   CheckCircle2,
   Trash2,
-  UserPlus
+  UserPlus,
+  Plus,
+  Crown,
+  X,
+  Bot,
+  ExternalLink,
+  Code,
+  Zap,
+  Check,
+  Info
 } from 'lucide-react';
 
 import { eventsRulesData, isSameEvent } from '../data/eventsRulesData';
 import ExportOptionsModal from './ExportOptionsModal';
+
+const ALL_TEAM_EVENTS = [
+  { id: 'industry-2', title: 'AI AGENTS EXPO', min: 2, max: 4, category: 'INDUSTRY & INNOVATION', isShowcase: true, badge: '2 to 4 Members' },
+  { id: 'technical-1', title: 'AGENTIC AI HACKATHON', min: 4, max: 5, category: 'TECHNICAL', isShowcase: true, badge: '4 to 5 Members' },
+  { id: 'technical-2', title: 'AI PROMPT COMBAT', min: 2, max: 3, category: 'TECHNICAL', badge: '2 to 3 Members' },
+  { id: 'technical-3', title: 'PAPER / POSTER PRESENTATION', min: 1, max: 3, category: 'TECHNICAL', badge: '1 to 3 Members' },
+  { id: 'creative-1', title: 'REELS COMPETITION (AI FOR SOCIETY)', min: 1, max: 3, category: 'CREATIVE', badge: '1 to 3 Members' },
+  { id: 'creative-2', title: 'AI MUSICAL COMPETITION', min: 1, max: 3, category: 'CREATIVE', badge: '1 to 3 Members' },
+  { id: 'creative-3', title: 'AGENTIC DAY QUIZ CHALLENGE 2026', min: 3, max: 5, category: 'CREATIVE', badge: '3 to 5 Members' },
+  { id: 'creative-4', title: 'QUESTX', min: 5, max: 5, category: 'CREATIVE', badge: 'Strictly 5 Members' },
+  { id: 'innovative-1', title: 'SPARKX', min: 2, max: 3, category: 'INNOVATIVE', badge: '2 to 3 Members' }
+];
 
 export default function AdminDashboard({ onBack }) {
   // Authentication State
@@ -62,6 +83,29 @@ export default function AdminDashboard({ onBack }) {
   const [teamSearch, setTeamSearch] = useState('');
   const [teamEventFilter, setTeamEventFilter] = useState('all');
   const [teamsLoading, setTeamsLoading] = useState(false);
+
+  // Admin Register Team Modal State
+  const [isAdminRegisterTeamOpen, setIsAdminRegisterTeamOpen] = useState(false);
+  const [adminTeamForm, setAdminTeamForm] = useState({
+    eventId: 'industry-2',
+    eventTitle: 'AI AGENTS EXPO',
+    teamName: '',
+    autoEnrollMembers: true,
+    members: [
+      { aiId: '', name: '', regNo: '', year: '3', section: '', email: '', phone: '', isLeader: true }
+    ],
+    showcaseDetails: {
+      agentName: '',
+      problemStatement: '',
+      toolsNeeded: '',
+      githubLink: '',
+      demoLink: ''
+    }
+  });
+  const [memberLookupStates, setMemberLookupStates] = useState({});
+  const [adminRegisterLoading, setAdminRegisterLoading] = useState(false);
+  const [adminRegisterError, setAdminRegisterError] = useState('');
+  const [adminRegisterSuccess, setAdminRegisterSuccess] = useState('');
 
   // Add Member Modal State
   const [selectedTeamForAddMember, setSelectedTeamForAddMember] = useState(null);
@@ -549,6 +593,184 @@ export default function AdminDashboard({ onBack }) {
       alert('Server error adding team member: ' + err.message);
     } finally {
       setAddMemberLoading(false);
+    }
+  };
+
+  // Admin Team Registration Handlers
+  const openAdminRegisterTeamModal = (prefillEventId = null) => {
+    const targetEvtId = prefillEventId || 'industry-2';
+    const ev = ALL_TEAM_EVENTS.find(e => e.id === targetEvtId) || ALL_TEAM_EVENTS[0];
+    setAdminTeamForm({
+      eventId: ev.id,
+      eventTitle: ev.title,
+      teamName: '',
+      autoEnrollMembers: true,
+      members: [
+        { aiId: '', name: '', regNo: '', year: '3', section: '', email: '', phone: '', isLeader: true }
+      ],
+      showcaseDetails: {
+        agentName: '',
+        problemStatement: '',
+        toolsNeeded: '',
+        githubLink: '',
+        demoLink: ''
+      }
+    });
+    setMemberLookupStates({});
+    setAdminRegisterError('');
+    setAdminRegisterSuccess('');
+    setIsAdminRegisterTeamOpen(true);
+  };
+
+  const lookupMemberByIdentifier = async (index, query) => {
+    if (!query || !query.trim()) return;
+    const cleanQuery = query.trim();
+
+    setMemberLookupStates(prev => ({
+      ...prev,
+      [index]: { loading: true, msg: 'Searching student database...', type: 'info' }
+    }));
+
+    try {
+      const { data } = await apiFetch(`/student/${encodeURIComponent(cleanQuery)}`);
+      if (data && data.success && data.student) {
+        const stu = data.student;
+        setAdminTeamForm(prev => {
+          const updated = [...prev.members];
+          updated[index] = {
+            ...updated[index],
+            aiId: stu.aiId || updated[index].aiId || cleanQuery.toUpperCase(),
+            name: stu.name || updated[index].name,
+            regNo: (stu.regNo || updated[index].regNo || '').toUpperCase(),
+            year: stu.year || updated[index].year || '3',
+            email: stu.email || updated[index].email,
+            phone: stu.phone || updated[index].phone
+          };
+          return { ...prev, members: updated };
+        });
+        setMemberLookupStates(prev => ({
+          ...prev,
+          [index]: { loading: false, msg: `✅ Found: ${stu.name} (${stu.aiId})`, type: 'success' }
+        }));
+      } else {
+        setMemberLookupStates(prev => ({
+          ...prev,
+          [index]: { loading: false, msg: '⚠️ Not found in attendee DB. You can enter details manually.', type: 'warning' }
+        }));
+      }
+    } catch (err) {
+      setMemberLookupStates(prev => ({
+        ...prev,
+        [index]: { loading: false, msg: '⚠️ Student not found in database. Enter details manually.', type: 'warning' }
+      }));
+    }
+  };
+
+  const handleMemberFieldChange = (idx, field, value) => {
+    setAdminTeamForm(prev => {
+      const updated = [...prev.members];
+      updated[idx] = { ...updated[idx], [field]: value };
+      return { ...prev, members: updated };
+    });
+  };
+
+  const handleAddMemberRow = () => {
+    setAdminTeamForm(prev => ({
+      ...prev,
+      members: [
+        ...prev.members,
+        { aiId: '', name: '', regNo: '', year: '3', section: '', email: '', phone: '', isLeader: false }
+      ]
+    }));
+  };
+
+  const handleRemoveMemberRow = (idx) => {
+    setAdminTeamForm(prev => {
+      if (prev.members.length <= 1) return prev;
+      const updated = prev.members.filter((_, i) => i !== idx);
+      if (updated.length > 0 && !updated.some(m => m.isLeader)) {
+        updated[0].isLeader = true;
+      }
+      return { ...prev, members: updated };
+    });
+  };
+
+  const handleSetLeader = (idx) => {
+    setAdminTeamForm(prev => ({
+      ...prev,
+      members: prev.members.map((m, i) => ({ ...m, isLeader: i === idx }))
+    }));
+  };
+
+  const handleSubmitAdminRegisterTeam = async (e) => {
+    e.preventDefault();
+    setAdminRegisterError('');
+    setAdminRegisterSuccess('');
+
+    if (!adminTeamForm.teamName.trim()) {
+      setAdminRegisterError('Please provide a Team Name.');
+      return;
+    }
+    if (!adminTeamForm.members.length) {
+      setAdminRegisterError('Please add at least 1 member to the team.');
+      return;
+    }
+
+    for (let i = 0; i < adminTeamForm.members.length; i++) {
+      const m = adminTeamForm.members[i];
+      if (!m.aiId.trim() && !m.regNo.trim() && !m.name.trim()) {
+        setAdminRegisterError(`Member #${i + 1} requires an AI ID, Reg No, or Name.`);
+        return;
+      }
+    }
+
+    setAdminRegisterLoading(true);
+    try {
+      const adminToken = secureStorage.getItem('vucse_admin_token', true) || '';
+      const selectedEv = ALL_TEAM_EVENTS.find(ev => ev.id === adminTeamForm.eventId) || {};
+
+      const payload = {
+        teamName: adminTeamForm.teamName.trim(),
+        eventId: adminTeamForm.eventId,
+        eventTitle: selectedEv.title || adminTeamForm.eventTitle || adminTeamForm.eventId,
+        autoEnrollMembers: adminTeamForm.autoEnrollMembers,
+        members: adminTeamForm.members.map(m => ({
+          aiId: m.aiId.trim(),
+          name: m.name.trim(),
+          regNo: m.regNo.trim(),
+          year: m.year,
+          section: (m.section || '').trim(),
+          email: m.email.trim(),
+          phone: m.phone.trim(),
+          isLeader: m.isLeader
+        })),
+        projectDetails: adminTeamForm.showcaseDetails
+      };
+
+      const { res, data } = await apiFetch('/admin/register-team', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-token': adminToken
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (data && data.success) {
+        setAdminRegisterSuccess(data.message || 'Team successfully registered!');
+        setTimeout(() => {
+          setIsAdminRegisterTeamOpen(false);
+          setAdminRegisterSuccess('');
+          fetchTeams();
+          fetchData();
+        }, 1200);
+      } else {
+        setAdminRegisterError(data?.message || 'Failed to register team.');
+      }
+    } catch (err) {
+      setAdminRegisterError(err.message || 'Server error occurred while registering team.');
+    } finally {
+      setAdminRegisterLoading(false);
     }
   };
 
@@ -1293,6 +1515,15 @@ export default function AdminDashboard({ onBack }) {
 
         {/* Action Controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => openAdminRegisterTeamModal()}
+            className="btn-primary"
+            title="Admin Override: Register Team"
+            style={{ padding: '0.45rem 1rem', fontSize: '0.85rem', background: 'linear-gradient(135deg, #10b981, #059669)', border: '1px solid rgba(16, 185, 129, 0.5)' }}
+          >
+            <Plus size={16} /> + Register Team
+          </button>
+
           <button onClick={fetchData} className="btn-secondary" title="Refresh Database" style={{ padding: '0.45rem 0.9rem', fontSize: '0.85rem' }}>
             <RefreshCw size={16} /> Refresh Data
           </button>
@@ -2246,6 +2477,25 @@ export default function AdminDashboard({ onBack }) {
               <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                 <button
                   type="button"
+                  onClick={() => openAdminRegisterTeamModal(teamEventFilter !== 'all' ? teamEventFilter : 'industry-2')}
+                  className="btn-primary"
+                  style={{
+                    background: 'linear-gradient(135deg, #10b981, #059669)',
+                    fontSize: '0.85rem',
+                    padding: '0.5rem 1.2rem',
+                    fontWeight: 800,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)',
+                    border: '1px solid rgba(16, 185, 129, 0.5)'
+                  }}
+                >
+                  <Plus size={16} /> + Register New Team
+                </button>
+
+                <button
+                  type="button"
                   onClick={openExportTeamsPerMemberModal}
                   className="btn-primary"
                   disabled={!teams.length}
@@ -2513,6 +2763,560 @@ export default function AdminDashboard({ onBack }) {
           </div>
         )}
       </main>
+
+      {/* ADMIN TEAM REGISTRATION MODAL (SHOWCASE & COMPETITION OVERRIDE) */}
+      {isAdminRegisterTeamOpen && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.88)',
+          backdropFilter: 'blur(10px)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 9999,
+          padding: '1.5rem 1rem',
+          overflowY: 'auto'
+        }}>
+          <div style={{
+            background: 'linear-gradient(180deg, #0b1329 0%, #060b17 100%)',
+            border: '1.5px solid rgba(16, 185, 129, 0.45)',
+            borderRadius: '24px',
+            padding: '2rem',
+            width: '100%',
+            maxWidth: '860px',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            boxShadow: '0 25px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(16, 185, 129, 0.15)',
+            position: 'relative'
+          }}>
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '1rem' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <div style={{
+                    background: 'linear-gradient(135deg, #10b981, #059669)',
+                    padding: '0.45rem',
+                    borderRadius: '10px',
+                    color: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <Plus size={22} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '1.35rem', fontWeight: '900', color: '#ffffff', margin: 0, letterSpacing: '0.5px' }}>
+                      ADMIN TEAM REGISTRATION
+                    </h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.2rem' }}>
+                      <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', fontSize: '0.72rem', fontWeight: 800, padding: '0.15rem 0.5rem', borderRadius: '4px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                        OVERRIDE ACCESS
+                      </span>
+                      <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                        Bypasses deadlines, leader locks & auto-enrolls members
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsAdminRegisterTeamOpen(false)}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  color: '#94a3b8',
+                  borderRadius: '10px',
+                  padding: '0.5rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Error & Success Feedback Banners */}
+            {adminRegisterError && (
+              <div style={{
+                background: 'rgba(239, 68, 68, 0.15)',
+                border: '1px solid rgba(239, 68, 68, 0.4)',
+                borderRadius: '12px',
+                padding: '0.85rem 1rem',
+                color: '#fca5a5',
+                fontSize: '0.88rem',
+                marginBottom: '1.25rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.6rem'
+              }}>
+                <AlertCircle size={18} color="#ef4444" />
+                <span>{adminRegisterError}</span>
+              </div>
+            )}
+
+            {adminRegisterSuccess && (
+              <div style={{
+                background: 'rgba(16, 185, 129, 0.15)',
+                border: '1px solid rgba(16, 185, 129, 0.4)',
+                borderRadius: '12px',
+                padding: '0.85rem 1rem',
+                color: '#6ee7b7',
+                fontSize: '0.88rem',
+                marginBottom: '1.25rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.6rem'
+              }}>
+                <CheckCircle2 size={18} color="#10b981" />
+                <span>{adminRegisterSuccess}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmitAdminRegisterTeam} style={{ display: 'flex', flexDirection: 'column', gap: '1.4rem' }}>
+              
+              {/* Event & Team Name Row */}
+              <div style={{
+                background: 'rgba(15, 23, 42, 0.6)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '16px',
+                padding: '1.25rem',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: '1rem'
+              }}>
+                {/* Event Selector */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#e2e8f0', marginBottom: '0.4rem' }}>
+                    SELECT COMPETITION EVENT *
+                  </label>
+                  <select
+                    value={adminTeamForm.eventId}
+                    onChange={(e) => {
+                      const selectedId = e.target.value;
+                      const ev = ALL_TEAM_EVENTS.find(item => item.id === selectedId) || {};
+                      setAdminTeamForm(prev => ({
+                        ...prev,
+                        eventId: selectedId,
+                        eventTitle: ev.title || selectedId
+                      }));
+                    }}
+                    className="cyber-select"
+                    style={{ width: '100%', fontSize: '0.9rem', padding: '0.6rem' }}
+                  >
+                    {ALL_TEAM_EVENTS.map(ev => (
+                      <option key={ev.id} value={ev.id}>
+                        {ev.title} ({ev.badge}) {ev.isShowcase ? '⭐ SHOWCASE' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Team Name */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: '#e2e8f0', marginBottom: '0.4rem' }}>
+                    TEAM NAME *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. CyberSentinels, AgentSquad, ByteMasters"
+                    value={adminTeamForm.teamName}
+                    onChange={(e) => setAdminTeamForm(prev => ({ ...prev, teamName: e.target.value }))}
+                    className="cyber-input"
+                    style={{ width: '100%', fontSize: '0.9rem' }}
+                    required
+                  />
+                </div>
+
+                {/* Auto Enroll Checkbox */}
+                <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '0.2rem' }}>
+                  <input
+                    type="checkbox"
+                    id="autoEnrollCheckbox"
+                    checked={adminTeamForm.autoEnrollMembers}
+                    onChange={(e) => setAdminTeamForm(prev => ({ ...prev, autoEnrollMembers: e.target.checked }))}
+                    style={{ width: '16px', height: '16px', accentColor: '#10b981', cursor: 'pointer' }}
+                  />
+                  <label htmlFor="autoEnrollCheckbox" style={{ fontSize: '0.82rem', color: '#cbd5e1', cursor: 'pointer' }}>
+                    Auto-enroll member students into this event roster if not already registered
+                  </label>
+                </div>
+              </div>
+
+              {/* Team Members Section */}
+              <div style={{
+                background: 'rgba(15, 23, 42, 0.6)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '16px',
+                padding: '1.25rem'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: '800', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <Users size={18} style={{ color: '#10b981' }} /> TEAM MEMBERS ({adminTeamForm.members.length})
+                    </h4>
+                    <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                      {(() => {
+                        const ev = ALL_TEAM_EVENTS.find(e => e.id === adminTeamForm.eventId);
+                        return ev ? `Target: ${ev.badge} • ${ev.category}` : '';
+                      })()}
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleAddMemberRow}
+                    className="btn-secondary"
+                    style={{
+                      padding: '0.4rem 0.85rem',
+                      fontSize: '0.8rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      color: '#34d399',
+                      border: '1px solid rgba(52, 211, 153, 0.4)'
+                    }}
+                  >
+                    <Plus size={14} /> + Add Another Member
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {adminTeamForm.members.map((m, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        background: m.isLeader ? 'rgba(255, 215, 0, 0.04)' : 'rgba(255, 255, 255, 0.02)',
+                        border: m.isLeader ? '1.5px solid rgba(255, 215, 0, 0.35)' : '1px solid rgba(255, 255, 255, 0.08)',
+                        borderRadius: '14px',
+                        padding: '1rem',
+                        position: 'relative'
+                      }}
+                    >
+                      {/* Member Card Header */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                          <span style={{
+                            background: m.isLeader ? 'rgba(255, 215, 0, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+                            color: m.isLeader ? '#ffd700' : '#e2e8f0',
+                            padding: '0.2rem 0.6rem',
+                            borderRadius: '6px',
+                            fontSize: '0.78rem',
+                            fontWeight: 800
+                          }}>
+                            Member #{idx + 1}
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={() => handleSetLeader(idx)}
+                            style={{
+                              background: m.isLeader ? 'rgba(255, 215, 0, 0.15)' : 'transparent',
+                              border: m.isLeader ? '1px solid rgba(255, 215, 0, 0.5)' : '1px solid rgba(255, 255, 255, 0.15)',
+                              color: m.isLeader ? '#ffd700' : '#94a3b8',
+                              padding: '0.2rem 0.6rem',
+                              borderRadius: '6px',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.3rem'
+                            }}
+                          >
+                            <Crown size={13} color={m.isLeader ? '#ffd700' : '#94a3b8'} />
+                            {m.isLeader ? 'Team Leader' : 'Set as Leader'}
+                          </button>
+                        </div>
+
+                        {adminTeamForm.members.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveMemberRow(idx)}
+                            style={{
+                              background: 'rgba(239, 68, 68, 0.12)',
+                              border: '1px solid rgba(239, 68, 68, 0.3)',
+                              color: '#ef4444',
+                              borderRadius: '6px',
+                              padding: '0.25rem 0.5rem',
+                              fontSize: '0.75rem',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.3rem'
+                            }}
+                          >
+                            <Trash2 size={13} /> Remove
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Fast Student Database Lookup Bar */}
+                      <div style={{
+                        background: 'rgba(8, 14, 28, 0.8)',
+                        border: '1px solid rgba(0, 242, 254, 0.2)',
+                        borderRadius: '10px',
+                        padding: '0.65rem 0.85rem',
+                        marginBottom: '0.85rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.6rem',
+                        flexWrap: 'wrap'
+                      }}>
+                        <Search size={15} style={{ color: '#00f2fe' }} />
+                        <span style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 600 }}>Quick Lookup:</span>
+                        <input
+                          type="text"
+                          placeholder="Enter VUCSE AI ID, Reg No, or Email to Auto-fill..."
+                          value={m.aiId || m.regNo || ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            handleMemberFieldChange(idx, 'aiId', val);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              lookupMemberByIdentifier(idx, m.aiId || m.regNo);
+                            }
+                          }}
+                          className="cyber-input"
+                          style={{ flex: 1, minWidth: '200px', fontSize: '0.82rem', padding: '0.35rem 0.6rem' }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => lookupMemberByIdentifier(idx, m.aiId || m.regNo)}
+                          disabled={memberLookupStates[idx]?.loading}
+                          className="btn-primary"
+                          style={{ padding: '0.35rem 0.75rem', fontSize: '0.78rem', background: 'linear-gradient(135deg, #00f2fe, #3b82f6)' }}
+                        >
+                          {memberLookupStates[idx]?.loading ? 'Searching...' : 'Lookup & Auto-fill'}
+                        </button>
+                      </div>
+
+                      {memberLookupStates[idx]?.msg && (
+                        <div style={{
+                          fontSize: '0.76rem',
+                          color: memberLookupStates[idx]?.type === 'success' ? '#4ade80' : memberLookupStates[idx]?.type === 'warning' ? '#fbbf24' : '#38bdf8',
+                          marginBottom: '0.75rem',
+                          fontWeight: 600
+                        }}>
+                          {memberLookupStates[idx]?.msg}
+                        </div>
+                      )}
+
+                      {/* Detailed Fields Grid */}
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                        gap: '0.75rem'
+                      }}>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>Student Name *</label>
+                          <input
+                            type="text"
+                            placeholder="Full Name"
+                            value={m.name}
+                            onChange={(e) => handleMemberFieldChange(idx, 'name', e.target.value)}
+                            className="cyber-input"
+                            style={{ width: '100%', fontSize: '0.82rem' }}
+                            required
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>Registration Number *</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. 2300090123"
+                            value={m.regNo}
+                            onChange={(e) => handleMemberFieldChange(idx, 'regNo', e.target.value)}
+                            className="cyber-input"
+                            style={{ width: '100%', fontSize: '0.82rem' }}
+                            required
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>VUCSE AI ID (Optional)</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. VUCSE2026..."
+                            value={m.aiId}
+                            onChange={(e) => handleMemberFieldChange(idx, 'aiId', e.target.value)}
+                            className="cyber-input"
+                            style={{ width: '100%', fontSize: '0.82rem' }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>Year</label>
+                          <select
+                            value={m.year}
+                            onChange={(e) => handleMemberFieldChange(idx, 'year', e.target.value)}
+                            className="cyber-select"
+                            style={{ width: '100%', fontSize: '0.82rem' }}
+                          >
+                            <option value="1">1st Year</option>
+                            <option value="2">2nd Year</option>
+                            <option value="3">3rd Year</option>
+                            <option value="4">4th Year</option>
+                            <option value="M.Tech (1st year)">M.Tech (1st year)</option>
+                            <option value="M.Tech (2nd year)">M.Tech (2nd year)</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>Email</label>
+                          <input
+                            type="email"
+                            placeholder="student@vignan.ac.in"
+                            value={m.email}
+                            onChange={(e) => handleMemberFieldChange(idx, 'email', e.target.value)}
+                            className="cyber-input"
+                            style={{ width: '100%', fontSize: '0.82rem' }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>Phone</label>
+                          <input
+                            type="tel"
+                            placeholder="10-digit phone"
+                            value={m.phone}
+                            onChange={(e) => handleMemberFieldChange(idx, 'phone', e.target.value)}
+                            className="cyber-input"
+                            style={{ width: '100%', fontSize: '0.82rem' }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Showcase / Project Details (Optional) */}
+              <div style={{
+                background: 'rgba(15, 23, 42, 0.6)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '16px',
+                padding: '1.25rem'
+              }}>
+                <h4 style={{ margin: '0 0 0.85rem 0', fontSize: '0.95rem', fontWeight: '800', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Bot size={16} /> SHOWCASE & PROJECT DETAILS (OPTIONAL)
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.85rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>Agent / Project Name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. EduBot Agent, CodeRefactor AI"
+                      value={adminTeamForm.showcaseDetails.agentName}
+                      onChange={(e) => setAdminTeamForm(prev => ({
+                        ...prev,
+                        showcaseDetails: { ...prev.showcaseDetails, agentName: e.target.value }
+                      }))}
+                      className="cyber-input"
+                      style={{ width: '100%', fontSize: '0.82rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>Tools / Frameworks Used</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Python, LangChain, React, Gemini API"
+                      value={adminTeamForm.showcaseDetails.toolsNeeded}
+                      onChange={(e) => setAdminTeamForm(prev => ({
+                        ...prev,
+                        showcaseDetails: { ...prev.showcaseDetails, toolsNeeded: e.target.value }
+                      }))}
+                      className="cyber-input"
+                      style={{ width: '100%', fontSize: '0.82rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>GitHub Repository Link</label>
+                    <input
+                      type="url"
+                      placeholder="https://github.com/..."
+                      value={adminTeamForm.showcaseDetails.githubLink}
+                      onChange={(e) => setAdminTeamForm(prev => ({
+                        ...prev,
+                        showcaseDetails: { ...prev.showcaseDetails, githubLink: e.target.value }
+                      }))}
+                      className="cyber-input"
+                      style={{ width: '100%', fontSize: '0.82rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>Live Demo / Deployment Link</label>
+                    <input
+                      type="url"
+                      placeholder="https://..."
+                      value={adminTeamForm.showcaseDetails.demoLink}
+                      onChange={(e) => setAdminTeamForm(prev => ({
+                        ...prev,
+                        showcaseDetails: { ...prev.showcaseDetails, demoLink: e.target.value }
+                      }))}
+                      className="cyber-input"
+                      style={{ width: '100%', fontSize: '0.82rem' }}
+                    />
+                  </div>
+
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginBottom: '0.25rem' }}>Problem Statement / Brief</label>
+                    <textarea
+                      rows={2}
+                      placeholder="Brief summary of what this agent or project accomplishes..."
+                      value={adminTeamForm.showcaseDetails.problemStatement}
+                      onChange={(e) => setAdminTeamForm(prev => ({
+                        ...prev,
+                        showcaseDetails: { ...prev.showcaseDetails, problemStatement: e.target.value }
+                      }))}
+                      className="cyber-input"
+                      style={{ width: '100%', fontSize: '0.82rem', resize: 'vertical' }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Submit / Cancel Actions */}
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', paddingTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setIsAdminRegisterTeamOpen(false)}
+                  style={{ padding: '0.65rem 1.4rem', fontSize: '0.85rem' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={adminRegisterLoading}
+                  className="btn-primary"
+                  style={{
+                    background: 'linear-gradient(135deg, #10b981, #059669)',
+                    padding: '0.65rem 1.8rem',
+                    fontSize: '0.9rem',
+                    fontWeight: 800,
+                    boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)',
+                    opacity: adminRegisterLoading ? 0.6 : 1
+                  }}
+                >
+                  {adminRegisterLoading ? 'Registering Team...' : 'Register Team as Admin'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* ADD TEAM MEMBER MODAL FOR ADMIN */}
       {selectedTeamForAddMember && (
