@@ -308,7 +308,7 @@ export const eventsRulesData = {
     image: '/images/event_quiz.png',
     whatsappGroupLink: 'https://chat.whatsapp.com/Lp6H85SdIyf9mKFxFV0iDm',
     eventDate: '29 August 2026',
-    registrationDeadline: '26 August 2026',
+    registrationDeadline: '28 August 2026, 4:00 PM',
     topics: [
       'Real-World AI Use Cases & Case Studies',
       'AI Reasoning & Decision-Making',
@@ -367,7 +367,7 @@ export const eventsRulesData = {
     cardTitle: 'QUESTX',
     image: '/images/event_questx.png',
     whatsappGroupLink: 'https://chat.whatsapp.com/GHLd8ixNoPDLHI26cwjnDF',
-    registrationDeadline: '27 August 2026',
+    registrationDeadline: 'Registration Closed',
     eventDate: '29 August 2026',
     teamSize: 'Strictly 5 members per team',
     rules: [
@@ -462,7 +462,7 @@ export const eventsRulesData = {
 
 
 
-// Helper to parse deadline string into a Date object (set to end of the day 23:59:59.999)
+// Helper to parse deadline string into a Date object (set to end of the day 23:59:59.999 if no time specified)
 export function parseDeadlineDate(deadlineStr) {
   if (!deadlineStr || typeof deadlineStr !== 'string') return null;
   const lower = deadlineStr.toLowerCase().trim();
@@ -472,7 +472,10 @@ export function parseDeadlineDate(deadlineStr) {
   const cleanStr = deadlineStr.replace(/(\d+)(st|nd|rd|th)/gi, '$1').trim();
   const parsed = new Date(cleanStr);
   if (!isNaN(parsed.getTime())) {
-    parsed.setHours(23, 59, 59, 999);
+    const hasTime = /(?:am|pm|:\d{2})/i.test(cleanStr);
+    if (!hasTime) {
+      parsed.setHours(23, 59, 59, 999);
+    }
     return parsed;
   }
   return null;
